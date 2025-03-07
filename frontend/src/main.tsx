@@ -5,10 +5,10 @@ import GlobalStyles from "./styles/GlobalStyles.tsx";
 import {Provider} from "@/components/ui/provider.tsx";
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // <StrictMode>
     <Provider>
       <GlobalStyles/>
       <App/>
     </Provider>
-  </StrictMode>,
+  // </StrictMode>,
 )
