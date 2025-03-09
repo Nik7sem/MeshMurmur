@@ -1,3 +1,5 @@
+const rtcConfig: RTCConfiguration = {iceServers: [{urls: "stun:stun.l.google.com:19302"}]}
+
 export class PeerConnection {
   private pc: RTCPeerConnection;
   private dataChannel?: RTCDataChannel;
@@ -5,7 +7,6 @@ export class PeerConnection {
   constructor(
     private onIceCandidate: (candidate: RTCIceCandidate) => void,
     private onMessage: (message: string) => void,
-    rtcConfig: RTCConfiguration = {iceServers: [{urls: "stun:stun.l.google.com:19302"}]}
   ) {
     this.onIceCandidate = onIceCandidate;
     this.onMessage = onMessage;
@@ -58,10 +59,7 @@ export class PeerConnection {
     this.dataChannel.onopen = () => console.log("Data channel opened!");
     this.dataChannel.onclose = () => console.log("Data channel closed.");
     this.dataChannel.onerror = (error) => console.error("Data channel error:", error);
-    this.dataChannel.onmessage = (event) => {
-      console.log("Received message:", event.data);
-      this.onMessage?.(event.data);
-    };
+    this.dataChannel.onmessage = (event) => this.onMessage?.(event.data)
   }
 
   /**
@@ -78,12 +76,6 @@ export class PeerConnection {
    */
   async handleOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
     await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
-    // if (this.pc.signalingState === "have-local-offer") {
-    //   await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
-    // } else {
-    //   console.warn("Received answer but peer connection is in state:", this.pc.signalingState);
-    // }
-
     const answer = await this.pc.createAnswer();
     await this.pc.setLocalDescription(answer);
     return answer;

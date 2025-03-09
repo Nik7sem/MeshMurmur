@@ -39,6 +39,9 @@ export async function main() {
       });
     } else {
       console.log("I am offerer")
+      // Create a data channel.
+      peerConnection.createDataChannel();
+
       // Create an offer and send it via Firebase.
       peerConnection.createOffer().then((offer) => {
         signaling.sendOffer(targetPeer.peerId, offer);
@@ -49,9 +52,6 @@ export async function main() {
         // console.log("Received answer via Firebase:", answer);
         await peerConnection.handleAnswer(answer);
       });
-
-      // Create a data channel.
-      // peerConnection.createDataChannel();
     }
 
     // Listen for new ICE candidates from the remote peer.
