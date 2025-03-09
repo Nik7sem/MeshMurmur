@@ -3,15 +3,12 @@ import {FirebaseSignaling} from "./firebase-realtime-db.ts";
 import {PeerConnection} from "./webrtc-conn.ts";
 
 // Your Firebase configuration (minimal config for testing can be just the databaseURL)
-const firebaseConfig = {
-  databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
-};
 
 const roomId = "exampleRoom";
 
 export async function main() {
 // Create a FirebaseSignaling instance with a unique peer ID (optional: let it generate one)
-  const signaling = new FirebaseSignaling(firebaseConfig, roomId);
+  const signaling = new FirebaseSignaling(roomId);
 
 // Create a WebRTC connection instance.
 // Pass callbacks to send ICE candidates via Firebase and to process messages from the data channel.

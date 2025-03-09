@@ -1,4 +1,4 @@
-import { initializeApp, FirebaseApp } from "firebase/app";
+import {initializeApp, FirebaseApp} from "firebase/app";
 import {
   getDatabase,
   Database,
@@ -15,6 +15,10 @@ import {FirebaseOptions} from "@firebase/app";
 // Define types for the SDP and ICE candidate objects.
 type SDPMessage = RTCSessionDescriptionInit;
 type ICECandidateMessage = RTCIceCandidateInit;
+
+const firebaseConfig: FirebaseOptions = {
+  databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
+};
 
 interface OfferData {
   sender: string;
@@ -41,11 +45,10 @@ export class FirebaseSignaling {
   /**
    * Constructs a new FirebaseSignaling instance.
    *
-   * @param firebaseConfig - Your Firebase configuration object.
    * @param roomId - The room identifier to use for exchanging signaling data.
    * @param peerId - (Optional) Provide your own peer ID; if omitted, a random one is generated.
    */
-  constructor(firebaseConfig: FirebaseOptions, private roomId: string, peerId?: string) {
+  constructor(private roomId: string, peerId?: string) {
     // Generate a unique peer ID if not provided.
     this.peerId = peerId || Math.random().toString(36).substr(2, 9);
     // Initialize Firebase app and database.
@@ -62,7 +65,7 @@ export class FirebaseSignaling {
    */
   async sendOffer(offer: SDPMessage): Promise<void> {
     const offerRef = ref(this.db, `rooms/${this.roomId}/offer`);
-    const data: OfferData = { sender: this.peerId, offer };
+    const data: OfferData = {sender: this.peerId, offer};
     await set(offerRef, data);
     console.log("Offer sent to Firebase:", data);
   }
@@ -74,7 +77,7 @@ export class FirebaseSignaling {
    */
   async sendAnswer(answer: SDPMessage): Promise<void> {
     const answerRef = ref(this.db, `rooms/${this.roomId}/answer`);
-    const data: AnswerData = { sender: this.peerId, answer };
+    const data: AnswerData = {sender: this.peerId, answer};
     await set(answerRef, data);
     console.log("Answer sent to Firebase:", data);
   }
@@ -87,7 +90,7 @@ export class FirebaseSignaling {
    */
   async sendIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
     const candidateListRef = ref(this.db, `rooms/${this.roomId}/candidates`);
-    const data: CandidateData = { sender: this.peerId, candidate };
+    const data: CandidateData = {sender: this.peerId, candidate};
     await push(candidateListRef, data);
     console.log("ICE candidate sent to Firebase:", data);
   }

@@ -1,28 +1,22 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Button, Center, Container, Flex, Heading, Input, Text} from "@chakra-ui/react";
-// import {node, registerEvents, connectRelay, sendMessage, publish} from "../utils/p2p-library/p2p-node.ts"
+import React, {useEffect, useRef} from 'react';
+import {Box, Button, Center, Container, Flex, Heading, Text} from "@chakra-ui/react";
+import {main} from "@/utils/p2p-library/p2p-node-own.ts";
 
 const HomePage = () => {
-  const [peerNumber, setPeerNumber] = useState(0);
+  const sendRef = useRef<() => void>(null)
 
   useEffect(() => {
-    // node.start()
-    // registerEvents((peerNumber) => setPeerNumber(peerNumber))
+    async function start() {
+      sendRef.current = await main()
+    }
+
+    start()
   }, [])
 
   async function onClick() {
-    const ma = prompt("Multiaddr:") || ''
-    // await connectRelay(ma)
-  }
-
-  async function onClick2() {
-    const message = prompt("message:") || ''
-    // await sendMessage(message)
-  }
-
-  async function onClick3() {
-    const message = prompt("message:") || ''
-    // await publish(message)
+    if (sendRef.current) {
+      sendRef.current();
+    }
   }
 
   return (
@@ -32,12 +26,10 @@ const HomePage = () => {
           <Heading size="6xl">Home Page</Heading>
         </Box>
         <Flex margin="50px" justifyContent="space-around">
-          <Button onClick={onClick}>Connect</Button>
-          <Button onClick={onClick2}>Send message</Button>
-          <Button onClick={onClick3}>Publish</Button>
+          <Button onClick={onClick}>Send message</Button>
         </Flex>
         <Box>
-          <Text fontSize="7xl">{peerNumber}</Text>
+          {/*<Text fontSize="7xl">{peerNumber}</Text>*/}
         </Box>
       </Container>
     </Center>
