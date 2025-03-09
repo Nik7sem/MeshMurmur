@@ -18,6 +18,7 @@ import {FirebaseOptions} from "firebase/app";
 // Define types for SDP and ICE candidate messages.
 type SDPMessage = RTCSessionDescriptionInit;
 type ICECandidateMessage = RTCIceCandidateInit;
+type PeerType = { peerId: string, data: { ready: boolean } };
 
 const firebaseConfig: FirebaseOptions = {
   databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/",
@@ -26,12 +27,10 @@ const firebaseConfig: FirebaseOptions = {
 export class FirebaseSignaling {
   private readonly firebaseApp: FirebaseApp;
   private readonly db: Database;
-  private readonly peerId: string;
   // Reference for new-peers subscription.
   private newPeersCallback?: (snapshot: DataSnapshot) => void;
 
-  constructor(peerId?: string) {
-    this.peerId = peerId || Math.random().toString(36).substr(2, 9);
+  constructor(private readonly peerId: string) {
     this.firebaseApp = initializeApp(firebaseConfig);
     this.db = getDatabase(this.firebaseApp);
   }
@@ -42,7 +41,7 @@ export class FirebaseSignaling {
    */
   async registerPeer(): Promise<void> {
     const peerRef = ref(this.db, `peers/${this.peerId}`);
-    await set(peerRef, {online: true});
+    await set(peerRef, {ready: true});
     console.log("Registered peer:", this.peerId);
   }
 
@@ -60,13 +59,13 @@ export class FirebaseSignaling {
    * Subscribes to new peers added to /peers.
    * The callback is called with the new peer's ID.
    */
-  subscribeToNewPeers(callback: (newPeerId: string) => void): void {
+  subscribeToNewPeers(callback: (newPeer: PeerType) => void): void {
     const peersRef = ref(this.db, "peers");
     this.newPeersCallback = (snapshot: DataSnapshot) => {
-      const newPeerId = snapshot.key;
-      if (newPeerId && newPeerId !== this.peerId) {
-        console.log("New peer detected:", newPeerId);
-        callback(newPeerId);
+      const newPeer: PeerType = {peerId: snapshot.key!, data: snapshot.val()};
+      if (newPeer.peerId && newPeer.peerId !== this.peerId) {
+        console.log("New peer detected:", newPeer.peerId);
+        callback(newPeer);
       }
     };
     onChildAdded(peersRef, this.newPeersCallback);
@@ -124,7 +123,7 @@ export class FirebaseSignaling {
     onValue(offerRef, (snapshot: DataSnapshot) => {
       const data: { offer: RTCSessionDescriptionInit } = snapshot.val();
       if (data) {
-        console.log("Offer received from Firebase:", data.offer);
+        console.log(`Offer received from ${targetPeerId}:`, data.offer);
         callback(data.offer);
       }
     });
@@ -140,7 +139,7 @@ export class FirebaseSignaling {
     onValue(answerRef, (snapshot: DataSnapshot) => {
       const data: { answer: RTCSessionDescriptionInit } = snapshot.val()
       if (data) {
-        console.log("Answer received from Firebase:", data.answer);
+        console.log(`Answer received from ${targetPeerId}:`, data.answer);
         callback(data.answer);
       }
     });
@@ -156,7 +155,7 @@ export class FirebaseSignaling {
     onChildAdded(candidateListRef, (snapshot: DataSnapshot) => {
       const data: { candidate: ICECandidateMessage } = snapshot.val();
       if (data) {
-        console.log("ICE candidate received from Firebase:", data.candidate);
+        console.log(`ICE candidate received from ${targetPeerId}:`, data.candidate);
         callback(data.candidate);
       }
     });

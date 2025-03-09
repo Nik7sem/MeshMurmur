@@ -27,6 +27,20 @@ export class PeerConnection {
     };
   }
 
+  startDebugListeners() {
+    this.pc.onconnectionstatechange = () => {
+      console.log("Connection state changed:", this.pc.connectionState);
+    };
+
+    this.pc.onsignalingstatechange = () => {
+      console.log("Signaling state changed:", this.pc.signalingState);
+    };
+
+    this.pc.onicegatheringstatechange = () => {
+      console.log("ICE gathering state changed:", this.pc.iceGatheringState);
+    };
+  }
+
   /**
    * Creates a new data channel (only for the peer that initiates the connection).
    */
@@ -63,12 +77,12 @@ export class PeerConnection {
    * Handles an SDP offer from a remote peer and generates an answer.
    */
   async handleOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
-    // await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
-    if (this.pc.signalingState === "have-local-offer") {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
-    } else {
-      console.warn("Received answer but peer connection is in state:", this.pc.signalingState);
-    }
+    await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
+    // if (this.pc.signalingState === "have-local-offer") {
+    //   await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
+    // } else {
+    //   console.warn("Received answer but peer connection is in state:", this.pc.signalingState);
+    // }
 
     const answer = await this.pc.createAnswer();
     await this.pc.setLocalDescription(answer);
