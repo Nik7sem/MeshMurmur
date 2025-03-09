@@ -13,7 +13,6 @@ import {privateKeyFromRaw} from '@libp2p/crypto/keys'
 // import {generateKeyPair} from '@libp2p/crypto/keys'
 
 // const privateKey = await generateKeyPair('Ed25519')
-
 const PUBSUB_PEER_DISCOVERY = "browser-peer-discovery"
 
 const server = await createLibp2p({
@@ -23,7 +22,7 @@ const server = await createLibp2p({
   },
   transports: [
     webSockets({
-      filter: filters.all
+      // filter: filters.all
     })
   ],
   // peerDiscovery: [
@@ -48,9 +47,9 @@ const server = await createLibp2p({
       // disable max reservations limit for demo purposes. in production you
       // should leave this set to the default of 15 to prevent abuse of your
       // node by network peers
-      reservations: {
-        maxReservations: Infinity
-      }
+      // reservations: {
+      //   maxReservations: Infinity
+      // }
     })
   }
 })

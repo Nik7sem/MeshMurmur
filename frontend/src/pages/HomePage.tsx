@@ -1,28 +1,28 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Button, Center, Container, Flex, Heading, Input, Text} from "@chakra-ui/react";
-import {node, registerEvents, connectRelay, sendMessage, publish} from "../utils/p2p-library/p2p-node.ts"
+// import {node, registerEvents, connectRelay, sendMessage, publish} from "../utils/p2p-library/p2p-node.ts"
 
 const HomePage = () => {
   const [peerNumber, setPeerNumber] = useState(0);
 
   useEffect(() => {
-    node.start()
-    registerEvents((peerNumber) => setPeerNumber(peerNumber))
+    // node.start()
+    // registerEvents((peerNumber) => setPeerNumber(peerNumber))
   }, [])
 
   async function onClick() {
     const ma = prompt("Multiaddr:") || ''
-    await connectRelay(ma)
+    // await connectRelay(ma)
   }
 
   async function onClick2() {
     const message = prompt("message:") || ''
-    await sendMessage(message)
+    // await sendMessage(message)
   }
 
   async function onClick3() {
     const message = prompt("message:") || ''
-    await publish(message)
+    // await publish(message)
   }
 
   return (

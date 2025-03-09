@@ -41,7 +41,7 @@ async function createNode() {
     transports: [
       webSockets({
         // this allows non-secure WebSocket connections for purposes of the demo
-        filter: filters.all
+        // filter: filters.all
       }),
       webRTC(),
       circuitRelayTransport()
@@ -62,9 +62,9 @@ async function createNode() {
     connectionEncrypters: [noise()],
     streamMuxers: [yamux()],
     connectionGater: {
-      denyDialMultiaddr: () => {
-        return false
-      }
+      // denyDialMultiaddr: () => {
+      //   return false
+      // }
     },
     services: {
       identify: identify(),

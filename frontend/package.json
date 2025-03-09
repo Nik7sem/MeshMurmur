@@ -24,6 +24,7 @@
     "@libp2p/webrtc": "^5.2.7",
     "@libp2p/websockets": "^9.2.6",
     "@libp2p/webtransport": "^5.0.35",
+    "firebase": "^11.4.0",
     "libp2p": "^2.8.0",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
