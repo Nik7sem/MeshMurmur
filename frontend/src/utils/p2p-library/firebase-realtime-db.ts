@@ -5,155 +5,168 @@ import {
   ref,
   set,
   push,
-  onValue,
   onChildAdded,
+  onChildRemoved,
+  onValue,
+  off,
+  remove,
+  get,
   DataSnapshot,
-  remove
 } from "firebase/database";
-import {FirebaseOptions} from "@firebase/app";
+import {FirebaseOptions} from "firebase/app";
 
-// Define types for the SDP and ICE candidate objects.
+// Define types for SDP and ICE candidate messages.
 type SDPMessage = RTCSessionDescriptionInit;
 type ICECandidateMessage = RTCIceCandidateInit;
 
 const firebaseConfig: FirebaseOptions = {
-  databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
+  databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/",
 };
 
-interface OfferData {
-  sender: string;
-  offer: SDPMessage;
-}
-
-interface AnswerData {
-  sender: string;
-  answer: SDPMessage;
-}
-
-interface CandidateData {
-  sender: string;
-  candidate: ICECandidateMessage;
-}
-
 export class FirebaseSignaling {
-  private firebaseApp: FirebaseApp;
-  private db: Database;
-  private roomRef: ReturnType<typeof ref>;
-  // Unique identifier for this peer.
-  private peerId: string;
+  private readonly firebaseApp: FirebaseApp;
+  private readonly db: Database;
+  private readonly peerId: string;
+  // Reference for new-peers subscription.
+  private newPeersCallback?: (snapshot: DataSnapshot) => void;
 
-  /**
-   * Constructs a new FirebaseSignaling instance.
-   *
-   * @param roomId - The room identifier to use for exchanging signaling data.
-   * @param peerId - (Optional) Provide your own peer ID; if omitted, a random one is generated.
-   */
-  constructor(private roomId: string, peerId?: string) {
-    // Generate a unique peer ID if not provided.
+  constructor(peerId?: string) {
     this.peerId = peerId || Math.random().toString(36).substr(2, 9);
-    // Initialize Firebase app and database.
     this.firebaseApp = initializeApp(firebaseConfig);
     this.db = getDatabase(this.firebaseApp);
-    // Create a reference to a room in the database.
-    this.roomRef = ref(this.db, `rooms/${this.roomId}`);
   }
 
   /**
-   * Sends an SDP offer to the Firebase room.
-   *
-   * @param offer - The SDP offer object from your peer connection.
+   * Registers this peer in the global peer list at /peers/$peerId.
+   * Sets an onDisconnect to remove your entry automatically.
    */
-  async sendOffer(offer: SDPMessage): Promise<void> {
-    const offerRef = ref(this.db, `rooms/${this.roomId}/offer`);
-    const data: OfferData = {sender: this.peerId, offer};
-    await set(offerRef, data);
-    console.log("Offer sent to Firebase:", data);
+  async registerPeer(): Promise<void> {
+    const peerRef = ref(this.db, `peers/${this.peerId}`);
+    await set(peerRef, {online: true});
+    console.log("Registered peer:", this.peerId);
   }
 
   /**
-   * Sends an SDP answer to the Firebase room.
-   *
-   * @param answer - The SDP answer object from your peer connection.
+   * Retrieves all available peer IDs (excluding this peer).
    */
-  async sendAnswer(answer: SDPMessage): Promise<void> {
-    const answerRef = ref(this.db, `rooms/${this.roomId}/answer`);
-    const data: AnswerData = {sender: this.peerId, answer};
-    await set(answerRef, data);
-    console.log("Answer sent to Firebase:", data);
+  async getAvailablePeers(): Promise<string[]> {
+    const peersRef = ref(this.db, "peers");
+    const snapshot = await get(peersRef);
+    if (!snapshot.exists()) return [];
+    return Object.keys(snapshot.val()).filter((id) => id !== this.peerId);
   }
 
   /**
-   * Sends an ICE candidate to the Firebase room.
-   * Each candidate is pushed to a list so that multiple candidates can be exchanged.
-   *
-   * @param candidate - The ICE candidate object from your peer connection.
+   * Subscribes to new peers added to /peers.
+   * The callback is called with the new peer's ID.
    */
-  async sendIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
-    const candidateListRef = ref(this.db, `rooms/${this.roomId}/candidates`);
-    const data: CandidateData = {sender: this.peerId, candidate};
-    await push(candidateListRef, data);
-    console.log("ICE candidate sent to Firebase:", data);
+  subscribeToNewPeers(callback: (newPeerId: string) => void): void {
+    const peersRef = ref(this.db, "peers");
+    this.newPeersCallback = (snapshot: DataSnapshot) => {
+      const newPeerId = snapshot.key;
+      if (newPeerId && newPeerId !== this.peerId) {
+        console.log("New peer detected:", newPeerId);
+        callback(newPeerId);
+      }
+    };
+    onChildAdded(peersRef, this.newPeersCallback);
   }
 
   /**
-   * Listens for an SDP offer in the Firebase room.
-   *
-   * @param callback - A function that receives the SDP offer when it is set.
+   * Unsubscribes from the new peers listener.
    */
-  onOffer(callback: (offer: SDPMessage) => void): void {
-    const offerRef = ref(this.db, `rooms/${this.roomId}/offer`);
+  unsubscribeFromNewPeers(): void {
+    if (this.newPeersCallback) {
+      const peersRef = ref(this.db, "peers");
+      off(peersRef, "child_added", this.newPeersCallback);
+      this.newPeersCallback = undefined;
+      console.log("Unsubscribed from new peers.");
+    }
+  }
+
+  /**
+   * Sends an SDP offer to a target peer.
+   * The offer is written under /peers/$targetPeerId/connections/$this.peerId/offer.
+   */
+  async sendOffer(targetPeerId: string, offer: SDPMessage): Promise<void> {
+    const offerRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}/offer`);
+    await set(offerRef, {offer});
+    console.log(`Offer sent to ${targetPeerId}:`, offer);
+  }
+
+  /**
+   * Sends an SDP answer to a target peer.
+   * The answer is written under /peers/$targetPeerId/connections/${this.peerId}/answer.
+   */
+  async sendAnswer(targetPeerId: string, answer: SDPMessage): Promise<void> {
+    const answerRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}/answer`);
+    await set(answerRef, {answer});
+    console.log(`Answer sent to ${targetPeerId}:`, answer);
+  }
+
+  /**
+   * Sends an ICE candidate to a target peer.
+   * The candidate is pushed under /peers/$targetPeerId/connections/${this.peerId}/candidates.
+   */
+  async sendIceCandidate(targetPeerId: string, candidate: ICECandidateMessage): Promise<void> {
+    const candidateRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}/candidates`);
+    await push(candidateRef, {candidate});
+    console.log(`ICE candidate sent to ${targetPeerId}:`, candidate);
+  }
+
+  /**
+   * Listens for incoming SDP offers directed to this peer.
+   * It watches /peers/$this.peerId/connections/$targetPeerId/offer.
+   * The callback is called with the sender's peer ID and the offer.
+   */
+  onOffer(targetPeerId: string, callback: (offer: SDPMessage) => void): void {
+    const offerRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}/offer`);
     onValue(offerRef, (snapshot: DataSnapshot) => {
-      const data: OfferData = snapshot.val();
-      // Ignore the offer if it's from ourselves.
-      if (data && data.sender !== this.peerId) {
-        console.log("Offer received from Firebase:", data);
+      const data: { offer: RTCSessionDescriptionInit } = snapshot.val();
+      if (data) {
+        console.log("Offer received from Firebase:", data.offer);
         callback(data.offer);
       }
     });
   }
 
   /**
-   * Listens for an SDP answer in the Firebase room.
-   *
-   * @param callback - A function that receives the SDP answer when it is set.
+   * Listens for incoming SDP answers directed to this peer.
+   * It watches /peers/$this.peerId/connections/$targetPeerId/answer.
+   * The callback is called with the sender's peer ID and the answer.
    */
-  onAnswer(callback: (answer: SDPMessage) => void): void {
-    const answerRef = ref(this.db, `rooms/${this.roomId}/answer`);
+  onAnswer(targetPeerId: string, callback: (answer: SDPMessage) => void): void {
+    const answerRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}/answer`);
     onValue(answerRef, (snapshot: DataSnapshot) => {
-      const data: AnswerData = snapshot.val();
-      // Ignore the answer if it's from ourselves.
-      if (data && data.sender !== this.peerId) {
-        console.log("Answer received from Firebase:", data);
+      const data: { answer: RTCSessionDescriptionInit } = snapshot.val()
+      if (data) {
+        console.log("Answer received from Firebase:", data.answer);
         callback(data.answer);
       }
     });
   }
 
   /**
-   * Listens for new ICE candidates in the Firebase room.
-   * This uses "child_added" so that each new candidate is processed as it is added.
-   *
-   * @param callback - A function that receives each new ICE candidate.
+   * Listens for incoming ICE candidates directed to this peer.
+   * It watches /peers/$this.peerId/connections/$targetPeerId/candidates.
+   * The callback is called with the sender's peer ID and each candidate.
    */
-  onIceCandidate(callback: (candidate: ICECandidateMessage) => void): void {
-    const candidateListRef = ref(this.db, `rooms/${this.roomId}/candidates`);
+  onIceCandidate(targetPeerId: string, callback: (candidate: ICECandidateMessage) => void): void {
+    const candidateListRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}/candidates`);
     onChildAdded(candidateListRef, (snapshot: DataSnapshot) => {
-      const data: CandidateData = snapshot.val();
-      // Ignore candidate if it's from ourselves.
-      if (data && data.sender !== this.peerId) {
-        console.log("ICE candidate received from Firebase:", data);
+      const data: { candidate: ICECandidateMessage } = snapshot.val();
+      if (data) {
+        console.log("ICE candidate received from Firebase:", data.candidate);
         callback(data.candidate);
       }
     });
   }
 
   /**
-   * Optional: Clean up the signaling data after connection is established.
+   * Cleans up this peer's data from the Firebase database.
    */
   async cleanup(): Promise<void> {
-    await remove(ref(this.db, `rooms/${this.roomId}/offer`));
-    await remove(ref(this.db, `rooms/${this.roomId}/answer`));
-    await remove(ref(this.db, `rooms/${this.roomId}/candidates`));
-    console.log("Cleaned up signaling data in room:", this.roomId);
+    await remove(ref(this.db, `peers/${this.peerId}`));
+    console.log("Cleaned up peer data for:", this.peerId);
   }
 }
