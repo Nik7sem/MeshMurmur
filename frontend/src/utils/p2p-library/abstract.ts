@@ -11,7 +11,7 @@ export class Signaler {
 }
 
 export class Logger {
-  log(...args: any[]) {
+  info(...args: any[]) {
     throw new Error("Not implemented");
   }
 

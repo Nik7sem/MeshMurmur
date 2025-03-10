@@ -12,14 +12,14 @@ export class PeerConnection {
     private logger: Logger,
     private readonly targetPeerId: string,
     private readonly polite: boolean,
-    private onMessage: (message: string) => void,
+    private onMessage: (text: string, peerId: string) => void,
   ) {
     this.pc = new RTCPeerConnection(rtcConfig);
     this.connect()
   }
 
   connect() {
-    this.logger.log(`START CONNECTION AS ${this.polite ? "POLITE" : "INPOLITE"} PEER`)
+    this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "INPOLITE"} PEER`)
     // this.startDebugListeners()
 
     // Creates a new data channel
@@ -28,14 +28,14 @@ export class PeerConnection {
     // Handle ICE candidates
     this.pc.onicecandidate = ({candidate}) => {
       if (candidate) {
-        this.logger.log(`Send ice candidate: `, candidate)
+        this.logger.info(`Send ice candidate: `, candidate)
         this.signaler.send(this.targetPeerId, {candidate: candidate.toJSON()})
       }
     };
 
     // Handle incoming data channel (from remote peer)
     this.pc.ondatachannel = (event) => {
-      this.logger.log(`Receive data channel`)
+      this.logger.info(`Receive data channel`)
       this.dataChannel = event.channel;
       this.setupDataChannel();
     };
@@ -46,7 +46,7 @@ export class PeerConnection {
         this.makingOffer = true;
         await this.pc.setLocalDescription();
         this.signaler.send(this.targetPeerId, {description: this.pc.localDescription!.toJSON()});
-        this.logger.log(`Send offer: `, this.pc.localDescription)
+        this.logger.info(`Send offer: `, this.pc.localDescription)
       } catch (err) {
         this.logger.error(err);
       } finally {
@@ -87,15 +87,15 @@ export class PeerConnection {
 
   startDebugListeners() {
     this.pc.onconnectionstatechange = () => {
-      this.logger.log("Connection state changed:", this.pc.connectionState);
+      this.logger.info("Connection state changed:", this.pc.connectionState);
     };
 
     this.pc.onsignalingstatechange = () => {
-      this.logger.log("Signaling state changed:", this.pc.signalingState);
+      this.logger.info("Signaling state changed:", this.pc.signalingState);
     };
 
     this.pc.onicegatheringstatechange = () => {
-      this.logger.log("ICE gathering state changed:", this.pc.iceGatheringState);
+      this.logger.info("ICE gathering state changed:", this.pc.iceGatheringState);
     };
   }
 
@@ -110,10 +110,14 @@ export class PeerConnection {
   private setupDataChannel(): void {
     if (!this.dataChannel) return;
 
-    this.dataChannel.onopen = () => this.logger.log("Data channel opened!");
-    this.dataChannel.onclose = () => this.logger.log("Data channel closed.");
+    this.dataChannel.onopen = () => this.logger.info("Data channel opened!");
+    this.dataChannel.onclose = () => this.logger.info("Data channel closed.");
     this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
-    this.dataChannel.onmessage = (event) => this.onMessage(event.data)
+    this.dataChannel.onmessage = (event) => {
+      if (event.data) {
+        this.onMessage(event.data, this.targetPeerId)
+      }
+    }
   }
 
   send(message: string): void {

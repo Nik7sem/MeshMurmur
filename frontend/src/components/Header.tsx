@@ -4,7 +4,7 @@ import {ColorModeButton} from "@/components/ui/color-mode.tsx";
 
 const Header = () => {
   return (
-    <Box position="absolute">
+    <Box>
       <ColorModeButton/>
     </Box>
   );
