@@ -14,8 +14,12 @@ export class PeerConnection {
     private readonly polite: boolean,
     private onMessage: (message: string) => void,
   ) {
-    logger.log(`START CONNECTION AS ${polite ? "POLITE" : "INPOLITE"} PEER`)
     this.pc = new RTCPeerConnection(rtcConfig);
+    this.connect()
+  }
+
+  connect() {
+    this.logger.log(`START CONNECTION AS ${this.polite ? "POLITE" : "INPOLITE"} PEER`)
     // this.startDebugListeners()
 
     // Creates a new data channel
@@ -25,7 +29,7 @@ export class PeerConnection {
     this.pc.onicecandidate = ({candidate}) => {
       if (candidate) {
         this.logger.log(`Send ice candidate: `, candidate)
-        this.signaler.sendCandidate(targetPeerId, candidate.toJSON())
+        this.signaler.send(this.targetPeerId, {candidate: candidate.toJSON()})
       }
     };
 
@@ -41,7 +45,7 @@ export class PeerConnection {
       try {
         this.makingOffer = true;
         await this.pc.setLocalDescription();
-        this.signaler.sendDescription(targetPeerId, this.pc.localDescription!.toJSON());
+        this.signaler.send(this.targetPeerId, {description: this.pc.localDescription!.toJSON()});
         this.logger.log(`Send offer: `, this.pc.localDescription)
       } catch (err) {
         this.logger.error(err);
@@ -50,38 +54,33 @@ export class PeerConnection {
       }
     };
 
-    // on description
-    this.signaler.onDescription(targetPeerId, async (description) => {
+    // on candidate or description
+    this.signaler.on(this.targetPeerId, async ({description, candidate}) => {
       try {
-        const offerCollision = description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable");
+        if (description) {
+          const offerCollision = description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable");
 
-        this.ignoreOffer = !this.polite && offerCollision;
-        if (this.ignoreOffer) {
-          this.logger.log("Ignore receiving offer")
-          return;
-        }
+          this.ignoreOffer = !this.polite && offerCollision;
+          if (this.ignoreOffer) {
+            return;
+          }
 
-        this.logger.log(`Receive ${description.type}: `, description)
-        await this.pc.setRemoteDescription(description);
-        if (description.type === "offer") {
-          await this.pc.setLocalDescription();
-          this.signaler.sendDescription(targetPeerId, this.pc.localDescription!.toJSON());
-          this.logger.log(`Send answer: `, this.pc.localDescription)
+          await this.pc.setRemoteDescription(description);
+          if (description.type === "offer") {
+            await this.pc.setLocalDescription();
+            this.signaler.send(this.targetPeerId, {description: this.pc.localDescription!.toJSON()});
+          }
+        } else if (candidate) {
+          try {
+            await this.pc.addIceCandidate(candidate);
+          } catch (err) {
+            if (!this.ignoreOffer) {
+              throw err;
+            }
+          }
         }
       } catch (err) {
         this.logger.error(err);
-      }
-    })
-
-    // on candidate
-    this.signaler.onCandidate(targetPeerId, async (candidate) => {
-      try {
-        this.logger.log(`Receive ice candidate: `, candidate)
-        await this.pc.addIceCandidate(candidate);
-      } catch (err) {
-        if (!this.ignoreOffer) {
-          this.logger.error(err);
-        }
       }
     })
   }

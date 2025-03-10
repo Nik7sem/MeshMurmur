@@ -1,19 +1,11 @@
-import {ICE, SDP} from "@/utils/p2p-library/types.ts";
+import {ConnectionData} from "@/utils/p2p-library/types.ts";
 
 export class Signaler {
-  sendDescription(targetPeerId: string, description: SDP) {
+  send(targetPeerId: string, connectionData: ConnectionData) {
     throw new Error("Not implemented");
   }
 
-  sendCandidate(targetPeerId: string, candidate: ICE) {
-    throw new Error("Not implemented");
-  }
-
-  onDescription(targetPeerId: string, callback: (description: SDP) => void) {
-    throw new Error("Not implemented");
-  }
-
-  onCandidate(targetPeerId: string, callback: (candidate: ICE) => void) {
+  on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
     throw new Error("Not implemented");
   }
 }

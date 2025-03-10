@@ -13,7 +13,7 @@ import {
   get,
   DataSnapshot,
 } from "firebase/database";
-import {ICE, PeerType, SDP} from "@/utils/p2p-library/types.ts";
+import {ConnectionData, PeerType} from "@/utils/p2p-library/types.ts";
 import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 
@@ -59,14 +59,9 @@ export class FirebaseSignaling extends Signaler {
     await set(descriptionRef, this.peerId);
   }
 
-  async sendDescription(targetPeerId: string, description: SDP) {
-    const descriptionRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}/description`);
-    await set(descriptionRef, {description});
-  }
-
-  async sendCandidate(targetPeerId: string, candidate: ICE) {
-    const candidateRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}/candidates`);
-    await push(candidateRef, {candidate});
+  async send(targetPeerId: string, connectionData: ConnectionData) {
+    const connectionRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}`);
+    await set(connectionRef, connectionData);
   }
 
   onInvite(callback: (targetPeerId: string) => void) {
@@ -79,22 +74,12 @@ export class FirebaseSignaling extends Signaler {
     });
   }
 
-  onDescription(targetPeerId: string, callback: (description: SDP) => void) {
-    const descriptionRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}/description`);
-    onValue(descriptionRef, (snapshot: DataSnapshot) => {
+  on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
+    const connectionRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}`);
+    onValue(connectionRef, (snapshot: DataSnapshot) => {
       const data = snapshot.val();
       if (data) {
-        callback(data.description);
-      }
-    });
-  }
-
-  onCandidate(targetPeerId: string, callback: (candidate: ICE) => void) {
-    const candidateListRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}/candidates`);
-    onChildAdded(candidateListRef, (snapshot: DataSnapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        callback(data.candidate);
+        callback(data);
       }
     });
   }
