@@ -1,5 +1,5 @@
 import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
-import {Center, Container, Heading, IconButton, Input} from "@chakra-ui/react";
+import {Center, Container, DataList, Heading, IconButton, Input, Text} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
 import ChatMessage from "@/components/ChatMessage.tsx";
 import {logType, messageDataType} from "@/utils/p2p-library/types.ts";
@@ -15,7 +15,6 @@ const HomePage = () => {
   const [logs, setLogs] = useState<logType[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const messageBlockRef = useRef<HTMLDivElement>(null);
-
 
   const smoothScroll = useCallback(() => {
     setTimeout(() => {
@@ -41,6 +40,9 @@ const HomePage = () => {
     if (!connectorRef.current && addMessage && addLog) {
       const logger = new Logger(addLog);
       connectorRef.current = new Connector(peerId, logger, addMessage)
+      window.addEventListener("beforeunload", function (e) {
+        if (connectorRef.current) connectorRef.current.cleanup()
+      });
     }
   }, [addMessage, addLog])
 
@@ -51,7 +53,7 @@ const HomePage = () => {
     }
   }
 
-  async function onClick() {
+  function onClick() {
     if (!connectorRef.current || inputValue.length === 0) return
 
     addMessage({text: inputValue, peerId})
@@ -66,7 +68,26 @@ const HomePage = () => {
   return (
     <Container width="100%" height="100%">
       <Center>
+        <Logs logs={logs}/>
         <Heading size="3xl">MeshMurmur</Heading>
+        <DataList.Root marginLeft="40px" orientation="horizontal" maxW="5">
+          <DataList.Item>
+            <DataList.ItemLabel>PeerId</DataList.ItemLabel>
+            <DataList.ItemValue>{peerId}</DataList.ItemValue>
+          </DataList.Item>
+          <DataList.Item>
+            <DataList.ItemLabel>Potential peers</DataList.ItemLabel>
+            <DataList.ItemValue>{connectorRef.current ? connectorRef.current.potentialPeersCount : 0}</DataList.ItemValue>
+          </DataList.Item>
+          <DataList.Item>
+            <DataList.ItemLabel>Connecting peers</DataList.ItemLabel>
+            <DataList.ItemValue>{connectorRef.current ? connectorRef.current.connectingPeersCount : 0}</DataList.ItemValue>
+          </DataList.Item>
+          <DataList.Item>
+            <DataList.ItemLabel>Connected peers</DataList.ItemLabel>
+            <DataList.ItemValue>{connectorRef.current ? connectorRef.current.peers.length : 0}</DataList.ItemValue>
+          </DataList.Item>
+        </DataList.Root>
       </Center>
 
       <Center marginTop="1vh">
@@ -83,7 +104,6 @@ const HomePage = () => {
                        key={idx}/>
         )}
       </Container>
-      <Logs logs={logs}/>
     </Container>
   );
 };

@@ -15,6 +15,7 @@ export class PeerConnection {
     private readonly targetPeerId: string,
     private readonly polite: boolean,
     private onData: ({peerId, text}: messageDataType) => void,
+    private onFinalState: (state: RTCPeerConnectionState) => void
   ) {
     this.pc = new RTCPeerConnection(rtcConfig);
     this.connect()
@@ -24,7 +25,15 @@ export class PeerConnection {
     this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "INPOLITE"} PEER`)
     // this.startDebugListeners()
 
+    this.pc.onconnectionstatechange = () => {
+      if (this.pc.connectionState === "connecting" ||
+        this.pc.connectionState === "new") return
+
+      this.onFinalState(this.pc.connectionState);
+    }
+
     // Creates a new data channel
+    // TODO: remove data channel duplicates
     this.createDataChannel()
 
     // Handle ICE candidates
@@ -128,5 +137,8 @@ export class PeerConnection {
     } else {
       this.logger.error("Data channel is not open. Cannot send message:", message);
     }
+  }
+
+  cleanup() {
   }
 }
