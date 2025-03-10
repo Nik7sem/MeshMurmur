@@ -1,48 +1,23 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {
-  Box,
-  Button,
-  Center,
-  Collapsible,
-  Container,
-  Flex,
-  Heading,
-  IconButton,
-  Input,
-  Separator,
-  Text
-} from "@chakra-ui/react";
-import {main} from "@/utils/p2p-library/p2p-node-own.ts";
-import {PeerConnection} from "@/utils/p2p-library/webrtc-conn.ts";
+import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
+import {Center, Container, Heading, IconButton, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
 import ChatMessage from "@/components/ChatMessage.tsx";
-import {logType} from "@/utils/p2p-library/types.ts";
+import {logType, messageDataType} from "@/utils/p2p-library/types.ts";
 import Logs from "@/components/Logs.tsx";
+import {Logger} from "@/utils/p2p-library/logger.ts";
+import {Connector} from "@/utils/p2p-library/connector.ts";
 
 const peerId = Math.random().toString(36).substr(2, 9)
 
 const HomePage = () => {
-  const connectionsRef = useRef<{ [peerId: string]: PeerConnection }>({})
-  const [messages, setMessages] = useState<{ text: string, peerId: string }[]>([])
+  const connectorRef = useRef<Connector>(null)
+  const [messages, setMessages] = useState<messageDataType[]>([])
   const [logs, setLogs] = useState<logType[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const messageBlockRef = useRef<HTMLDivElement>(null);
-  const addMessage = useCallback((text: string, peerId: string) => {
-    setMessages((prevMessages) => [...prevMessages, {text, peerId}]);
-  }, []);
-  const addLog = useCallback((log: logType) => {
-    setLogs((prevLogs) => [...prevLogs, log])
-  }, [])
 
-  useEffect(() => {
-    async function start() {
-      connectionsRef.current = await main(peerId, addLog, addMessage)
-    }
 
-    start()
-  }, [])
-
-  async function onClick() {
+  const smoothScroll = useCallback(() => {
     setTimeout(() => {
       if (messageBlockRef.current) {
         messageBlockRef.current.scrollTo({
@@ -50,12 +25,41 @@ const HomePage = () => {
           behavior: "smooth",
         })
       }
-    }, 100);
+    }, 100)
+  }, [])
 
-    addMessage(inputValue, peerId)
+  const addMessage = useCallback(({peerId, text}: messageDataType) => {
+    smoothScroll()
+    setMessages((prevMessages) => [...prevMessages, {text, peerId}]);
+  }, []);
+
+  const addLog = useCallback((log: logType) => {
+    setLogs((prevLogs) => [...prevLogs, log])
+  }, [])
+
+  useEffect(() => {
+    if (!connectorRef.current && addMessage && addLog) {
+      const logger = new Logger(addLog);
+      connectorRef.current = new Connector(peerId, logger, addMessage)
+    }
+  }, [addMessage, addLog])
+
+  function keyDownHandler(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
+  async function onClick() {
+    if (!connectorRef.current || inputValue.length === 0) return
+
+    addMessage({text: inputValue, peerId})
+    smoothScroll()
     setInputValue('')
-    for (const [peerId, pc] of Object.entries(connectionsRef.current)) {
-      pc.send(inputValue)
+
+    for (const peerId of connectorRef.current.peers) {
+      connectorRef.current.send({peerId, text: inputValue})
     }
   }
 
@@ -66,15 +70,16 @@ const HomePage = () => {
       </Center>
 
       <Center marginTop="1vh">
-        <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)}/>
+        <Input onKeyDown={keyDownHandler} value={inputValue} onChange={(e) => setInputValue(e.target.value)}/>
         <IconButton marginLeft='5' onClick={onClick} aria-label="Send message">
           <LuSend/>
         </IconButton>
       </Center>
 
-      <Container ref={messageBlockRef} margin="15px" padding={5} height="45vh" maxHeight="45vh" overflowY="auto">
+      <Container ref={messageBlockRef} margin="15px" padding={5} height="80vh" maxHeight="80vh" overflowY="auto">
         {messages.map((message, idx) =>
-          <ChatMessage message={message.text} username={peerId} direction={peerId == message.peerId ? "right" : "left"}
+          <ChatMessage message={message.text} username={message.peerId}
+                       direction={peerId == message.peerId ? "right" : "left"}
                        key={idx}/>
         )}
       </Container>

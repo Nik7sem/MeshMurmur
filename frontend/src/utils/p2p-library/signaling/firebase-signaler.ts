@@ -17,7 +17,7 @@ import {ConnectionData, PeerType} from "@/utils/p2p-library/types.ts";
 import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 
-export class FirebaseSignaling extends Signaler {
+export class FirebaseSignaler extends Signaler {
   private readonly firebaseApp: FirebaseApp;
   private readonly db: Database;
 

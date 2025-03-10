@@ -9,17 +9,3 @@ export class Signaler {
     throw new Error("Not implemented");
   }
 }
-
-export class Logger {
-  info(...args: any[]) {
-    throw new Error("Not implemented");
-  }
-
-  warn(...args: any[]) {
-    throw new Error("Not implemented");
-  }
-
-  error(...args: any[]) {
-    throw new Error("Not implemented");
-  }
-}

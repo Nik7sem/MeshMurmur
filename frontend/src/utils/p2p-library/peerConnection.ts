@@ -1,5 +1,7 @@
-import {Signaler, Logger} from "@/utils/p2p-library/abstract.ts";
+import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {rtcConfig} from "@/utils/p2p-library/conf.ts";
+import {Logger} from "./logger.ts";
+import {messageDataType} from "@/utils/p2p-library/types.ts";
 
 export class PeerConnection {
   private pc: RTCPeerConnection;
@@ -12,7 +14,7 @@ export class PeerConnection {
     private logger: Logger,
     private readonly targetPeerId: string,
     private readonly polite: boolean,
-    private onMessage: (text: string, peerId: string) => void,
+    private onData: ({peerId, text}: messageDataType) => void,
   ) {
     this.pc = new RTCPeerConnection(rtcConfig);
     this.connect()
@@ -75,7 +77,7 @@ export class PeerConnection {
             await this.pc.addIceCandidate(candidate);
           } catch (err) {
             if (!this.ignoreOffer) {
-              throw err;
+              this.logger.error(err);
             }
           }
         }
@@ -115,7 +117,7 @@ export class PeerConnection {
     this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
     this.dataChannel.onmessage = (event) => {
       if (event.data) {
-        this.onMessage(event.data, this.targetPeerId)
+        this.onData({peerId: this.targetPeerId, text: event.data})
       }
     }
   }
