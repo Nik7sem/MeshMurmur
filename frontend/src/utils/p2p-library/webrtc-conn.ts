@@ -1,118 +1,127 @@
-const rtcConfig: RTCConfiguration = {iceServers: [{urls: "stun:stun.l.google.com:19302"}]}
+import {Signaler, Logger} from "@/utils/p2p-library/abstract.ts";
+import {rtcConfig} from "@/utils/p2p-library/conf.ts";
 
 export class PeerConnection {
   private pc: RTCPeerConnection;
   private dataChannel?: RTCDataChannel;
+  private makingOffer = false
+  private ignoreOffer = false;
 
   constructor(
-    private onIceCandidate: (candidate: RTCIceCandidate) => void,
+    private signaler: Signaler,
+    private logger: Logger,
+    private readonly targetPeerId: string,
+    private readonly polite: boolean,
     private onMessage: (message: string) => void,
   ) {
-    this.onIceCandidate = onIceCandidate;
-    this.onMessage = onMessage;
-
-    // Initialize WebRTC connection
+    logger.log(`I AM ${polite ? "POLITE" : "INPOLITE"} PEER`)
     this.pc = new RTCPeerConnection(rtcConfig);
+    // this.startDebugListeners()
+
+    // Creates a new data channel
+    this.createDataChannel()
 
     // Handle ICE candidates
-    this.pc.onicecandidate = (event) => {
-      if (event.candidate && this.onIceCandidate) {
-        this.onIceCandidate(event.candidate);
+    this.pc.onicecandidate = ({candidate}) => {
+      if (candidate) {
+        this.logger.log(`Send ice candidate: `, candidate)
+        this.signaler.sendCandidate(targetPeerId, candidate.toJSON())
       }
     };
 
     // Handle incoming data channel (from remote peer)
     this.pc.ondatachannel = (event) => {
+      this.logger.log(`Receive data channel`)
       this.dataChannel = event.channel;
       this.setupDataChannel();
     };
+
+    // offer
+    this.pc.onnegotiationneeded = async () => {
+      try {
+        this.makingOffer = true;
+        await this.pc.setLocalDescription();
+        this.signaler.sendDescription(targetPeerId, this.pc.localDescription!.toJSON());
+        this.logger.log(`Send offer: `, this.pc.localDescription)
+      } catch (err) {
+        this.logger.error(err);
+      } finally {
+        this.makingOffer = false;
+      }
+    };
+
+    // on description
+    this.signaler.onDescription(targetPeerId, async (description) => {
+      try {
+        const offerCollision = description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable");
+
+        this.ignoreOffer = !this.polite && offerCollision;
+        if (this.ignoreOffer) {
+          this.logger.log("Ignore receiving offer")
+          return;
+        }
+
+        this.logger.log(`Receive ${description.type}: `, description)
+        await this.pc.setRemoteDescription(description);
+        if (description.type === "offer") {
+          await this.pc.setLocalDescription();
+          this.signaler.sendDescription(targetPeerId, this.pc.localDescription!.toJSON());
+          this.logger.log(`Send answer: `, this.pc.localDescription)
+        }
+      } catch (err) {
+        this.logger.error(err);
+      }
+    })
+
+    // on candidate
+    this.signaler.onCandidate(targetPeerId, async (candidate) => {
+      try {
+        this.logger.log(`Receive ice candidate: `, candidate)
+        await this.pc.addIceCandidate(candidate);
+      } catch (err) {
+        if (!this.ignoreOffer) {
+          this.logger.error(err);
+        }
+      }
+    })
   }
 
   startDebugListeners() {
     this.pc.onconnectionstatechange = () => {
-      console.log("Connection state changed:", this.pc.connectionState);
+      this.logger.log("Connection state changed:", this.pc.connectionState);
     };
 
     this.pc.onsignalingstatechange = () => {
-      console.log("Signaling state changed:", this.pc.signalingState);
+      this.logger.log("Signaling state changed:", this.pc.signalingState);
     };
 
     this.pc.onicegatheringstatechange = () => {
-      console.log("ICE gathering state changed:", this.pc.iceGatheringState);
+      this.logger.log("ICE gathering state changed:", this.pc.iceGatheringState);
     };
   }
 
   /**
-   * Creates a new data channel (only for the peer that initiates the connection).
+   * Creates a new data channel
    */
   createDataChannel(label: string = "chat"): void {
     this.dataChannel = this.pc.createDataChannel(label);
     this.setupDataChannel();
   }
 
-  /**
-   * Configures data channel event listeners.
-   */
   private setupDataChannel(): void {
     if (!this.dataChannel) return;
 
-    this.dataChannel.onopen = () => console.log("Data channel opened!");
-    this.dataChannel.onclose = () => console.log("Data channel closed.");
-    this.dataChannel.onerror = (error) => console.error("Data channel error:", error);
-    this.dataChannel.onmessage = (event) => this.onMessage?.(event.data)
+    this.dataChannel.onopen = () => this.logger.log("Data channel opened!");
+    this.dataChannel.onclose = () => this.logger.log("Data channel closed.");
+    this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
+    this.dataChannel.onmessage = (event) => this.onMessage(event.data)
   }
 
-  /**
-   * Creates an SDP offer.
-   */
-  async createOffer(): Promise<RTCSessionDescriptionInit> {
-    const offer = await this.pc.createOffer();
-    await this.pc.setLocalDescription(offer);
-    return offer;
-  }
-
-  /**
-   * Handles an SDP offer from a remote peer and generates an answer.
-   */
-  async handleOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
-    await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await this.pc.createAnswer();
-    await this.pc.setLocalDescription(answer);
-    return answer;
-  }
-
-  /**
-   * Handles an SDP answer from the remote peer.
-   */
-  async handleAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
-    await this.pc.setRemoteDescription(new RTCSessionDescription(answer));
-  }
-
-  /**
-   * Adds an ICE candidate received from the signaling channel.
-   */
-  async addIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
-    // If both sdpMid and sdpMLineIndex are null or undefined, skip this candidate.
-    // if ((candidate?.sdpMid == null && candidate?.sdpMLineIndex == null) ||
-    //   (candidate.candidate && candidate.candidate.includes("typ end-of-candidates"))) {
-    //   console.warn("Skipping invalid or end-of-candidates candidate:", candidate);
-    //   return;
-    // }
-    try {
-      await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch (error) {
-      console.error("Error adding ICE candidate:", error);
-    }
-  }
-
-  /**
-   * Sends a message via the WebRTC data channel.
-   */
   send(message: string): void {
     if (this.dataChannel && this.dataChannel.readyState === "open") {
       this.dataChannel.send(message);
     } else {
-      console.error("Data channel is not open. Cannot send message:", message);
+      this.logger.error("Data channel is not open. Cannot send message:", message);
     }
   }
 }
