@@ -1,21 +1,27 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, Center, Container, Flex, Heading, Text} from "@chakra-ui/react";
 import {main} from "@/utils/p2p-library/p2p-node-own.ts";
+import {PeerConnection} from "@/utils/p2p-library/webrtc-conn.ts";
 
 const HomePage = () => {
-  const sendRef = useRef<() => void>(null)
+  const connectionsRef = useRef<{ [peerId: string]: PeerConnection }>({})
+  const [messages, setMessages] = useState<string[]>([])
+
+  function addMessage(message: string) {
+    setMessages([...messages, message])
+  }
 
   useEffect(() => {
     async function start() {
-      sendRef.current = await main()
+      connectionsRef.current = await main(addMessage)
     }
 
     start()
   }, [])
 
   async function onClick() {
-    if (sendRef.current) {
-      sendRef.current();
+    if (Object.keys(connectionsRef.current).length > 0) {
+      connectionsRef.current[Object.keys(connectionsRef.current)[0]].send("NEW MESSAGE");
     }
   }
 
@@ -29,7 +35,7 @@ const HomePage = () => {
           <Button onClick={onClick}>Send message</Button>
         </Flex>
         <Box>
-          {/*<Text fontSize="7xl">{peerNumber}</Text>*/}
+          {messages.map((message, idx) => <Text key={idx} fontSize="xl">{message}</Text>)}
         </Box>
       </Container>
     </Center>

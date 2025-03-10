@@ -13,5 +13,6 @@ export default defineConfig({
       key: fs.readFileSync('./certs/server-key.pem')
     },
   },
+  base: process.env.NODE_ENV === 'production' ? '/MeshMurmur/' : '/',
   plugins: [react(), tsconfigPaths()],
 })

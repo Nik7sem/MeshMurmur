@@ -14,7 +14,7 @@ export class PeerConnection {
     private readonly polite: boolean,
     private onMessage: (message: string) => void,
   ) {
-    logger.log(`I AM ${polite ? "POLITE" : "INPOLITE"} PEER`)
+    logger.log(`START CONNECTION AS ${polite ? "POLITE" : "INPOLITE"} PEER`)
     this.pc = new RTCPeerConnection(rtcConfig);
     // this.startDebugListeners()
 
@@ -103,7 +103,7 @@ export class PeerConnection {
   /**
    * Creates a new data channel
    */
-  createDataChannel(label: string = "chat"): void {
+  createDataChannel(label: string = "data"): void {
     this.dataChannel = this.pc.createDataChannel(label);
     this.setupDataChannel();
   }

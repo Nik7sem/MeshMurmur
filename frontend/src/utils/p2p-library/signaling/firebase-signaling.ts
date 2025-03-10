@@ -55,8 +55,8 @@ export class FirebaseSignaling extends Signaler {
   }
 
   async sendInvite(targetPeerId: string) {
-    const descriptionRef = ref(this.db, `peers/${targetPeerId}/invites`);
-    await push(descriptionRef, {peerId: targetPeerId});
+    const descriptionRef = ref(this.db, `peers/${targetPeerId}/invite`);
+    await set(descriptionRef, this.peerId);
   }
 
   async sendDescription(targetPeerId: string, description: SDP) {
@@ -70,11 +70,11 @@ export class FirebaseSignaling extends Signaler {
   }
 
   onInvite(callback: (targetPeerId: string) => void) {
-    const candidateListRef = ref(this.db, `peers/${this.peerId}/invites`);
-    onChildAdded(candidateListRef, (snapshot: DataSnapshot) => {
+    const candidateListRef = ref(this.db, `peers/${this.peerId}/invite`);
+    onValue(candidateListRef, (snapshot: DataSnapshot) => {
       const data = snapshot.val();
       if (data) {
-        callback(data.peerId);
+        callback(data);
       }
     });
   }
