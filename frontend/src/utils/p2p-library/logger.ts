@@ -8,18 +8,23 @@ export class Logger {
   constructor() {
   }
 
+  success(...args: any[]) {
+    this.logs.push({text: formatConsoleLog(...args), type: "success"})
+    this.onLog?.(this.logs[this.logs.length - 1]);
+  }
+
   info(...args: any[]) {
     this.logs.push({text: formatConsoleLog(...args), type: "info"})
     this.onLog?.(this.logs[this.logs.length - 1]);
   }
 
   warn(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "info"})
+    this.logs.push({text: formatConsoleLog(...args), type: "warn"})
     this.onLog?.(this.logs[this.logs.length - 1]);
   }
 
   error(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "info"})
+    this.logs.push({text: formatConsoleLog(...args), type: "error"})
     this.onLog?.(this.logs[this.logs.length - 1]);
   }
 

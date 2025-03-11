@@ -32,12 +32,12 @@ export class FirebaseSignaler extends Signaler {
     await set(peerRef, {ready: true} as PeerDataType);
   }
 
-  // async getAvailablePeers() {
-  //   const peersRef = ref(this.db, "peers");
-  //   const snapshot = await get(peersRef);
-  //   if (!snapshot.exists()) return [];
-  //   return Object.keys(snapshot.val()).filter((id) => id !== this.peerId);
-  // }
+  async getAvailablePeers() {
+    const peersRef = ref(this.db, "peers");
+    const snapshot = await get(peersRef);
+    if (!snapshot.exists()) return [];
+    return Object.keys(snapshot.val()).filter((id) => id !== this.peerId);
+  }
 
   subscribeToPeers(addNewPeer: (peerId: PeerType) => void, removeOldPeer: (peerId: PeerType) => void) {
     const peersRef = ref(this.db, "peers");
@@ -69,7 +69,7 @@ export class FirebaseSignaler extends Signaler {
 
   async send(targetPeerId: string, connectionData: ConnectionData) {
     const connectionRef = ref(this.db, `peers/${targetPeerId}/connections/${this.peerId}`);
-    await set(connectionRef, connectionData);
+    await push(connectionRef, connectionData);
   }
 
   onInvite(callback: (targetPeerId: string) => void) {
@@ -84,7 +84,7 @@ export class FirebaseSignaler extends Signaler {
 
   on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
     const connectionRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}`);
-    onValue(connectionRef, (snapshot: DataSnapshot) => {
+    onChildAdded(connectionRef, (snapshot: DataSnapshot) => {
       const data = snapshot.val();
       if (data) {
         callback(data);

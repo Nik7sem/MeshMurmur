@@ -4,11 +4,17 @@ import {ColorModeButton} from "@/components/ui/color-mode.tsx";
 import Logs from "@/components/Logs.tsx";
 import {logType} from "@/utils/p2p-library/types.ts";
 import {connector, logger, peerId} from "@/init.ts";
+import useToast from "@/hooks/useToast.tsx";
+import {Toaster} from "@/components/ui/toaster"
 
 const Header = () => {
   const [logs, setLogs] = useState<logType[]>([])
+  const {successToast, warningToast, errorToast} = useToast()
 
   const addLog = useCallback((log: logType) => {
+    if (log.type === "success") successToast(log.text)
+    if (log.type === "warn") warningToast(log.text)
+    if (log.type === "error") errorToast(log.text)
     setLogs((prevLogs) => [...prevLogs, log])
   }, [])
 
@@ -22,6 +28,7 @@ const Header = () => {
       <Heading size="3xl">MeshMurmur</Heading>
       <Logs logs={logs}/>
       <Box><Status.Root colorPalette="green"><Status.Indicator/>{connector.peers.length}</Status.Root></Box>
+      <Toaster/>
     </Flex>
   );
 };

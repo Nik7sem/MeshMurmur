@@ -22,7 +22,7 @@ export class PeerConnection {
   }
 
   connect() {
-    this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "INPOLITE"} PEER`)
+    this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
     // this.startDebugListeners()
 
     this.pc.onconnectionstatechange = () => {
@@ -32,34 +32,50 @@ export class PeerConnection {
       this.onFinalState(this.pc.connectionState);
     }
 
-    // Creates a new data channel
-    // TODO: remove data channel duplicates
-    this.createDataChannel()
+    // Log more errors
+    this.pc.onicecandidateerror = (event) => {
+      this.logger.warn("Ice candidate error: ", event.errorText);
+    }
+
+    // Impolite peer creates a new data channel
+    if (!this.polite) {
+      this.createDataChannel()
+    }
 
     // Handle ICE candidates
     this.pc.onicecandidate = ({candidate}) => {
       if (candidate) {
-        this.logger.info(`Send ice candidate: `, candidate)
         this.signaler.send(this.targetPeerId, {candidate: candidate.toJSON()})
+        this.logger.info(`Send ice candidate: `, candidate)
       }
     };
 
     // Handle incoming data channel (from remote peer)
     this.pc.ondatachannel = (event) => {
-      this.logger.info(`Receive data channel`)
+      if (this.dataChannel) {
+        this.logger.warn("DATA CHANNEL DUPLICATE")
+      }
+
       this.dataChannel = event.channel;
       this.setupDataChannel();
+      this.logger.info(`Receive data channel`)
     };
 
     // offer
     this.pc.onnegotiationneeded = async () => {
       try {
         this.makingOffer = true;
+
+        if (this.polite && !this.dataChannel) {
+          // Polite peer creates a new data channel
+          this.createDataChannel();
+        }
+
         await this.pc.setLocalDescription();
         this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
         this.logger.info(`Send offer: `, this.pc.localDescription)
       } catch (err) {
-        this.logger.error(err);
+        this.logger.error("Error sending offer:", err);
       } finally {
         this.makingOffer = false;
       }
@@ -73,25 +89,29 @@ export class PeerConnection {
 
           this.ignoreOffer = !this.polite && offerCollision;
           if (this.ignoreOffer) {
+            this.logger.info("Ignore offer: ", description);
             return;
           }
 
           await this.pc.setRemoteDescription(description);
+          this.logger.info(`Receive ${description.type}: `, description);
           if (description.type === "offer") {
             await this.pc.setLocalDescription();
             this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
+            this.logger.info("Send answer: ", this.pc.localDescription);
           }
         } else if (candidate) {
           try {
             await this.pc.addIceCandidate(candidate);
+            this.logger.info("Receive ice candidate: ", candidate);
           } catch (err) {
             if (!this.ignoreOffer) {
-              this.logger.error(err);
+              this.logger.error("Error adding candidate: ", err);
             }
           }
         }
       } catch (err) {
-        this.logger.error(err);
+        this.logger.error("Error with description receiving: ", err);
       }
     })
   }
@@ -113,12 +133,14 @@ export class PeerConnection {
   /**
    * Creates a new data channel
    */
-  createDataChannel(label: string = "data"): void {
+  createDataChannel(label: string = "data") {
+    if (this.dataChannel) return
     this.dataChannel = this.pc.createDataChannel(label);
     this.setupDataChannel();
+    this.logger.info("Create data channel")
   }
 
-  private setupDataChannel(): void {
+  private setupDataChannel() {
     if (!this.dataChannel) return;
 
     this.dataChannel.onopen = () => this.logger.info("Data channel opened!");
@@ -131,12 +153,43 @@ export class PeerConnection {
     }
   }
 
-  send(message: string): void {
+  send(message: string) {
     if (this.dataChannel && this.dataChannel.readyState === "open") {
       this.dataChannel.send(message);
     } else {
       this.logger.error("Data channel is not open. Cannot send message:", message);
     }
+  }
+
+  async getStats() {
+    const stats = await this.pc.getStats(null)
+
+    stats.forEach(report => {
+      if (report.type === 'candidate-pair' && report.nominated && report.state === "succeeded") {
+        const localCandidate = stats.get(report.localCandidateId);
+        const remoteCandidate = stats.get(report.remoteCandidateId);
+        if (!localCandidate || !remoteCandidate) return
+
+        const info = {
+          local: {
+            type: localCandidate.candidateType,
+            address: localCandidate.address,
+            ip: localCandidate.ip
+          }, remote: {
+            type: remoteCandidate.candidateType,
+            address: localCandidate.address,
+            ip: remoteCandidate.ip
+          }
+        }
+
+        this.logger.info(`Candidates info: `, info);
+        if (localCandidate.candidateType === 'relay' || remoteCandidate.candidateType === 'relay') {
+          this.logger.success('Connection is using TURN server.');
+        } else {
+          this.logger.success(`Connection is using STUN (or direct) candidates.`);
+        }
+      }
+    });
   }
 
   cleanup() {

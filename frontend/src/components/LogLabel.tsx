@@ -1,10 +1,18 @@
 import React, {FC} from "react";
 import {Status} from "@chakra-ui/react";
+import {logType} from "../utils/p2p-library/types.ts"
 
-const LogLabel: FC<{ type: "error" | "warn" | "info" }> = ({type}) => {
-  if (type === "info") {
+const LogLabel: FC<{ type: logType["type"] }> = ({type}) => {
+  if (type === "success") {
     return (
       <Status.Root colorPalette="green">
+        <Status.Indicator/>
+        Success
+      </Status.Root>
+    )
+  } else if (type === "info") {
+    return (
+      <Status.Root colorPalette="white">
         <Status.Indicator/>
         Info
       </Status.Root>

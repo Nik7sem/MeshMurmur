@@ -1,13 +1,13 @@
 "use client"
 
-import type {IconButtonProps, SpanProps} from "@chakra-ui/react"
-import {ClientOnly, IconButton, Skeleton, Span} from "@chakra-ui/react"
-import {ThemeProvider, useTheme} from "next-themes"
-import type {ThemeProviderProps} from "next-themes"
+import type { IconButtonProps, SpanProps } from "@chakra-ui/react"
+import { ClientOnly, IconButton, Skeleton, Span } from "@chakra-ui/react"
+import { ThemeProvider, useTheme } from "next-themes"
+import type { ThemeProviderProps } from "next-themes"
 import * as React from "react"
-import {LuMoon, LuSun} from "react-icons/lu"
+import { LuMoon, LuSun } from "react-icons/lu"
 
-export type ColorModeProviderProps = ThemeProviderProps
+export interface ColorModeProviderProps extends ThemeProviderProps {}
 
 export function ColorModeProvider(props: ColorModeProviderProps) {
   return (
@@ -24,7 +24,7 @@ export interface UseColorModeReturn {
 }
 
 export function useColorMode(): UseColorModeReturn {
-  const {resolvedTheme, setTheme} = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const toggleColorMode = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark")
   }
@@ -36,25 +36,24 @@ export function useColorMode(): UseColorModeReturn {
 }
 
 export function useColorModeValue<T>(light: T, dark: T) {
-  const {colorMode} = useColorMode()
+  const { colorMode } = useColorMode()
   return colorMode === "dark" ? dark : light
 }
 
 export function ColorModeIcon() {
-  const {colorMode} = useColorMode()
-  return colorMode === "dark" ? <LuMoon/> : <LuSun/>
+  const { colorMode } = useColorMode()
+  return colorMode === "dark" ? <LuMoon /> : <LuSun />
 }
 
-type ColorModeButtonProps = Omit<IconButtonProps, "aria-label">
+interface ColorModeButtonProps extends Omit<IconButtonProps, "aria-label"> {}
 
 export const ColorModeButton = React.forwardRef<
   HTMLButtonElement,
   ColorModeButtonProps
 >(function ColorModeButton(props, ref) {
-  const {toggleColorMode} = useColorMode()
-
+  const { toggleColorMode } = useColorMode()
   return (
-    <ClientOnly fallback={<Skeleton boxSize="8"/>}>
+    <ClientOnly fallback={<Skeleton boxSize="8" />}>
       <IconButton
         onClick={toggleColorMode}
         variant="ghost"
@@ -69,7 +68,7 @@ export const ColorModeButton = React.forwardRef<
           },
         }}
       >
-        <ColorModeIcon/>
+        <ColorModeIcon />
       </IconButton>
     </ClientOnly>
   )

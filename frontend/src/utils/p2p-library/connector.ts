@@ -5,12 +5,14 @@ import {connectionsType, messageDataType} from "@/utils/p2p-library/types.ts";
 
 const createOnFinalState = (targetPeerId: string, connections: connectionsType, logger: Logger) => {
   return (state: RTCPeerConnectionState | "timeout") => {
-    logger.info(`FINAL STATE ${targetPeerId}: `, state)
     if (state === "connected") {
       connections[targetPeerId].connected = true
+      connections[targetPeerId].pc.getStats()
+      logger.success("Successfully connected to peer!")
     } else {
       connections[targetPeerId].pc.cleanup()
       delete connections[targetPeerId]
+      logger.error(`Error in connection to peer: ${state}!`)
     }
   }
 }
@@ -20,7 +22,7 @@ export class Connector {
   private connections: connectionsType = {}
   private onData: ({peerId, text}: messageDataType) => void
   private onMessage?: ({peerId, text}: messageDataType) => void
-  public potentialPeersCount = 0
+  private potentialPeers: Set<string> = new Set()
 
   constructor(
     private peerId: string,
@@ -37,6 +39,10 @@ export class Connector {
     await this.signaler.registerPeer()
     this.logger.info("Registered peer:", this.peerId);
 
+    for (const potentialPeerId of await this.signaler.getAvailablePeers()) {
+      this.potentialPeers.add(potentialPeerId);
+    }
+
     this.signaler.onInvite((targetPeerId) => {
       if (targetPeerId in this.connections) return this.logger.info("Ignore invite from:", targetPeerId);
       this.logger.info("Received invite from:", targetPeerId);
@@ -44,16 +50,16 @@ export class Connector {
     })
 
     this.signaler.subscribeToPeers((targetPeer) => {
-        this.logger.info("New peer detected:", targetPeer);
+        this.logger.info("New peer detected:", targetPeer.peerId);
         if (targetPeer.peerId in this.connections) return
 
-        ++this.potentialPeersCount;
+        this.potentialPeers.add(targetPeer.peerId);
 
         this.addConnection(targetPeer.peerId);
         this.signaler.sendInvite(targetPeer.peerId)
         this.logger.info("Send invite to:", targetPeer);
       }, (oldPeer) => {
-        --this.potentialPeersCount;
+        this.potentialPeers.delete(oldPeer.peerId);
       }
     )
   }
@@ -64,12 +70,12 @@ export class Connector {
       pc: new PeerConnection(this.signaler, this.logger, targetPeerId, this.peerId > targetPeerId, this.onData, onFinalState),
       connected: false
     }
-    // TODO: add reconnection attempt if failed (and understand why failing)
+
     setTimeout(() => {
       if (!this.connections[targetPeerId].connected) {
         onFinalState("timeout")
       }
-    }, 2000)
+    }, 5000)
   }
 
   get peers() {
@@ -78,6 +84,10 @@ export class Connector {
 
   get connectingPeersCount() {
     return Object.keys(this.connections).filter((peerId) => !this.connections[peerId].connected).length
+  }
+
+  get potentialPeersCount() {
+    return this.potentialPeers.size
   }
 
   send({peerId, text}: messageDataType) {
