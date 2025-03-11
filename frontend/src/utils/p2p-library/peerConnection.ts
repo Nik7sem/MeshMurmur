@@ -56,7 +56,7 @@ export class PeerConnection {
       try {
         this.makingOffer = true;
         await this.pc.setLocalDescription();
-        this.signaler.send(this.targetPeerId, {description: this.pc.localDescription!.toJSON()});
+        this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
         this.logger.info(`Send offer: `, this.pc.localDescription)
       } catch (err) {
         this.logger.error(err);
@@ -79,7 +79,7 @@ export class PeerConnection {
           await this.pc.setRemoteDescription(description);
           if (description.type === "offer") {
             await this.pc.setLocalDescription();
-            this.signaler.send(this.targetPeerId, {description: this.pc.localDescription!.toJSON()});
+            this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
           }
         } else if (candidate) {
           try {

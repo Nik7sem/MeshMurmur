@@ -4,8 +4,8 @@ import {FirebaseSignaler} from "@/utils/p2p-library/signaling/firebase-signaler.
 import {connectionsType, messageDataType} from "@/utils/p2p-library/types.ts";
 
 const createOnFinalState = (targetPeerId: string, connections: connectionsType, logger: Logger) => {
-  return (state: RTCPeerConnectionState) => {
-    logger.info("FINAL STATE: ", state)
+  return (state: RTCPeerConnectionState | "timeout") => {
+    logger.info(`FINAL STATE ${targetPeerId}: `, state)
     if (state === "connected") {
       connections[targetPeerId].connected = true
     } else {
@@ -19,20 +19,18 @@ export class Connector {
   private signaler: FirebaseSignaler;
   private connections: connectionsType = {}
   private onData: ({peerId, text}: messageDataType) => void
-  public potentialPeersCount
+  private onMessage?: ({peerId, text}: messageDataType) => void
+  public potentialPeersCount = 0
 
   constructor(
     private peerId: string,
     private logger: Logger,
-    private onMessage: ({peerId, text}: messageDataType) => void
   ) {
     this.onData = ({peerId, text}: messageDataType) => {
-      this.onMessage({peerId, text});
+      this.onMessage?.({peerId, text})
     }
 
-    this.potentialPeersCount = 0
     this.signaler = new FirebaseSignaler(peerId);
-    this.init()
   }
 
   async init() {
@@ -69,7 +67,7 @@ export class Connector {
     // TODO: add reconnection attempt if failed (and understand why failing)
     setTimeout(() => {
       if (!this.connections[targetPeerId].connected) {
-        onFinalState("failed")
+        onFinalState("timeout")
       }
     }, 2000)
   }
@@ -84,6 +82,10 @@ export class Connector {
 
   send({peerId, text}: messageDataType) {
     this.connections[peerId].pc.send(text)
+  }
+
+  setOnMessage(onMessage: ({peerId, text}: messageDataType) => void) {
+    this.onMessage = onMessage
   }
 
   cleanup() {
