@@ -1,0 +1,15 @@
+{
+  "name": "MeshMurmur",
+  "short_name": "MeshMurmur",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "App for secure peer to peer communication",
+  "icons": [
+    {
+      "src": "site-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}
