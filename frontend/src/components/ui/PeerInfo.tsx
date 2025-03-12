@@ -19,7 +19,7 @@ const PeerInfo = () => {
       </DataList.Item>
       <DataList.Item>
         <DataList.ItemLabel>Connected peers</DataList.ItemLabel>
-        <DataList.ItemValue>{connector.peers.length}</DataList.ItemValue>
+        <DataList.ItemValue>{connector.peerIds.length}</DataList.ItemValue>
       </DataList.Item>
     </DataList.Root>
   );

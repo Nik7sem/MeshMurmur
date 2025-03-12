@@ -162,34 +162,7 @@ export class PeerConnection {
   }
 
   async getStats() {
-    const stats = await this.pc.getStats(null)
-
-    stats.forEach(report => {
-      if (report.type === 'candidate-pair' && report.nominated && report.state === "succeeded") {
-        const localCandidate = stats.get(report.localCandidateId);
-        const remoteCandidate = stats.get(report.remoteCandidateId);
-        if (!localCandidate || !remoteCandidate) return
-
-        const info = {
-          local: {
-            type: localCandidate.candidateType,
-            address: localCandidate.address,
-            ip: localCandidate.ip
-          }, remote: {
-            type: remoteCandidate.candidateType,
-            address: localCandidate.address,
-            ip: remoteCandidate.ip
-          }
-        }
-
-        this.logger.info(`Candidates info: `, info);
-        if (localCandidate.candidateType === 'relay' || remoteCandidate.candidateType === 'relay') {
-          this.logger.success('Connection is using TURN server.');
-        } else {
-          this.logger.success(`Connection is using STUN (or direct) candidates.`);
-        }
-      }
-    });
+    return await this.pc.getStats(null)
   }
 
   cleanup() {

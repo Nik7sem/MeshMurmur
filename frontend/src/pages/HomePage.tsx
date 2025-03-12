@@ -46,7 +46,7 @@ const HomePage = () => {
     smoothScroll()
     setInputValue('')
 
-    for (const peerId of connector.peers) {
+    for (const peerId of connector.peerIds) {
       connector.send({peerId, text: inputValue})
     }
   }

@@ -2,12 +2,19 @@ import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
 import {Logger} from './logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signaling/firebase-signaler.ts";
 import {connectionsType, messageDataType} from "@/utils/p2p-library/types.ts";
+import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
 
-const createOnFinalState = (targetPeerId: string, connections: connectionsType, logger: Logger) => {
-  return (state: RTCPeerConnectionState | "timeout") => {
+function createOnFinalState(targetPeerId: string, connections: connectionsType, logger: Logger) {
+  return async (state: RTCPeerConnectionState | "timeout") => {
     if (state === "connected") {
-      connections[targetPeerId].connected = true
-      connections[targetPeerId].pc.getStats()
+      connections[targetPeerId].info.connected = true
+      const stats = await connections[targetPeerId].pc.getStats()
+      const {info} = parseRTCStats(stats)
+      if (info) {
+        logger.info(`Candidates info: `, info);
+        logger.success(`Connection is using ${info.type} server.`);
+        connections[targetPeerId].info.type = info.type
+      }
       logger.success("Successfully connected to peer!")
     } else {
       connections[targetPeerId].pc.cleanup()
@@ -68,22 +75,31 @@ export class Connector {
     const onFinalState = createOnFinalState(targetPeerId, this.connections, this.logger)
     this.connections[targetPeerId] = {
       pc: new PeerConnection(this.signaler, this.logger, targetPeerId, this.peerId > targetPeerId, this.onData, onFinalState),
-      connected: false
+      info: {
+        connected: false,
+        type: "",
+      }
     }
 
     setTimeout(() => {
-      if (!this.connections[targetPeerId].connected) {
+      if (!this.connections[targetPeerId].info.connected) {
         onFinalState("timeout")
       }
     }, 5000)
   }
 
+  get peerIds() {
+    return Object.keys(this.connections).filter((peerId) => this.connections[peerId].info.connected)
+  }
+
   get peers() {
-    return Object.keys(this.connections).filter((peerId) => this.connections[peerId].connected)
+    return Object.entries(this.connections).map(([peerId, {pc, info}]) => {
+      return {peerId, info}
+    })
   }
 
   get connectingPeersCount() {
-    return Object.keys(this.connections).filter((peerId) => !this.connections[peerId].connected).length
+    return Object.keys(this.connections).filter((peerId) => !this.connections[peerId].info.connected).length
   }
 
   get potentialPeersCount() {
