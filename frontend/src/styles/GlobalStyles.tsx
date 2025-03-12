@@ -6,11 +6,11 @@ const GlobalStyles = createGlobalStyle`
         height: 100vh;
     }
     
-    @media all and (display-mode: standalone) {
-        body {
-            margin-top: 50px;
-        }
-    }
+    //@media all and (display-mode: standalone) {
+    //    body {
+    //        margin-top: 50px;
+    //    }
+    //}
 `
 
 export default GlobalStyles
