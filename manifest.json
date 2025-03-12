@@ -1,7 +1,7 @@
 {
   "name": "MeshMurmur",
   "short_name": "MeshMurmur",
-  "start_url": "/MeshMurmur/",
+  "start_url": "https://siegfriedschmidt.github.io/MeshMurmur/",
   "display": "standalone",
   "background_color": "#fff",
   "description": "App for secure peer to peer communication",
