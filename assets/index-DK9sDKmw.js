@@ -5658,9 +5658,9 @@ vTroikaGlyphColor = uTroikaUseGlyphColors ? aTroikaGlyphColor / 255.0 : diffuse;
         height: 100vh;
     }
     
-    @media all and (display-mode: standalone) {
-        body {
-            margin-top: 50px;
-        }
-    }
+    //@media all and (display-mode: standalone) {
+    //    body {
+    //        margin-top: 50px;
+    //    }
+    //}
 `;function yMe(n){return ce.jsx(AY,{value:wne,children:ce.jsx(Hre,{...n})})}sB.createRoot(document.getElementById("root")).render(ce.jsxs(yMe,{children:[ce.jsx(vMe,{}),ce.jsx(pCe,{})]}));
