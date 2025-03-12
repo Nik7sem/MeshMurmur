@@ -99,6 +99,6 @@ export class Connector {
   }
 
   cleanup() {
-    this.signaler.cleanup()
+
   }
 }

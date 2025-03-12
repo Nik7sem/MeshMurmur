@@ -6,11 +6,3 @@ export const peerId = Math.random().toString(36).substr(2, 9)
 export const logger = new Logger();
 export const connector = new Connector(peerId, logger)
 connector.init()
-
-window.onbeforeunload = function () {
-  connector.cleanup()
-}
-window.addEventListener("beforeunload", function (e) {
-  connector.cleanup()
-});
-

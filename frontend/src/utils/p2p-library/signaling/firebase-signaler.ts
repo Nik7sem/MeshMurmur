@@ -7,6 +7,7 @@ import {
   push,
   onChildAdded,
   onChildRemoved,
+  onDisconnect,
   onValue,
   off,
   remove,
@@ -30,6 +31,13 @@ export class FirebaseSignaler extends Signaler {
   async registerPeer() {
     const peerRef = ref(this.db, `peers/${this.peerId}`);
     await set(peerRef, {ready: true} as PeerDataType);
+
+    // remove on disconnect
+    onDisconnect(peerRef).remove().catch((err) => {
+      if (err) {
+        console.error("could not establish onDisconnect event", err);
+      }
+    })
   }
 
   async getAvailablePeers() {
@@ -90,9 +98,5 @@ export class FirebaseSignaler extends Signaler {
         callback(data);
       }
     });
-  }
-
-  async cleanup(): Promise<void> {
-    await remove(ref(this.db, `peers/${this.peerId}`));
   }
 }

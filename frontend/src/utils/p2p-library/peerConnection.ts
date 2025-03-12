@@ -193,5 +193,6 @@ export class PeerConnection {
   }
 
   cleanup() {
+    this.pc.close()
   }
 }
