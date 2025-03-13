@@ -1,4 +1,4 @@
-import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
+import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts";
 import {Logger} from './logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signaling/firebase-signaler.ts";
 import {connectionsType, messageDataType} from "@/utils/p2p-library/types.ts";
@@ -56,17 +56,17 @@ export class Connector {
       this.addConnection(targetPeerId);
     })
 
-    this.signaler.subscribeToPeers((targetPeer) => {
-        this.logger.info("New peer detected:", targetPeer.peerId);
-        if (targetPeer.peerId in this.connections) return
+    this.signaler.subscribeToPeers((targetPeerId) => {
+        this.logger.info("New peer detected:", targetPeerId);
+        if (targetPeerId in this.connections) return
 
-        this.potentialPeers.add(targetPeer.peerId);
+        this.potentialPeers.add(targetPeerId);
 
-        this.addConnection(targetPeer.peerId);
-        this.signaler.sendInvite(targetPeer.peerId)
-        this.logger.info("Send invite to:", targetPeer);
-      }, (oldPeer) => {
-        this.potentialPeers.delete(oldPeer.peerId);
+        this.addConnection(targetPeerId);
+        this.signaler.sendInvite(targetPeerId)
+        this.logger.info("Send invite to:", targetPeerId);
+      }, (oldPeerId) => {
+        this.potentialPeers.delete(oldPeerId);
       }
     )
   }
@@ -74,7 +74,7 @@ export class Connector {
   private addConnection(targetPeerId: string) {
     const onFinalState = createOnFinalState(targetPeerId, this.connections, this.logger)
     this.connections[targetPeerId] = {
-      pc: new PeerConnection(this.signaler, this.logger, targetPeerId, this.peerId > targetPeerId, this.onData, onFinalState),
+      pc: new WebRTCPeerConnection(this.signaler, this.logger, targetPeerId, this.peerId > targetPeerId, this.onData, onFinalState),
       info: {
         connected: false,
         type: "",

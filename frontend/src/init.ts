@@ -1,7 +1,7 @@
 import {Connector} from "@/utils/p2p-library/connector.ts";
 import {Logger} from "@/utils/p2p-library/logger.ts";
-import {SecureStorage} from "@/utils/crypto/SecureStorage.ts";
-import {ED25519KeyPairManager} from "@/utils/crypto/ED25519KeyManager.ts";
+import {SecureStorage} from "@/utils/crypto/secureStorage.ts";
+import {ED25519KeyPairManager} from "@/utils/crypto/ed25519KeyManager.ts";
 import {arrayBufferToBase64, base64ToArrayBuffer, generateNonce} from "@/utils/crypto/helpers.ts";
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");

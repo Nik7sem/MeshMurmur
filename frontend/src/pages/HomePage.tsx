@@ -4,6 +4,7 @@ import {LuSend} from "react-icons/lu";
 import ChatMessage from "@/components/ChatMessage.tsx";
 import {messageDataType} from "@/utils/p2p-library/types.ts";
 import {connector, peerId} from "@/init.ts";
+import {getShort} from "@/utils/p2p-library/shortId.ts";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<messageDataType[]>([])
@@ -55,7 +56,7 @@ const HomePage = () => {
     <Container width="100%">
       <Container ref={messageBlockRef} margin="15px" padding={5} height="75vh" maxHeight="80vh" overflowY="auto">
         {messages.map((message, idx) =>
-          <ChatMessage message={message.text} username={message.peerId}
+          <ChatMessage message={message.text} username={peerId == message.peerId ? '' : getShort(message.peerId)}
                        direction={peerId == message.peerId ? "right" : "left"}
                        key={idx}/>
         )}

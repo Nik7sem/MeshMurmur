@@ -1,7 +1,7 @@
 import {arrayBufferToBase64, base64ToArrayBuffer, generateNonce} from "@/utils/crypto/helpers.ts";
 import {EncryptionResult} from "@/utils/crypto/types.ts";
 
-export class AESDerivedKeyManager {
+export class AesDerivedKeyManager {
   private readonly pbkdf2Iterations = 600000
   private readonly saltLength = 32  // bytes
   private readonly ivLength = 16    // bytes

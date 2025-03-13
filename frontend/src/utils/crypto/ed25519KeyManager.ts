@@ -66,10 +66,6 @@ export class ED25519KeyPairManager {
     return this.publicKey.exportKey();
   }
 
-  getSmallPeerId() {
-    return this.getPublicKey().slice(0, 8)
-  }
-
   sign(msg: dataType) {
     return this.privateKey.sign(msg)
   }

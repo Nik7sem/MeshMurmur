@@ -1,14 +1,14 @@
 import {IndexedDBManager} from "@/utils/IndexedDBManager.ts";
-import {AESDerivedKeyManager} from "@/utils/crypto/AESDerivedKeyManager.ts";
+import {AesDerivedKeyManager} from "@/utils/crypto/aesDerivedKeyManager.ts";
 import {EncryptionResult} from "@/utils/crypto/types.ts";
 
 export class SecureStorage {
   private db: IndexedDBManager
-  private crypto: AESDerivedKeyManager
+  private crypto: AesDerivedKeyManager
 
   constructor(private passphrase: string) {
     this.db = new IndexedDBManager()
-    this.crypto = new AESDerivedKeyManager(passphrase)
+    this.crypto = new AesDerivedKeyManager(passphrase)
   }
 
   /**

@@ -22,9 +22,11 @@ const ChatMessage: FC<Props> = ({username, message, direction = "left"}) => {
         borderRadius="lg"
         maxW="75%"
       >
-        <Text fontSize="sm" fontWeight="bold" mb={1}>
-          {username}
-        </Text>
+        {username ?
+          <Text fontSize="sm" fontWeight="bold" mb={1}>
+            {username}
+          </Text> :
+          <></>}
         <Text>{message}</Text>
       </Box>
     </Box>
