@@ -1,23 +1,18 @@
-import {Logger} from './logger.ts'
-import {FirebaseSignaler} from "@/utils/p2p-library/signaling/firebase-signaler.ts";
-import {connectionsType, messageDataType} from "@/utils/p2p-library/types.ts";
+import {Logger} from '../logger.ts'
+import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
+import {messagePeerDataType, textDataType} from "@/utils/p2p-library/types.ts";
 import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
 
 export class Connector {
   private signaler: FirebaseSignaler;
-  private connections: connectionsType = {}
-  private onData: ({peerId, text}: messageDataType) => void
-  private onMessage?: ({peerId, text}: messageDataType) => void
+  private connections: { [peerId: string]: PeerConnection } = {}
+  private onData?: (data: messagePeerDataType) => void
   private potentialPeers: Set<string> = new Set()
 
   constructor(
     private peerId: string,
     private logger: Logger,
   ) {
-    this.onData = ({peerId, text}: messageDataType) => {
-      this.onMessage?.({peerId, text})
-    }
-
     this.signaler = new FirebaseSignaler(peerId);
   }
 
@@ -54,33 +49,34 @@ export class Connector {
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, () => {
       delete this.connections[targetPeerId]
     });
-    this.connections[targetPeerId].setOnMessage(this.onData);
-  }
-
-  get peerIds() {
-    return Object.keys(this.connections).filter((peerId) => this.connections[peerId].info.connected)
+    this.connections[targetPeerId].setOnData((data) => this.onData?.(data));
   }
 
   get peers() {
-    return Object.entries(this.connections).map(([peerId, {info}]) => {
-      return {peerId, info}
-    })
+    return Object.values(this.connections)
+  }
+
+  get connectedPeers() {
+    return this.peers.filter((conn) => conn.connected)
   }
 
   get connectingPeersCount() {
-    return Object.keys(this.connections).filter((peerId) => !this.connections[peerId].info.connected).length
+    return this.peers.filter((conn) => !conn.connected).length
   }
 
   get potentialPeersCount() {
     return this.potentialPeers.size
   }
 
-  send({peerId, text}: messageDataType) {
-    this.connections[peerId].send(text)
+  send({peerId, text}: textDataType) {
+    this.connections[peerId].send({data: text, type: 'text'})
   }
 
-  setOnMessage(onMessage: ({peerId, text}: messageDataType) => void) {
-    this.onMessage = onMessage
+  setOnText(onText: (textData: textDataType) => void) {
+    this.onData = (messageData: messagePeerDataType) => onText({
+      text: messageData.data.data,
+      peerId: messageData.peerId
+    })
   }
 
   cleanup() {

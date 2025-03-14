@@ -4,17 +4,17 @@ import {connector} from "@/init.ts";
 import {getShort} from "@/utils/p2p-library/shortId.ts";
 
 const PeerGraph = () => {
-  const nodes: GraphNode[] = connector.peerIds.map((peerId) => {
-    return {id: peerId, label: getShort(peerId)}
+  const nodes: GraphNode[] = connector.peers.map((conn) => {
+    return {id: conn.targetPeerId, label: getShort(conn.targetPeerId)}
   }).concat([{id: 'me', label: 'me'}])
 
-  const edges: GraphEdge[] = connector.peers.map(({peerId, info}) => {
+  const edges: GraphEdge[] = connector.peers.map((conn) => {
     return {
-      id: `me->${peerId}`,
+      id: `me->${conn.targetPeerId}`,
       source: `me`,
-      target: `${peerId}`,
-      label: info.type,
-      fill: info.connected ? "green" : "red"
+      target: `${conn.targetPeerId}`,
+      label: conn.connectionType,
+      fill: conn.connected ? "green" : "red"
     }
   })
 

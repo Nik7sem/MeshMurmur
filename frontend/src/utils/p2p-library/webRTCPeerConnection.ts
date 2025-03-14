@@ -1,7 +1,7 @@
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {rtcConfig} from "@/utils/p2p-library/conf.ts";
-import {Logger} from "./logger.ts";
-import {messageDataType} from "@/utils/p2p-library/types.ts";
+import {Logger} from "../logger.ts";
+import {rawMessageDataType} from "@/utils/p2p-library/types.ts";
 
 export class WebRTCPeerConnection {
   private pc: RTCPeerConnection;
@@ -14,8 +14,9 @@ export class WebRTCPeerConnection {
     private logger: Logger,
     private readonly targetPeerId: string,
     private readonly polite: boolean,
-    private onData: ({peerId, text}: messageDataType) => void,
-    private onFinalState: (state: RTCPeerConnectionState) => void
+    private onData: (event: MessageEvent<rawMessageDataType>) => void,
+    private onFinalState: (state: RTCPeerConnectionState) => void,
+    private onChannelOpen: () => void
   ) {
     this.pc = new RTCPeerConnection(rtcConfig);
     this.connect()
@@ -34,7 +35,7 @@ export class WebRTCPeerConnection {
 
     // Log more errors
     this.pc.onicecandidateerror = (event) => {
-      this.logger.warn("Ice candidate error: ", event.errorText);
+      this.logger.info("Ice candidate error: ", event.errorText);
     }
 
     // Impolite peer creates a new data channel
@@ -143,21 +144,25 @@ export class WebRTCPeerConnection {
   private setupDataChannel() {
     if (!this.dataChannel) return;
 
-    this.dataChannel.onopen = () => this.logger.info("Data channel opened!");
+    this.dataChannel.onopen = this.onChannelOpen;
+    this.dataChannel.onmessage = (event) => this.onData(event)
     this.dataChannel.onclose = () => this.logger.info("Data channel closed.");
     this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
-    this.dataChannel.onmessage = (event) => {
-      if (event.data) {
-        this.onData({peerId: this.targetPeerId, text: event.data})
-      }
-    }
   }
 
-  send(message: string) {
+  send(data: rawMessageDataType) {
     if (this.dataChannel && this.dataChannel.readyState === "open") {
-      this.dataChannel.send(message);
+      if (typeof data === "string") {
+        this.dataChannel.send(data)
+      } else if (data instanceof Blob) {
+        this.dataChannel.send(data)
+      } else if (data instanceof ArrayBuffer) {
+        this.dataChannel.send(data)
+      } else if (data satisfies ArrayBufferView) {
+        this.dataChannel.send(data)
+      }
     } else {
-      this.logger.error("Data channel is not open. Cannot send message:", message);
+      this.logger.error("Data channel is not open!");
     }
   }
 

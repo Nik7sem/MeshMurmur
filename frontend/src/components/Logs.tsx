@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import {logType} from "@/utils/p2p-library/types.ts";
 import LogLabel from "@/components/LogLabel.tsx";
-import PeerInfo from "@/components/ui/PeerInfo.tsx";
+import PeerInfo from "@/components/PeerInfo.tsx";
 import PeerGraph from "./PeerGraph.tsx"
 
 interface Props {

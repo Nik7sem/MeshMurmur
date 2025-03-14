@@ -2,12 +2,12 @@ import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 're
 import {Center, Container, Heading, IconButton, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
 import ChatMessage from "@/components/ChatMessage.tsx";
-import {messageDataType} from "@/utils/p2p-library/types.ts";
+import {textDataType} from "@/utils/p2p-library/types.ts";
 import {connector, peerId} from "@/init.ts";
 import {getShort} from "@/utils/p2p-library/shortId.ts";
 
 const HomePage = () => {
-  const [messages, setMessages] = useState<messageDataType[]>([])
+  const [messages, setMessages] = useState<textDataType[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const messageBlockRef = useRef<HTMLDivElement>(null);
 
@@ -22,14 +22,14 @@ const HomePage = () => {
     }, 100)
   }, [])
 
-  const addMessage = useCallback(({peerId, text}: messageDataType) => {
+  const addMessage = useCallback((data: textDataType) => {
     smoothScroll()
-    setMessages((prevMessages) => [...prevMessages, {text, peerId}]);
+    setMessages((prevMessages) => [...prevMessages, data]);
   }, []);
 
   useEffect(() => {
     if (addMessage) {
-      connector.setOnMessage(addMessage)
+      connector.setOnText(addMessage)
     }
   }, [addMessage])
 
@@ -47,8 +47,8 @@ const HomePage = () => {
     smoothScroll()
     setInputValue('')
 
-    for (const peerId of connector.peerIds) {
-      connector.send({peerId, text: inputValue})
+    for (const conn of connector.connectedPeers) {
+      connector.send({peerId: conn.targetPeerId, text: inputValue})
     }
   }
 

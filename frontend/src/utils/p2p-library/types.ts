@@ -1,15 +1,19 @@
-import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts";
-import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
-
 export type PeerDataType = { ready: boolean };
-export type PeerType = { peerId: string, data: PeerDataType };
+
 export type logType = { text: string, type: "success" | "info" | "warn" | "error" }
+
 type SDP = RTCSessionDescriptionInit;
 type ICE = RTCIceCandidateInit;
 export type ConnectionData = { description?: SDP, candidate?: ICE };
-export type messageDataType = { peerId: string, text: string }
-export type connectionsType = { [peerId: string]: PeerConnection }
-export type ConnectionDataType = {
-  pc: WebRTCPeerConnection,
-  info: { connected: boolean, type: "STUN" | "TURN" | "" }
+
+export type textDataType = { peerId: string, text: string }
+export type rawMessageDataType = string | Blob | ArrayBuffer | ArrayBufferView
+
+export type messageDataType = {
+  data: string,
+  type: string
 }
+
+export type messagePeerDataType = { peerId: string, data: messageDataType }
+
+

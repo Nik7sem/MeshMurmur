@@ -9,7 +9,7 @@ interface params {
 export function parseRTCStats(stats: RTCStatsReport): params {
   let info: params['info'] = null
   stats.forEach(report => {
-    if (report.type === 'candidate-pair' && report.nominated && report.state === "succeeded") {
+    if (report.type === 'candidate-pair' && report.nominated) {
       const localCandidate = stats.get(report.localCandidateId);
       const remoteCandidate = stats.get(report.remoteCandidateId);
       if (!localCandidate || !remoteCandidate) return

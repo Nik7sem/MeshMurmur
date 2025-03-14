@@ -27,7 +27,7 @@ const Header = () => {
       <ColorModeButton alignSelf="start"/>
       <Heading size="3xl">MeshMurmur</Heading>
       <Logs logs={logs}/>
-      <Box><Status.Root colorPalette="green"><Status.Indicator/>{connector.peerIds.length}</Status.Root></Box>
+      <Box><Status.Root colorPalette="green"><Status.Indicator/>{connector.connectedPeers.length}</Status.Root></Box>
       <Toaster/>
     </Flex>
   );

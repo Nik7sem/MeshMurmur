@@ -1,5 +1,5 @@
 import {Connector} from "@/utils/p2p-library/connector.ts";
-import {Logger} from "@/utils/p2p-library/logger.ts";
+import {Logger} from "@/utils/logger.ts";
 import {SecureStorage} from "@/utils/crypto/secureStorage.ts";
 import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";
 import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
@@ -23,7 +23,7 @@ try {
   console.log('WRONG PASSPHRASE')
 }
 
-const edKeyManager = peerKeys ? new ED25519KeyPairManager(peerKeys) : new ED25519KeyPairManager()
+export const edKeyManager = peerKeys ? new ED25519KeyPairManager(peerKeys) : new ED25519KeyPairManager()
 
 if (!peerKeys) {
   await secureStorage.storeSecureData('peer-keys', edKeyManager.exportKeyPair())
