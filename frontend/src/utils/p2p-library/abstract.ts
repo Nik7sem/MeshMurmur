@@ -8,4 +8,12 @@ export class Signaler {
   on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
     throw new Error("Not implemented");
   }
+
+  off(targetPeerId: string) {
+    throw new Error("Not implemented");
+  }
+
+  cleanup(targetPeerId: string) {
+    throw new Error("Not implemented");
+  }
 }

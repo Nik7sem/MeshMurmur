@@ -14,7 +14,7 @@ import {
   get,
   DataSnapshot,
 } from "firebase/database";
-import {ConnectionData, PeerDataType, PeerType} from "@/utils/p2p-library/types.ts";
+import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 
@@ -81,8 +81,8 @@ export class FirebaseSignaler extends Signaler {
   }
 
   onInvite(callback: (targetPeerId: string) => void) {
-    const candidateListRef = ref(this.db, `peers/${this.peerId}/invite`);
-    onValue(candidateListRef, (snapshot: DataSnapshot) => {
+    const invitesListRef = ref(this.db, `peers/${this.peerId}/invite`);
+    onValue(invitesListRef, (snapshot: DataSnapshot) => {
       const data = snapshot.val();
       if (data) {
         callback(data);
@@ -98,5 +98,15 @@ export class FirebaseSignaler extends Signaler {
         callback(data);
       }
     });
+  }
+
+  off(targetPeerId: string) {
+    const connectionRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}`);
+    off(connectionRef, "child_added");
+  }
+
+  cleanup(targetPeerId: string) {
+    const connectionRef = ref(this.db, `peers/${this.peerId}/connections/${targetPeerId}`);
+    remove(connectionRef)
   }
 }

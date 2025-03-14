@@ -1,7 +1,20 @@
-import {arrayBufferToBase64, base64ToArrayBuffer} from "@/utils/crypto/helpers.ts";
+import {
+  arrayBufferToBase64,
+  arrayBufferToCustomEncoding,
+  base64ToArrayBuffer,
+  customEncodingToArrayBuffer
+} from "@/utils/crypto/helpers.ts";
 import {ed25519} from '@noble/curves/ed25519';
 
 type dataType = Uint8Array | string
+
+export function getPeerId(key: dataType) {
+  return (typeof key === 'string') ? arrayBufferToCustomEncoding(base64ToArrayBuffer(key)) : arrayBufferToCustomEncoding(key)
+}
+
+export function getPeerKey(peerId: string) {
+  return customEncodingToArrayBuffer(peerId)
+}
 
 class KeyManager {
   protected key: Uint8Array
@@ -32,7 +45,7 @@ export class ED25519PublicKeyManager extends KeyManager {
   }
 }
 
-export class ED25519PrivateKeyManager extends KeyManager {
+class ED25519PrivateKeyManager extends KeyManager {
   constructor(key: dataType) {
     super(key);
   }
@@ -43,7 +56,7 @@ export class ED25519PrivateKeyManager extends KeyManager {
 }
 
 export class ED25519KeyPairManager {
-  private publicKey: ED25519PublicKeyManager
+  public publicKey: ED25519PublicKeyManager
   private privateKey: ED25519PrivateKeyManager
 
   constructor(edKeyPair?: string) {
@@ -60,10 +73,6 @@ export class ED25519KeyPairManager {
 
   exportKeyPair() {
     return JSON.stringify({publicKey: this.publicKey.exportKey(), privateKey: this.privateKey.exportKey()});
-  }
-
-  getPublicKey() {
-    return this.publicKey.exportKey();
   }
 
   sign(msg: dataType) {
