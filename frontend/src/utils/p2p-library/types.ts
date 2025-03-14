@@ -10,7 +10,7 @@ export type textDataType = { peerId: string, text: string }
 export type rawMessageDataType = string | Blob | ArrayBuffer | ArrayBufferView
 
 export type messageDataType = {
-  data: string,
+  data: any,
   type: string
 }
 
