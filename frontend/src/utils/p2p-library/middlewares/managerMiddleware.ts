@@ -22,4 +22,13 @@ export class ManagerMiddleware extends Middleware {
     }
     return true
   }
+
+  isBlocked(): boolean {
+    for (const middleware of this.middlewares) {
+      if (middleware.isBlocked()) {
+        return true
+      }
+    }
+    return false
+  }
 }

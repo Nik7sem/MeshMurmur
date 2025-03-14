@@ -172,5 +172,7 @@ export class WebRTCPeerConnection {
 
   cleanup() {
     this.pc.close()
+    this.signaler.off(this.targetPeerId)
+    this.signaler.cleanup(this.targetPeerId)
   }
 }

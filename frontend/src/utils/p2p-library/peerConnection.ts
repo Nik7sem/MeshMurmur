@@ -18,10 +18,10 @@ export class PeerConnection {
     public readonly targetPeerId: string,
     private logger: Logger,
     private signaler: Signaler,
-    private onClose: () => void,
+    private onClose: (block: boolean) => void,
     private timeout = 5000
   ) {
-    this.managerMiddleware = new ManagerMiddleware((data) => this.send(data), this, this.logger)
+    this.managerMiddleware = new ManagerMiddleware((data) => this.send(data, true), this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware)
     this.connection = this.connect()
   }
@@ -74,19 +74,27 @@ export class PeerConnection {
         }
         this.logger.success("Successfully connected to peer!")
       } else {
-        this.connection.cleanup()
-        this.signaler.off(this.targetPeerId)
-        this.onClose()
+        this.disconnect()
         this.logger.error(`Error in connection to peer: ${state}!`)
       }
     }
   }
 
-  send(data: messageDataType) {
+  send(data: messageDataType, ignoreBlocked = false) {
+    if (this.isBlocked() && !ignoreBlocked) return this.logger.warn(`Cannot send message to ${this.targetPeerId}, peer is not verified!`);
     this.connection.send(JSON.stringify(data))
   }
 
   setOnData(onData: (data: messagePeerDataType) => void) {
     this.onData = onData
+  }
+
+  isBlocked() {
+    return this.managerMiddleware.isBlocked()
+  }
+
+  disconnect(block = false) {
+    this.connection.cleanup()
+    this.onClose(block)
   }
 }

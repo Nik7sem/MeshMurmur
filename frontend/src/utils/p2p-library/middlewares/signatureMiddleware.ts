@@ -7,30 +7,50 @@ import {ED25519PublicKeyManager} from "@/utils/crypto/ed25519KeyManager.ts";
 export class SignatureMiddleware extends Middleware {
   private randomNonce = generateNonce()
   private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.conn.targetPeerId))
+  private timeout = 3000
+  public verified = false
 
   init() {
-    this.logger.info("SignatureMiddleware initialized!");
-    this.conn.send({data: arrayBufferToBase64(this.randomNonce), type: 'signature-request'});
+    setTimeout(() => {
+      if (!this.verified) {
+        this.logger.warn("Signature verification failed!")
+        this.conn.disconnect(true)
+      }
+    }, this.timeout)
+
+    const sigRequest = arrayBufferToBase64(this.randomNonce)
+
+    this.logger.info("Signature request sent: ", sigRequest);
+    this.send({data: sigRequest, type: 'signature-request'});
   }
 
   call(data: messageDataType) {
+    if (this.verified) return true
+
     if (data.type === "signature-request") {
       this.logger.info("Signature request received: ", data.data);
+
       const sig = edKeyManager.sign(data.data);
-      console.log({sig: arrayBufferToBase64(sig), msg: data.data})
-      this.conn.send({data: {sig: arrayBufferToBase64(sig), msg: data.data}, type: 'signature-response'});
+      const sigResponse = {sig: arrayBufferToBase64(sig), msg: data.data}
+
+      this.logger.info("Signature response sent: ", sigResponse);
+      this.send({data: sigResponse, type: 'signature-response'});
     } else if (data.type === "signature-response") {
       this.logger.info("Signature response received: ", data.data);
 
-      const verified = this.publicKeyManager.verify(data.data.sig, data.data.msg)
-      if (verified) {
+      this.verified = this.publicKeyManager.verify(data.data.sig, data.data.msg)
+      if (this.verified) {
         this.logger.success("Signature verification succeeded!")
       } else {
         this.logger.error("Signature verification failed!")
       }
     } else {
-      return true
+      return this.verified
     }
     return false
+  }
+
+  isBlocked(): boolean {
+    return !this.verified
   }
 }

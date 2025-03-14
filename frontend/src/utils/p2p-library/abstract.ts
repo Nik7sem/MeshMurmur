@@ -37,4 +37,8 @@ export class Middleware {
   call(data: messageDataType): boolean {
     throw new Error("Not implemented");
   }
+
+  isBlocked(): boolean {
+    throw new Error("Not implemented");
+  }
 }

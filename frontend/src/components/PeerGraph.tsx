@@ -14,7 +14,7 @@ const PeerGraph = () => {
       source: `me`,
       target: `${conn.targetPeerId}`,
       label: conn.connectionType,
-      fill: conn.connected ? "green" : "red"
+      fill: conn.connected && !conn.isBlocked() ? "green" : "red"
     }
   })
 
