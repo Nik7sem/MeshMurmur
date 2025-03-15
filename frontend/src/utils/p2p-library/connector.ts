@@ -1,14 +1,14 @@
 import {Logger} from '../logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
-import {messagePeerDataType, textDataType} from "@/utils/p2p-library/types.ts";
 import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
 import {getRandomSample} from "@/utils/getRandomSample.ts";
+import {completeMessageType, completeTextType} from "@/utils/p2p-library/types.ts";
 
 export class Connector {
   private signaler: FirebaseSignaler;
   private connections: { [peerId: string]: PeerConnection } = {}
   private blackList: Set<string> = new Set()
-  private onData?: (data: messagePeerDataType) => void
+  private onCompleteData?: (data: completeMessageType) => void
   private potentialPeers: Set<string> = new Set()
   private maxNumberOfOutgoingConnections = 5
   private maxNumberOfPeers = 10
@@ -61,7 +61,7 @@ export class Connector {
       this.logger.info("Received invite from:", targetPeerId);
     }
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnClose(targetPeerId));
-    this.connections[targetPeerId].setOnData((data) => this.onData?.(data));
+    this.connections[targetPeerId].setOnCompleteData((data) => this.onCompleteData?.(data));
   }
 
   private createOnClose(targetPeerId: string) {
@@ -89,15 +89,16 @@ export class Connector {
     return this.potentialPeers.size
   }
 
-  send({peerId, text}: textDataType) {
-    this.connections[peerId].send({data: text, type: 'text'})
+  send({peerId, data}: completeTextType) {
+    this.connections[peerId].send({data, type: 'text'})
   }
 
-  setOnText(onText: (textData: textDataType) => void) {
-    this.onData = (messageData: messagePeerDataType) => onText({
-      text: messageData.data.data,
-      peerId: messageData.peerId
-    })
+  setOnCompleteData(onCompleteData: (data: completeMessageType) => void) {
+    this.onCompleteData = onCompleteData
+  }
+
+  sendFile({peerId, file}: { peerId: string, file: File }) {
+    this.connections[peerId].sendFile(file)
   }
 
   cleanup() {

@@ -1,14 +1,16 @@
-import {messageDataType, messagePeerDataType, rawMessageDataType} from "@/utils/p2p-library/types.ts";
+import {parsedMessageDataType, rawMessageDataType, completeMessageType} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
 import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
 import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddleware.ts";
 import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMiddleware.ts";
-import {isObjectMessage} from "@/utils/p2p-library/isObjectMessage.ts";
+import {isObjectMessage} from "@/utils/p2p-library/isObjectHelper.ts";
+import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransferMiddleware.ts";
+import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
 
 export class PeerConnection {
-  private onData?: (data: messagePeerDataType) => void
+  private onCompleteData?: (data: completeMessageType) => void
   private connection: WebRTCPeerConnection
   private managerMiddleware: ManagerMiddleware
   public connected = false;
@@ -23,7 +25,9 @@ export class PeerConnection {
     private timeout = 5000
   ) {
     this.managerMiddleware = new ManagerMiddleware((data) => this.send(data, true), this, this.logger)
-    this.managerMiddleware.add(SignatureMiddleware, 'high')
+    this.managerMiddleware.add(SignatureMiddleware, 3)
+    this.managerMiddleware.add(FileTransferMiddleware, 2).onFile = (data) => this.onCompleteData?.(data)
+    this.managerMiddleware.add(TextMiddleware, 1).onText = (data) => this.onCompleteData?.(data)
     this.connection = this.connect()
   }
 
@@ -42,12 +46,10 @@ export class PeerConnection {
   }
 
   private createOnData() {
-    return (event: MessageEvent<rawMessageDataType>) => {
-      const data = typeof event.data === "string" ? JSON.parse(event.data) as messageDataType : event.data;
-      if (!this.managerMiddleware.call(data)) return
-      if (!isObjectMessage(data)) return
-
-      this.onData?.({data, peerId: this.targetPeerId})
+    return (data: rawMessageDataType) => {
+      const parsedData: parsedMessageDataType = typeof data === "string" ? JSON.parse(data) : data;
+      if (!this.managerMiddleware.call(parsedData)) return
+      this.logger.warn("Not handled data:", parsedData)
     }
   }
 
@@ -78,13 +80,21 @@ export class PeerConnection {
     }
   }
 
-  send(data: messageDataType, ignoreBlocked = false) {
+  send(data: parsedMessageDataType, ignoreBlocked = false) {
     if (this.isBlocked() && !ignoreBlocked) return this.logger.warn(`Cannot send message to ${this.targetPeerId}, peer is not verified!`);
-    this.connection.send(JSON.stringify(data))
+    if (isObjectMessage(data)) {
+      this.connection.send(JSON.stringify(data))
+    } else {
+      this.connection.send(data)
+    }
   }
 
-  setOnData(onData: (data: messagePeerDataType) => void) {
-    this.onData = onData
+  setOnCompleteData(onCompleteData: (data: completeMessageType) => void) {
+    this.onCompleteData = onCompleteData
+  }
+
+  sendFile(file: File) {
+    this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
   }
 
   isBlocked() {

@@ -1,15 +1,14 @@
 import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
-import {Button, Center, Container, FileUpload, Input, Menu, Portal} from "@chakra-ui/react";
+import {Button, Center, Container, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
-import {GrAttachment} from "react-icons/gr";
-import ChatMessage from "@/components/ChatMessage.tsx";
-import {textDataType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType} from "@/utils/p2p-library/types.ts";
 import {connector, peerId} from "@/init.ts";
-import {getShort} from "@/utils/p2p-library/shortId.ts";
-import {HiUpload} from "react-icons/hi";
+import MessagesBlock from "@/components/MessagesBlock.tsx";
+import SendOptions from "@/components/SendOptions.tsx";
 
 const HomePage = () => {
-  const [messages, setMessages] = useState<textDataType[]>([])
+  const [messages, setMessages] = useState<completeMessageType[]>([])
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const messageBlockRef = useRef<HTMLDivElement>(null);
 
@@ -24,14 +23,14 @@ const HomePage = () => {
     }, 100)
   }, [])
 
-  const addMessage = useCallback((data: textDataType) => {
+  const addMessage = useCallback((data: completeMessageType) => {
     smoothScroll()
     setMessages((prevMessages) => [...prevMessages, data]);
   }, []);
 
   useEffect(() => {
     if (addMessage) {
-      connector.setOnText(addMessage)
+      connector.setOnCompleteData(addMessage)
     }
   }, [addMessage])
 
@@ -43,49 +42,31 @@ const HomePage = () => {
   }
 
   function onClick() {
-    if (inputValue.length === 0) return
+    if (inputValue.length > 0) {
+      for (const conn of connector.connectedPeers) {
+        connector.send({peerId: conn.targetPeerId, data: inputValue})
+      }
+      addMessage({data: inputValue, peerId})
+      setInputValue('')
+    }
 
-    addMessage({text: inputValue, peerId})
-    smoothScroll()
-    setInputValue('')
-
-    for (const conn of connector.connectedPeers) {
-      connector.send({peerId: conn.targetPeerId, text: inputValue})
+    if (uploadedFiles.length > 0) {
+      for (const file of uploadedFiles) {
+        for (const conn of connector.connectedPeers) {
+          connector.sendFile({peerId: conn.targetPeerId, file})
+        }
+        const url = URL.createObjectURL(file)
+        addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+      }
+      setUploadedFiles([])
     }
   }
 
   return (
     <Container width="100%">
-      <Container ref={messageBlockRef} margin="15px" padding={5} height="75vh" maxHeight="80vh" overflowY="auto">
-        {messages.map((message, idx) =>
-          <ChatMessage message={message.text} username={peerId == message.peerId ? '' : getShort(message.peerId)}
-                       direction={peerId == message.peerId ? "right" : "left"}
-                       key={idx}/>
-        )}
-      </Container>
+      <MessagesBlock messageBlockRef={messageBlockRef} messages={messages}/>
       <Center marginTop="1vh">
-        <Menu.Root>
-          <Menu.Trigger asChild>
-            <Button color="white" bg="black" marginRight='5' onClick={onClick} aria-label="Send message">
-              <GrAttachment/>
-            </Button>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content>
-                <FileUpload.Root>
-                  <FileUpload.HiddenInput/>
-                  <FileUpload.Trigger asChild>
-                    <Button variant="outline" size="sm">
-                      <HiUpload/> Send file
-                    </Button>
-                  </FileUpload.Trigger>
-                  <FileUpload.List/>
-                </FileUpload.Root>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
+        <SendOptions onClick={onClick} files={uploadedFiles} setFiles={setUploadedFiles}/>
         <Input onKeyDown={keyDownHandler} value={inputValue} onChange={(e) => setInputValue(e.target.value)}/>
         <Button marginLeft='5' onClick={onClick} aria-label="Send message">
           <LuSend/>

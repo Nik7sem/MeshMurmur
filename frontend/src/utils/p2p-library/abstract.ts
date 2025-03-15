@@ -1,4 +1,4 @@
-import {ConnectionData, messageDataType} from "@/utils/p2p-library/types.ts";
+import {ConnectionData, parsedMessageDataType} from "@/utils/p2p-library/types.ts";
 import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
 import {Logger} from "../logger.ts";
 
@@ -22,7 +22,7 @@ export class Signaler {
 
 export class Middleware {
   constructor(
-    protected send: (data: messageDataType) => void,
+    protected send: (data: parsedMessageDataType) => void,
     protected conn: PeerConnection,
     protected logger: Logger
   ) {
@@ -30,15 +30,14 @@ export class Middleware {
 
   // on datachannel open
   init() {
-    throw new Error("Not implemented");
   }
 
   // call middleware on new message
-  call(data: messageDataType): boolean {
-    throw new Error("Not implemented");
+  call(data: parsedMessageDataType): boolean {
+    return true
   }
 
   isBlocked(): boolean {
-    throw new Error("Not implemented");
+    return false
   }
 }

@@ -14,7 +14,7 @@ export class WebRTCPeerConnection {
     private logger: Logger,
     private readonly targetPeerId: string,
     private readonly polite: boolean,
-    private onData: (event: MessageEvent<rawMessageDataType>) => void,
+    private onData: (data: rawMessageDataType) => void,
     private onFinalState: (state: RTCPeerConnectionState) => void,
     private onChannelOpen: () => void
   ) {
@@ -137,6 +137,7 @@ export class WebRTCPeerConnection {
   createDataChannel(label: string = "data") {
     if (this.dataChannel) return
     this.dataChannel = this.pc.createDataChannel(label);
+    this.dataChannel.binaryType = 'arraybuffer'
     this.setupDataChannel();
     this.logger.info("Create data channel")
   }
@@ -145,7 +146,7 @@ export class WebRTCPeerConnection {
     if (!this.dataChannel) return;
 
     this.dataChannel.onopen = this.onChannelOpen;
-    this.dataChannel.onmessage = (event) => this.onData(event)
+    this.dataChannel.onmessage = (event) => this.onData(event.data)
     this.dataChannel.onclose = () => this.logger.info("Data channel closed.");
     this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
   }

@@ -4,25 +4,25 @@ import {FC} from "react";
 interface Props {
   username: string
   message: string
-  direction: "left" | "right"
+  me: boolean
 }
 
-const ChatMessage: FC<Props> = ({username, message, direction = "left"}) => {
+const ChatTextMessage: FC<Props> = ({username, message, me}) => {
   return (
     <Box
       display="flex"
-      justifyContent={direction === "right" ? "flex-end" : "flex-start"}
+      justifyContent={me ? "flex-end" : "flex-start"}
       my={2}
     >
       <Box
-        bg={direction === "right" ? "blue.500" : "gray.200"}
-        color={direction === "right" ? "white" : "black"}
+        bg={me ? "blue.500" : "gray.200"}
+        color={me ? "white" : "black"}
         px={4}
         py={2}
         borderRadius="lg"
         maxW="75%"
       >
-        {username ?
+        {!me ?
           <Text fontSize="sm" fontWeight="bold" mb={1}>
             {username}
           </Text> :
@@ -33,4 +33,4 @@ const ChatMessage: FC<Props> = ({username, message, direction = "left"}) => {
   );
 };
 
-export default ChatMessage;
+export default ChatTextMessage;
