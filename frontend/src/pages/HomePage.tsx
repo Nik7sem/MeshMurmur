@@ -1,15 +1,17 @@
 import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Button, Center, Container, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
-import {completeMessageType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType, fileProgressType} from "@/utils/p2p-library/types.ts";
 import {connector, peerId} from "@/init.ts";
 import MessagesBlock from "@/components/MessagesBlock.tsx";
 import SendOptions from "@/components/SendOptions.tsx";
+import FileProgressBar from "@/components/FileProgressBar.tsx";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [inputValue, setInputValue] = useState<string>('')
+  const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
   const messageBlockRef = useRef<HTMLDivElement>(null);
 
   const smoothScroll = useCallback(() => {
@@ -28,9 +30,24 @@ const HomePage = () => {
     setMessages((prevMessages) => [...prevMessages, data]);
   }, []);
 
+  const setNewFileProgress = useCallback((data: fileProgressType) => {
+    setFileProgressData(data)
+    if (data.progress === 100) {
+      setTimeout(() => {
+        setFileProgressData((fileProgressData) => {
+          if (fileProgressData?.progress === 100) {
+            return null
+          }
+          return fileProgressData
+        })
+      }, 1000)
+    }
+  }, [])
+
   useEffect(() => {
     if (addMessage) {
-      connector.setOnCompleteData(addMessage)
+      connector.onCompleteData = addMessage
+      connector.onFileProgress = setNewFileProgress
     }
   }, [addMessage])
 
@@ -71,6 +88,9 @@ const HomePage = () => {
         <Button marginLeft='5' onClick={onClick} aria-label="Send message">
           <LuSend/>
         </Button>
+      </Center>
+      <Center>
+        <FileProgressBar data={fileProgressData}/>
       </Center>
     </Container>
   );

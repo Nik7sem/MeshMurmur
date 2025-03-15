@@ -1,4 +1,8 @@
-import {parsedMessageDataType, rawMessageDataType, completeMessageType} from "@/utils/p2p-library/types.ts";
+import {
+  parsedMessageDataType,
+  rawMessageDataType,
+  completeMessageType, onFileProgressType,
+} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
 import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
 import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts";
@@ -10,7 +14,8 @@ import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransf
 import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
 
 export class PeerConnection {
-  private onCompleteData?: (data: completeMessageType) => void
+  public onCompleteData?: (data: completeMessageType) => void
+  public onFileProgress?: onFileProgressType
   private connection: WebRTCPeerConnection
   private managerMiddleware: ManagerMiddleware
   public connected = false;
@@ -26,7 +31,9 @@ export class PeerConnection {
   ) {
     this.managerMiddleware = new ManagerMiddleware((data) => this.send(data, true), this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 3)
-    this.managerMiddleware.add(FileTransferMiddleware, 2).onFile = (data) => this.onCompleteData?.(data)
+    const fileTransferMiddleware = this.managerMiddleware.add(FileTransferMiddleware, 2)
+    fileTransferMiddleware.onFileComplete = (data) => this.onCompleteData?.(data)
+    fileTransferMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
     this.managerMiddleware.add(TextMiddleware, 1).onText = (data) => this.onCompleteData?.(data)
     this.connection = this.connect()
   }
@@ -89,10 +96,6 @@ export class PeerConnection {
     }
   }
 
-  setOnCompleteData(onCompleteData: (data: completeMessageType) => void) {
-    this.onCompleteData = onCompleteData
-  }
-
   sendFile(file: File) {
     this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
   }
@@ -104,5 +107,9 @@ export class PeerConnection {
   disconnect(block = false) {
     this.connection.cleanup()
     this.onClose(block)
+  }
+
+  sendLargeData(chunks: ArrayBuffer[], onChunkIdx: (chunkIdx: number) => void) {
+    return this.connection.sendLargeData(chunks, onChunkIdx)
   }
 }

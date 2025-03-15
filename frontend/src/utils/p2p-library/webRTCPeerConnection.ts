@@ -8,6 +8,7 @@ export class WebRTCPeerConnection {
   private dataChannel?: RTCDataChannel;
   private makingOffer = false
   private ignoreOffer = false;
+  private bufferedAmountLowThreshold = 512 * 1024 * 8 // 512 KB
 
   constructor(
     private signaler: Signaler,
@@ -137,13 +138,15 @@ export class WebRTCPeerConnection {
   createDataChannel(label: string = "data") {
     if (this.dataChannel) return
     this.dataChannel = this.pc.createDataChannel(label);
-    this.dataChannel.binaryType = 'arraybuffer'
     this.setupDataChannel();
     this.logger.info("Create data channel")
   }
 
   private setupDataChannel() {
     if (!this.dataChannel) return;
+
+    this.dataChannel.binaryType = 'arraybuffer'
+    this.dataChannel.bufferedAmountLowThreshold = this.bufferedAmountLowThreshold;
 
     this.dataChannel.onopen = this.onChannelOpen;
     this.dataChannel.onmessage = (event) => this.onData(event.data)
@@ -165,6 +168,32 @@ export class WebRTCPeerConnection {
     } else {
       this.logger.error("Data channel is not open!");
     }
+  }
+
+  sendLargeData(chunks: ArrayBuffer[], onChunkIdx: (chunkIdx: number) => void): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.dataChannel && this.dataChannel.readyState === "open") {
+        const sendNextChunk = () => {
+          if (this.dataChannel && this.dataChannel.readyState === "open") {
+            if (chunkIdx < chunks.length) {
+              this.dataChannel.send(chunks[chunkIdx])
+              onChunkIdx(chunkIdx)
+              ++chunkIdx
+              if (this.dataChannel.bufferedAmount <= this.dataChannel.bufferedAmountLowThreshold) {
+                sendNextChunk()
+              }
+            } else {
+              this.dataChannel.onbufferedamountlow = null
+              resolve()
+            }
+          }
+        }
+
+        let chunkIdx = 0
+        this.dataChannel.onbufferedamountlow = () => sendNextChunk()
+        sendNextChunk()
+      }
+    })
   }
 
   async getStats() {
