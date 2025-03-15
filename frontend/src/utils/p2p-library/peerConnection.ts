@@ -5,6 +5,7 @@ import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts"
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddleware.ts";
 import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMiddleware.ts";
+import {isObjectMessage} from "@/utils/p2p-library/isObjectMessage.ts";
 
 export class PeerConnection {
   private onData?: (data: messagePeerDataType) => void
@@ -22,7 +23,7 @@ export class PeerConnection {
     private timeout = 5000
   ) {
     this.managerMiddleware = new ManagerMiddleware((data) => this.send(data, true), this, this.logger)
-    this.managerMiddleware.add(SignatureMiddleware)
+    this.managerMiddleware.add(SignatureMiddleware, 'high')
     this.connection = this.connect()
   }
 
@@ -42,14 +43,11 @@ export class PeerConnection {
 
   private createOnData() {
     return (event: MessageEvent<rawMessageDataType>) => {
-      if (typeof event.data === "string") {
-        const data = JSON.parse(event.data) as messageDataType;
-        if (this.managerMiddleware.call(data)) {
-          this.onData?.({data, peerId: this.targetPeerId})
-        }
-      } else {
-        this.logger.warn("Not handled data: ", typeof event.data)
-      }
+      const data = typeof event.data === "string" ? JSON.parse(event.data) as messageDataType : event.data;
+      if (!this.managerMiddleware.call(data)) return
+      if (!isObjectMessage(data)) return
+
+      this.onData?.({data, peerId: this.targetPeerId})
     }
   }
 

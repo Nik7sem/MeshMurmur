@@ -3,6 +3,7 @@ import {messageDataType} from "@/utils/p2p-library/types.ts";
 import {arrayBufferToBase64, customEncodingToArrayBuffer, generateNonce} from "@/utils/crypto/helpers.ts";
 import {edKeyManager} from "@/init.ts";
 import {ED25519PublicKeyManager} from "@/utils/crypto/ed25519KeyManager.ts";
+import {isObjectMessage} from "@/utils/p2p-library/isObjectMessage.ts";
 
 export class SignatureMiddleware extends Middleware {
   private randomNonce = generateNonce()
@@ -26,6 +27,7 @@ export class SignatureMiddleware extends Middleware {
 
   call(data: messageDataType) {
     if (this.verified) return true
+    if (!isObjectMessage(data)) return false
 
     if (data.type === "signature-request") {
       this.logger.info("Signature request received: ", data.data);
