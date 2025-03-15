@@ -10,7 +10,8 @@ export class Connector {
   private blackList: Set<string> = new Set()
   private onData?: (data: messagePeerDataType) => void
   private potentialPeers: Set<string> = new Set()
-  private maxNumberOfPeers = 3
+  private maxNumberOfOutgoingConnections = 5
+  private maxNumberOfPeers = 10
 
   constructor(
     private peerId: string,
@@ -23,6 +24,7 @@ export class Connector {
     await this.signaler.registerPeer()
     this.logger.info("Registered peer:", this.peerId);
 
+    // TODO: Add peer reconnecting
     for (const potentialPeerId of await this.signaler.getAvailablePeers()) {
       this.potentialPeers.add(potentialPeerId);
     }
@@ -43,11 +45,16 @@ export class Connector {
     )
   }
 
-  private createConnection(targetPeerId: string, sendInvite = true) {
-    if (this.blackList.has(targetPeerId) || targetPeerId in this.connections || this.peers.length >= this.maxNumberOfPeers) return
+  private createConnection(targetPeerId: string, outgoing = true) {
+    if (
+      this.blackList.has(targetPeerId) ||
+      targetPeerId in this.connections ||
+      this.peers.length >= this.maxNumberOfPeers ||
+      (outgoing && this.peers.length >= this.maxNumberOfOutgoingConnections)
+    ) return
 
     this.potentialPeers.add(targetPeerId);
-    if (sendInvite) {
+    if (outgoing) {
       this.signaler.sendInvite(targetPeerId)
       this.logger.info("Send invite to:", targetPeerId);
     } else {

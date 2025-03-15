@@ -1,10 +1,12 @@
 import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
-import {Center, Container, Heading, IconButton, Input} from "@chakra-ui/react";
+import {Button, Center, Container, FileUpload, Input, Menu, Portal} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
+import {GrAttachment} from "react-icons/gr";
 import ChatMessage from "@/components/ChatMessage.tsx";
 import {textDataType} from "@/utils/p2p-library/types.ts";
 import {connector, peerId} from "@/init.ts";
 import {getShort} from "@/utils/p2p-library/shortId.ts";
+import {HiUpload} from "react-icons/hi";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<textDataType[]>([])
@@ -62,10 +64,32 @@ const HomePage = () => {
         )}
       </Container>
       <Center marginTop="1vh">
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button color="white" bg="black" marginRight='5' onClick={onClick} aria-label="Send message">
+              <GrAttachment/>
+            </Button>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <FileUpload.Root>
+                  <FileUpload.HiddenInput/>
+                  <FileUpload.Trigger asChild>
+                    <Button variant="outline" size="sm">
+                      <HiUpload/> Send file
+                    </Button>
+                  </FileUpload.Trigger>
+                  <FileUpload.List/>
+                </FileUpload.Root>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
         <Input onKeyDown={keyDownHandler} value={inputValue} onChange={(e) => setInputValue(e.target.value)}/>
-        <IconButton marginLeft='5' onClick={onClick} aria-label="Send message">
+        <Button marginLeft='5' onClick={onClick} aria-label="Send message">
           <LuSend/>
-        </IconButton>
+        </Button>
       </Center>
     </Container>
   );

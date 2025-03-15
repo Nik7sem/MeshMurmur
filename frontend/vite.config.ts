@@ -13,6 +13,11 @@ export default defineConfig({
       key: fs.readFileSync('./certs/server-key.pem')
     },
   },
+  esbuild: {
+    supported: {
+      'top-level-await': true
+    },
+  },
   base: process.env.NODE_ENV === 'production' ? '/MeshMurmur/' : '/',
   plugins: [react(), tsconfigPaths()],
 })
