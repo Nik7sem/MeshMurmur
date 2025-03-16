@@ -70,10 +70,11 @@ const HomePage = () => {
     if (uploadedFiles.length > 0) {
       for (const file of uploadedFiles) {
         for (const conn of connector.connectedPeers) {
-          connector.sendFile({peerId: conn.targetPeerId, file})
+          connector.sendFile({peerId: conn.targetPeerId, file}).then(() => {
+            const url = URL.createObjectURL(file)
+            addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+          })
         }
-        const url = URL.createObjectURL(file)
-        addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
       }
       setUploadedFiles([])
     }
@@ -84,7 +85,11 @@ const HomePage = () => {
       <MessagesBlock messageBlockRef={messageBlockRef} messages={messages}/>
       <Center marginTop="1vh">
         <SendOptions onClick={onClick} files={uploadedFiles} setFiles={setUploadedFiles}/>
-        <Input onKeyDown={keyDownHandler} value={inputValue} onChange={(e) => setInputValue(e.target.value)}/>
+        <Input onKeyDown={keyDownHandler}
+               value={inputValue}
+               onChange={(e) => setInputValue(e.target.value)}
+               onPaste={(e) => setUploadedFiles([...e.clipboardData.files])}
+        />
         <Button marginLeft='5' onClick={onClick} aria-label="Send message">
           <LuSend/>
         </Button>

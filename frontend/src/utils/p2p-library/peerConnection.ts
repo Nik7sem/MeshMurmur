@@ -96,8 +96,8 @@ export class PeerConnection {
     }
   }
 
-  sendFile(file: File) {
-    this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
+  async sendFile(file: File) {
+    await this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
   }
 
   isBlocked() {

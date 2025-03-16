@@ -99,8 +99,8 @@ export class Connector {
     this.connections[peerId].send({data, type: 'text'})
   }
 
-  sendFile({peerId, file}: { peerId: string, file: File }) {
-    this.connections[peerId].sendFile(file)
+  async sendFile({peerId, file}: { peerId: string, file: File }) {
+    await this.connections[peerId].sendFile(file)
   }
 
   cleanup() {
