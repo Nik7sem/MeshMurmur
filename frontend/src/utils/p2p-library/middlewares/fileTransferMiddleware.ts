@@ -66,6 +66,8 @@ export class FileTransferMiddleware extends Middleware {
 
     const percent = Math.round(this.received.chunks.length / this.fileMetadata.chunks * 100)
     if (percent > this.received.percent) {
+
+      // TODO: Try to create more general function for display progress
       this.onFileProgress?.({
         title: `Receiving from ${getShort(this.conn.targetPeerId)} ${this.received.chunks.length}/${this.fileMetadata.chunks}`,
         progress: percent,
@@ -140,6 +142,7 @@ export class FileTransferMiddleware extends Middleware {
     })
   }
 
+  // TODO: Remove this function (inefficient for large files) create chunks while sending
   async sendFile(file: File) {
     if (this.state !== "idle") return this.logger.warn("Cannot send file while receiving!");
     this.logger.info(`Sending file: ${file.name}, Size: ${file.size} bytes`);

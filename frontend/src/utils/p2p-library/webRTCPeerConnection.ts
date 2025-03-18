@@ -5,6 +5,7 @@ import {rawMessageDataType} from "@/utils/p2p-library/types.ts";
 
 export class WebRTCPeerConnection {
   private pc: RTCPeerConnection;
+  // TODO: Create object (maybe class) with data channels to easily access it, and create getter
   private dataChannel?: RTCDataChannel;
   private makingOffer = false
   private ignoreOffer = false;
@@ -27,6 +28,7 @@ export class WebRTCPeerConnection {
     this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
     // this.startDebugListeners()
 
+    // TODO: Leave only one: on final state or on data channel open
     this.pc.onconnectionstatechange = () => {
       if (this.pc.connectionState === "connecting" ||
         this.pc.connectionState === "new") return
@@ -39,6 +41,7 @@ export class WebRTCPeerConnection {
       this.logger.info("Ice candidate error: ", event.errorText);
     }
 
+    // TODO: Create datachannel with negotiated parameter, also create 3 different channels with different options
     // Impolite peer creates a new data channel
     if (!this.polite) {
       this.createDataChannel()
