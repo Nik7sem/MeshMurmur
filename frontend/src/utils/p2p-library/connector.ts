@@ -11,7 +11,7 @@ import {
 export class Connector {
   public onCompleteData?: (data: completeMessageType) => void
   public onFileProgress?: onFileProgressType
-  private signaler: FirebaseSignaler;
+  private readonly signaler: FirebaseSignaler;
   private connections: { [peerId: string]: PeerConnection } = {}
   private blackList: Set<string> = new Set()
   private potentialPeers: Set<string> = new Set()
@@ -95,8 +95,8 @@ export class Connector {
     return this.potentialPeers.size
   }
 
-  send({peerId, data}: completeTextType) {
-    this.connections[peerId].send({data, type: 'text'})
+  sendText({peerId, data}: completeTextType) {
+    this.connections[peerId].sendText(data)
   }
 
   async sendFile({peerId, file}: { peerId: string, file: File }) {

@@ -4,7 +4,7 @@ import {peerId} from "@/init.ts";
 import {getShort} from "@/utils/p2p-library/shortId.ts";
 import {Container} from "@chakra-ui/react";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
-import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/isObjectHelper.ts";
+import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
 import ChatFileMessage from "@/components/ChatFileMessage.tsx";
 
 interface Props {

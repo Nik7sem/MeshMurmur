@@ -1,39 +1,30 @@
-import {ConnectionData, parsedMessageDataType} from "@/utils/p2p-library/types.ts";
+import {ChannelEventBase, ConnectionData, eventDataType} from "@/utils/p2p-library/types.ts";
 import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
 import {Logger} from "../logger.ts";
 
-export class Signaler {
-  send(targetPeerId: string, connectionData: ConnectionData) {
-    throw new Error("Not implemented");
-  }
+export abstract class Signaler {
+  abstract send(targetPeerId: string, connectionData: ConnectionData): void
 
-  on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
-    throw new Error("Not implemented");
-  }
+  abstract on(targetPeerId: string, callback: (connectionData: ConnectionData) => void): void
 
-  off(targetPeerId: string) {
-    throw new Error("Not implemented");
-  }
+  abstract off(targetPeerId: string): void
 
-  cleanup(targetPeerId: string) {
-    throw new Error("Not implemented");
-  }
+  abstract cleanup(targetPeerId: string): void
 }
 
-export class Middleware {
+export abstract class Middleware {
   constructor(
-    protected send: (data: parsedMessageDataType) => void,
     protected conn: PeerConnection,
     protected logger: Logger
   ) {
   }
 
   // on datachannel open
-  init() {
+  init(eventData: ChannelEventBase) {
   }
 
   // call middleware on new message
-  call(data: parsedMessageDataType): boolean {
+  call(data: eventDataType): boolean {
     return true
   }
 

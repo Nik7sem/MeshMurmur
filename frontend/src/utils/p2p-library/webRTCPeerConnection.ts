@@ -1,26 +1,36 @@
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {rtcConfig} from "@/utils/p2p-library/conf.ts";
 import {Logger} from "../logger.ts";
-import {rawMessageDataType} from "@/utils/p2p-library/types.ts";
+import {DataChannels} from "@/utils/p2p-library/DataChannel.ts";
+import {ChannelEventHandlers} from "@/utils/p2p-library/types.ts";
 
 export class WebRTCPeerConnection {
-  private pc: RTCPeerConnection;
-  // TODO: Create object (maybe class) with data channels to easily access it, and create getter
-  private dataChannel?: RTCDataChannel;
+  private readonly pc: RTCPeerConnection;
+  private readonly polite: boolean = false;
   private makingOffer = false
   private ignoreOffer = false;
-  private bufferedAmountLowThreshold = 512 * 1024 * 8 // 512 KB
+
+  public readonly channel: DataChannels;
 
   constructor(
-    private signaler: Signaler,
-    private logger: Logger,
+    peerId: string,
     private readonly targetPeerId: string,
-    private readonly polite: boolean,
-    private onData: (data: rawMessageDataType) => void,
-    private onFinalState: (state: RTCPeerConnectionState) => void,
-    private onChannelOpen: () => void
+    private readonly signaler: Signaler,
+    private readonly logger: Logger,
+    private readonly onFinalState: (state: RTCPeerConnectionState) => void,
+    onData: ChannelEventHandlers['ondata'],
+    onChannelOpen: ChannelEventHandlers['onopen']
   ) {
+    this.polite = peerId < this.targetPeerId
     this.pc = new RTCPeerConnection(rtcConfig);
+    this.channel = new DataChannels(this.pc,
+      {
+        onopen: onChannelOpen,
+        ondata: onData,
+        onclose: ({channelType}) => this.logger.error(`${channelType} channel closed`),
+        onerror: ({error}) => this.logger.error(error)
+      }
+    )
     this.connect()
   }
 
@@ -41,12 +51,6 @@ export class WebRTCPeerConnection {
       this.logger.info("Ice candidate error: ", event.errorText);
     }
 
-    // TODO: Create datachannel with negotiated parameter, also create 3 different channels with different options
-    // Impolite peer creates a new data channel
-    if (!this.polite) {
-      this.createDataChannel()
-    }
-
     // Handle ICE candidates
     this.pc.onicecandidate = ({candidate}) => {
       if (candidate) {
@@ -55,27 +59,10 @@ export class WebRTCPeerConnection {
       }
     };
 
-    // Handle incoming data channel (from remote peer)
-    this.pc.ondatachannel = (event) => {
-      if (this.dataChannel) {
-        this.logger.warn("DATA CHANNEL DUPLICATE")
-      }
-
-      this.dataChannel = event.channel;
-      this.setupDataChannel();
-      this.logger.info(`Receive data channel`)
-    };
-
     // offer
     this.pc.onnegotiationneeded = async () => {
       try {
         this.makingOffer = true;
-
-        if (this.polite && !this.dataChannel) {
-          // Polite peer creates a new data channel
-          this.createDataChannel();
-        }
-
         await this.pc.setLocalDescription();
         this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
         this.logger.info(`Send offer: `, this.pc.localDescription)
@@ -133,70 +120,6 @@ export class WebRTCPeerConnection {
     this.pc.onicegatheringstatechange = () => {
       this.logger.info("ICE gathering state changed:", this.pc.iceGatheringState);
     };
-  }
-
-  /**
-   * Creates a new data channel
-   */
-  createDataChannel(label: string = "data") {
-    if (this.dataChannel) return
-    this.dataChannel = this.pc.createDataChannel(label);
-    this.setupDataChannel();
-    this.logger.info("Create data channel")
-  }
-
-  private setupDataChannel() {
-    if (!this.dataChannel) return;
-
-    this.dataChannel.binaryType = 'arraybuffer'
-    this.dataChannel.bufferedAmountLowThreshold = this.bufferedAmountLowThreshold;
-
-    this.dataChannel.onopen = this.onChannelOpen;
-    this.dataChannel.onmessage = (event) => this.onData(event.data)
-    this.dataChannel.onclose = () => this.logger.info("Data channel closed.");
-    this.dataChannel.onerror = (error) => this.logger.error("Data channel error:", error);
-  }
-
-  send(data: rawMessageDataType) {
-    if (this.dataChannel && this.dataChannel.readyState === "open") {
-      if (typeof data === "string") {
-        this.dataChannel.send(data)
-      } else if (data instanceof Blob) {
-        this.dataChannel.send(data)
-      } else if (data instanceof ArrayBuffer) {
-        this.dataChannel.send(data)
-      } else if (data satisfies ArrayBufferView) {
-        this.dataChannel.send(data)
-      }
-    } else {
-      this.logger.error("Data channel is not open!");
-    }
-  }
-
-  sendLargeData(chunks: ArrayBuffer[], onChunkIdx: (chunkIdx: number) => void): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.dataChannel && this.dataChannel.readyState === "open") {
-        const sendNextChunk = () => {
-          if (this.dataChannel && this.dataChannel.readyState === "open") {
-            if (chunkIdx < chunks.length) {
-              this.dataChannel.send(chunks[chunkIdx])
-              onChunkIdx(chunkIdx)
-              ++chunkIdx
-              if (this.dataChannel.bufferedAmount <= this.dataChannel.bufferedAmountLowThreshold) {
-                sendNextChunk()
-              }
-            } else {
-              this.dataChannel.onbufferedamountlow = null
-              resolve()
-            }
-          }
-        }
-
-        let chunkIdx = 0
-        this.dataChannel.onbufferedamountlow = () => sendNextChunk()
-        sendNextChunk()
-      }
-    })
   }
 
   async getStats() {

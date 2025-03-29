@@ -20,6 +20,7 @@ let peerKeys = null
 try {
   peerKeys = await secureStorage.retrieveSecureData('peer-keys');
 } catch (e) {
+  // TODO: Ask user if he wants to create new key pair
   console.log('WRONG PASSPHRASE')
 }
 

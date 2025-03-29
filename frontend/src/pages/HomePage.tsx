@@ -61,7 +61,7 @@ const HomePage = () => {
   function onClick() {
     if (inputValue.length > 0) {
       for (const conn of connector.connectedPeers) {
-        connector.send({peerId: conn.targetPeerId, data: inputValue})
+        connector.sendText({peerId: conn.targetPeerId, data: inputValue})
       }
       addMessage({data: inputValue, peerId})
       setInputValue('')

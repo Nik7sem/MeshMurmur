@@ -1,5 +1,5 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
-import {parsedMessageDataType} from "@/utils/p2p-library/types.ts";
+import {ChannelEventBase, eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class ManagerMiddleware extends Middleware {
   private middlewares: { [key: string]: { middleware: Middleware, priority: number } } = {};
@@ -7,7 +7,7 @@ export class ManagerMiddleware extends Middleware {
 
   add<T extends Middleware>(middlewareClass: new (...args: any[]) => T, priority: number): T {
     const key = middlewareClass.name;
-    const instance = new middlewareClass(this.send, this.conn, this.logger);
+    const instance = new middlewareClass(this.conn, this.logger);
     this.middlewares[key] = {middleware: instance, priority};
     this.updateList()
     return instance;
@@ -17,13 +17,13 @@ export class ManagerMiddleware extends Middleware {
     return this.middlewares[middlewareClass.name].middleware as T || null;
   }
 
-  init() {
+  init(eventData: ChannelEventBase) {
     for (const middleware of this.prioritizedList) {
-      middleware.init();
+      middleware.init(eventData);
     }
   }
 
-  call(data: parsedMessageDataType) {
+  call(data: eventDataType) {
     for (const middleware of this.prioritizedList) {
       if (!middleware.call(data)) {
         return false
