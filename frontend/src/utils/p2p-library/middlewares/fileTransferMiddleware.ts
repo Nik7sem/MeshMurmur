@@ -5,7 +5,6 @@ import {
   fileProgressType,
 } from "@/utils/p2p-library/types.ts";
 import {getShort} from "@/utils/p2p-library/shortId.ts";
-import {shuffle} from "@/utils/getRandomSample.ts";
 
 interface FileMetadataMessage {
   type: "file-metadata";
@@ -50,7 +49,7 @@ export class FileTransferMiddleware extends Middleware {
         return true
       }
     } else if (eventData.datatype === 'byte' && eventData.channelType === "unordered") {
-      this.handleFileChunk({data: eventData.data, metadata: eventData.metadata} as ChunkData);
+      this.handleFileChunk(eventData as ChunkData);
     }
     return false;
   }

@@ -26,7 +26,7 @@ export class PeerConnection {
     private logger: Logger,
     private signaler: Signaler,
     private onClose: (block: boolean) => void,
-    private timeout = 5000
+    private timeout = 30000
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 1)

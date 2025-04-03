@@ -24,7 +24,7 @@ export abstract class Middleware {
   }
 
   // call middleware on new message
-  call(data: eventDataType): boolean {
+  call(eventData: eventDataType): boolean {
     return true
   }
 
