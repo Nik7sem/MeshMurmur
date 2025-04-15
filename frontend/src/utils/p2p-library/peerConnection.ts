@@ -11,10 +11,12 @@ import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddlewa
 import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMiddleware.ts";
 import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransferMiddleware.ts";
 import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
+import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEventMiddleware.ts";
 
 export class PeerConnection {
   public onCompleteData?: (data: completeMessageType) => void
   public onFileProgress?: onFileProgressType
+  public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private connection: WebRTCPeerConnection
   private managerMiddleware: ManagerMiddleware
   public connected = false;
@@ -34,6 +36,7 @@ export class PeerConnection {
     fileTransferMiddleware.onFileComplete = (data) => this.onCompleteData?.(data)
     fileTransferMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
     this.managerMiddleware.add(TextMiddleware, 3).onText = (data) => this.onCompleteData?.(data)
+    this.managerMiddleware.add(TypingEventMiddleware, 4).onTyping = (data) => this.onTyping?.(data)
     this.connection = this.connect()
   }
 
@@ -83,6 +86,11 @@ export class PeerConnection {
   async sendFile(file: File) {
     if (this.isBlocked()) return this.logger.warn(`Cannot send file to ${this.targetPeerId}, peer is not verified!`);
     await this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
+  }
+
+  emitTypingEvent() {
+    if (this.isBlocked()) return this.logger.warn(`Cannot emit typing event to ${this.targetPeerId}, peer is not verified!`);
+    this.managerMiddleware.get(TypingEventMiddleware)?.emitTypingEvent()
   }
 
   get channel() {

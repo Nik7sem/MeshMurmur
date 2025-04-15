@@ -6,6 +6,8 @@ import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
 
+export const AppVersion = 'Alpha v1.0.0'
+
 let passphrase = localStorage.getItem('passphrase')
 if (!passphrase) {
   passphrase = arrayBufferToBase64(generateNonce())

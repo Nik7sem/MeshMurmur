@@ -1,4 +1,4 @@
-import React, {KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
+import React, {ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Button, Center, Container, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
 import {completeMessageType, fileProgressType} from "@/utils/p2p-library/types.ts";
@@ -6,11 +6,13 @@ import {connector, peerId} from "@/init.ts";
 import MessagesBlock from "@/components/MessagesBlock.tsx";
 import SendOptions from "@/components/SendOptions.tsx";
 import FileProgressBar from "@/components/FileProgressBar.tsx";
+import TypingNotification from "@/components/TypingNotification.tsx";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [inputValue, setInputValue] = useState<string>('')
+  const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
   const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
   const messageBlockRef = useRef<HTMLDivElement>(null);
 
@@ -44,12 +46,30 @@ const HomePage = () => {
     }
   }, [])
 
+  const onTyping = useCallback((data: { typing: boolean, peerId: string }) => {
+    setTypingPeers((typingPeers) => {
+      const newTypingPeers = new Set([...typingPeers])
+      if (data.typing) {
+        newTypingPeers.add(data.peerId)
+      } else {
+        newTypingPeers.delete(data.peerId)
+      }
+      return newTypingPeers
+    })
+  }, [])
+
   useEffect(() => {
     if (addMessage) {
       connector.onCompleteData = addMessage
       connector.onFileProgress = setNewFileProgress
+      connector.onTyping = onTyping
     }
   }, [addMessage])
+
+  function onChangeInput(e: ChangeEvent<HTMLInputElement>) {
+    setInputValue(e.target.value)
+    connector.emitTypingEvent()
+  }
 
   function keyDownHandler(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
@@ -85,9 +105,7 @@ const HomePage = () => {
       <MessagesBlock messageBlockRef={messageBlockRef} messages={messages}/>
       <Center marginTop="1vh">
         <SendOptions onClick={onClick} files={uploadedFiles} setFiles={setUploadedFiles}/>
-        <Input onKeyDown={keyDownHandler}
-               value={inputValue}
-               onChange={(e) => setInputValue(e.target.value)}
+        <Input onKeyDown={keyDownHandler} value={inputValue} onChange={onChangeInput}
                onPaste={(e) => setUploadedFiles([...e.clipboardData.files])}
         />
         <Button marginLeft='5' onClick={onClick} aria-label="Send message">
@@ -97,6 +115,7 @@ const HomePage = () => {
       <Center>
         <FileProgressBar data={fileProgressData}/>
       </Center>
+      <TypingNotification typingPeers={typingPeers}/>
     </Container>
   );
 };

@@ -11,6 +11,7 @@ import {
 export class Connector {
   public onCompleteData?: (data: completeMessageType) => void
   public onFileProgress?: onFileProgressType
+  public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private readonly signaler: FirebaseSignaler;
   private connections: { [peerId: string]: PeerConnection } = {}
   private blackList: Set<string> = new Set()
@@ -68,6 +69,8 @@ export class Connector {
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnClose(targetPeerId));
     this.connections[targetPeerId].onCompleteData = (data) => this.onCompleteData?.(data)
     this.connections[targetPeerId].onFileProgress = (data) => this.onFileProgress?.(data)
+    // TODO: this number of callbacks scares me...
+    this.connections[targetPeerId].onTyping = (data) => this.onTyping?.(data)
   }
 
   private createOnClose(targetPeerId: string) {
@@ -101,6 +104,12 @@ export class Connector {
 
   async sendFile({peerId, file}: { peerId: string, file: File }) {
     await this.connections[peerId].sendFile(file)
+  }
+
+  emitTypingEvent() {
+    for (const conn of Object.values(this.connections)) {
+      conn.emitTypingEvent()
+    }
   }
 
   cleanup() {

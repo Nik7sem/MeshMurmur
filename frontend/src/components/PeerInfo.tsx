@@ -1,10 +1,14 @@
 import React from 'react';
 import {DataList} from "@chakra-ui/react";
-import {connector, peerId} from "@/init.ts";
+import {AppVersion, connector, peerId} from "@/init.ts";
 
 const PeerInfo = () => {
   return (
-    <DataList.Root marginLeft="40px" orientation="horizontal" maxW="5">
+    <DataList.Root marginLeft="20px" orientation="horizontal" maxW="15">
+      <DataList.Item>
+        <DataList.ItemLabel>App version</DataList.ItemLabel>
+        <DataList.ItemValue>{AppVersion}</DataList.ItemValue>
+      </DataList.Item>
       <DataList.Item>
         <DataList.ItemLabel>PeerId</DataList.ItemLabel>
         <DataList.ItemValue>{peerId}</DataList.ItemValue>

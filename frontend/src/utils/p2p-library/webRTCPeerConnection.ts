@@ -27,7 +27,7 @@ export class WebRTCPeerConnection {
       {
         onopen: onChannelOpen,
         ondata: onData,
-        onclose: ({channelType}) => this.logger.error(`${channelType} channel closed`),
+        onclose: ({channelType}) => this.logger.info(`${channelType} channel closed`),
         onerror: ({error}) => this.logger.error(error)
       }
     )

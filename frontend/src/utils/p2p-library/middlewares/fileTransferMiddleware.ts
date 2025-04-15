@@ -45,13 +45,13 @@ export class FileTransferMiddleware extends Middleware {
     if (eventData.datatype === 'json' && eventData.channelType === "reliable") {
       if (eventData.type === "file-metadata") {
         this.handleFileMetadata(eventData as FileMetadataMessage);
-      } else {
-        return true
+        return false;
       }
     } else if (eventData.datatype === 'byte' && eventData.channelType === "unordered") {
       this.handleFileChunk(eventData as ChunkData);
+      return false;
     }
-    return false;
+    return true;
   }
 
   private handleFileMetadata(message: FileMetadataMessage) {

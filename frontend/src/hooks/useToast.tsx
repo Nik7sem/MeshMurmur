@@ -7,6 +7,11 @@ export default function useToast(duration = 6000) {
       description: description,
       type: 'error',
       duration: duration,
+      action: {
+        label: "✕",
+        onClick: () => {
+        },
+      },
     })
   }
 
@@ -16,6 +21,11 @@ export default function useToast(duration = 6000) {
       description: description,
       type: 'success',
       duration: duration,
+      action: {
+        label: "✕",
+        onClick: () => {
+        },
+      },
     })
   }
 
@@ -25,6 +35,11 @@ export default function useToast(duration = 6000) {
       description: description,
       type: 'info',
       duration: duration,
+      action: {
+        label: "✕",
+        onClick: () => {
+        },
+      },
     })
   }
 
@@ -34,6 +49,11 @@ export default function useToast(duration = 6000) {
       description: description,
       type: 'warning',
       duration: duration,
+      action: {
+        label: "✕",
+        onClick: () => {
+        },
+      },
     })
   }
 
