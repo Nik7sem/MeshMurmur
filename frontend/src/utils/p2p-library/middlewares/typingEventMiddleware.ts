@@ -4,7 +4,7 @@ import {eventDataType} from "@/utils/p2p-library/types.ts";
 export class TypingEventMiddleware extends Middleware {
   private lastTypingEventSent: number = 0;
   private readonly typingDebounceDelay: number = 300; // ms
-  private readonly typingTimeout: number = 1000; // ms
+  private readonly typingTimeout: number = 2000; // ms
   private typingTimeoutId: NodeJS.Timeout | null = null;
   private isTargetPeerTyping = false
   public onTyping?: (data: { typing: boolean, peerId: string }) => void

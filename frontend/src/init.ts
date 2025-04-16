@@ -3,10 +3,22 @@ import {Logger} from "@/utils/logger.ts";
 import {SecureStorage} from "@/utils/crypto/secureStorage.ts";
 import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";
 import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
+import {askNotificationPermission} from "@/utils/notifications.ts";
+
+// init globals
+window.DOCUMENT_VISIBLE = true
+window.SCROLL_TO_BOTTOM = true
+
+document.addEventListener('visibilitychange', () => {
+  window.DOCUMENT_VISIBLE = !document.hidden
+})
+
+// init constants
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
 
 export const AppVersion = 'Alpha v1.0.0'
+askNotificationPermission()
 
 let passphrase = localStorage.getItem('passphrase')
 if (!passphrase) {

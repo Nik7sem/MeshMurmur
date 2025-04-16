@@ -1,4 +1,4 @@
-import React, {ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
+import React, {ChangeEvent, KeyboardEvent, useCallback, useEffect, useState} from 'react';
 import {Button, Center, Container, Input} from "@chakra-ui/react";
 import {LuSend} from "react-icons/lu";
 import {completeMessageType, fileProgressType} from "@/utils/p2p-library/types.ts";
@@ -7,6 +7,8 @@ import MessagesBlock from "@/components/MessagesBlock.tsx";
 import SendOptions from "@/components/SendOptions.tsx";
 import FileProgressBar from "@/components/FileProgressBar.tsx";
 import TypingNotification from "@/components/TypingNotification.tsx";
+import {getShort} from "@/utils/p2p-library/shortId.ts";
+import {notifyUser} from "@/utils/notifications.ts";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
@@ -14,21 +16,12 @@ const HomePage = () => {
   const [inputValue, setInputValue] = useState<string>('')
   const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
   const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
-  const messageBlockRef = useRef<HTMLDivElement>(null);
-
-  const smoothScroll = useCallback(() => {
-    setTimeout(() => {
-      if (messageBlockRef.current) {
-        messageBlockRef.current.scrollTo({
-          top: messageBlockRef.current.scrollHeight,
-          behavior: "smooth",
-        })
-      }
-    }, 100)
-  }, [])
 
   const addMessage = useCallback((data: completeMessageType) => {
-    smoothScroll()
+    if (!window.DOCUMENT_VISIBLE) {
+      window.SCROLL_TO_BOTTOM = false
+      notifyUser(`New message from: ${getShort(data.peerId)}`)
+    }
     setMessages((prevMessages) => [...prevMessages, data]);
   }, []);
 
@@ -59,12 +52,12 @@ const HomePage = () => {
   }, [])
 
   useEffect(() => {
-    if (addMessage) {
+    if (addMessage && setNewFileProgress && onTyping) {
       connector.onCompleteData = addMessage
       connector.onFileProgress = setNewFileProgress
       connector.onTyping = onTyping
     }
-  }, [addMessage])
+  }, [addMessage, onTyping, setNewFileProgress])
 
   function onChangeInput(e: ChangeEvent<HTMLInputElement>) {
     setInputValue(e.target.value)
@@ -89,10 +82,13 @@ const HomePage = () => {
 
     if (uploadedFiles.length > 0) {
       for (const file of uploadedFiles) {
-        for (const conn of connector.connectedPeers) {
+        const len = connector.connectedPeers.length
+        for (const [idx, conn] of connector.connectedPeers.entries()) {
           connector.sendFile({peerId: conn.targetPeerId, file}).then(() => {
-            const url = URL.createObjectURL(file)
-            addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+            if (idx == len - 1) {
+              const url = URL.createObjectURL(file)
+              addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+            }
           })
         }
       }
@@ -102,7 +98,7 @@ const HomePage = () => {
 
   return (
     <Container width="100%">
-      <MessagesBlock messageBlockRef={messageBlockRef} messages={messages}/>
+      <MessagesBlock messages={messages}/>
       <Center marginTop="1vh">
         <SendOptions onClick={onClick} files={uploadedFiles} setFiles={setUploadedFiles}/>
         <Input onKeyDown={keyDownHandler} value={inputValue} onChange={onChangeInput}
