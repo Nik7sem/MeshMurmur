@@ -46,10 +46,9 @@ export class PeerConnection {
     this.logger.warn("Not handled data:", data)
   }
 
-  private onChannelOpen: ChannelEventHandlers['onopen'] = (data) => {
-    // TODO: wait for each init and doing it sequentially, dont allow call while not initialized
+  private onChannelOpen: ChannelEventHandlers['onopen'] = async (data) => {
     this.logger.info(`${data.channelType} data channel opened!`)
-    this.managerMiddleware.init(data)
+    await this.managerMiddleware.init(data)
   }
 
   private onFinalState = async (state: RTCPeerConnectionState | "timeout") => {
@@ -72,10 +71,6 @@ export class PeerConnection {
 
   get channel() {
     return this.connection.channel
-  }
-
-  is_initialized() {
-    return this.managerMiddleware.isBlocked()
   }
 
   disconnect(block = false) {

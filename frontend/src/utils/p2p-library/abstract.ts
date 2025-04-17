@@ -20,7 +20,7 @@ export abstract class Middleware {
   }
 
   // on datachannel open
-  init(eventData: ChannelEventBase) {
+  async init(eventData: ChannelEventBase) {
   }
 
   // call middleware on new message

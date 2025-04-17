@@ -36,7 +36,7 @@ export class FileTransferMiddleware extends Middleware {
   public onFileComplete?: (data: completeFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 
-  init(eventData: ChannelEventBase) {
+  async init(eventData: ChannelEventBase) {
     if (eventData.channelType === "reliable") {
       this.chunkSize = this.conn.channel.unordered.CHUNK_SIZE - this.conn.channel.unordered.METADATA_SIZE
     }
