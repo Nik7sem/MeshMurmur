@@ -17,7 +17,7 @@ document.addEventListener('visibilitychange', () => {
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
 
-export const AppVersion = 'Alpha v1.0.0'
+export const AppVersion = 'Alpha v1.1.0'
 askNotificationPermission()
 
 let passphrase = localStorage.getItem('passphrase')
