@@ -10,6 +10,7 @@ const useUserData = () => {
     if (userData.nickname !== newUserData.nickname) {
       connector.actions.sendNickname(newUserData.nickname)
     }
+    connector.actions.associatedNicknames = newUserData.associatedNicknames
     setUserData(newUserData)
     localStorage.setItem("userData", JSON.stringify(newUserData))
   }

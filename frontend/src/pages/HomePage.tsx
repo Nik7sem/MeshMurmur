@@ -74,7 +74,7 @@ const HomePage = () => {
   function onClick() {
     if (inputValue.length > 0) {
       connector.actions.sendText(inputValue)
-      addMessage({data: inputValue, peerId})
+      addMessage({data: inputValue, peerId, nickname: ''})
       setInputValue('')
     }
 
@@ -82,7 +82,7 @@ const HomePage = () => {
       for (const file of uploadedFiles) {
         connector.actions.sendFile(file).then(() => {
           const url = URL.createObjectURL(file)
-          addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+          addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId, nickname: ''})
         })
       }
       setUploadedFiles([])

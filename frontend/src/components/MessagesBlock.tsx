@@ -41,9 +41,9 @@ const MessagesBlock: FC<Props> = ({messages}) => {
       {messages.map((data, idx) => {
           const me = peerId === data.peerId
           if (isCompleteText(data)) {
-            return <ChatTextMessage message={data.data} username={getShort(data.peerId)} me={me} key={idx}/>
+            return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
           } else if (isCompleteFile(data)) {
-            return <ChatFileMessage data={data.data} username={getShort(data.peerId)} me={me} key={idx}/>
+            return <ChatFileMessage data={data.data} username={data.nickname} me={me} key={idx}/>
           }
         }
       )}

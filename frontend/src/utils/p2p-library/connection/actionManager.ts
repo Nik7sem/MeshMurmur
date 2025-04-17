@@ -5,12 +5,14 @@ import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransf
 import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
 import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
 import {getShort} from "@/utils/p2p-library/helpers.ts";
+import {UserData} from "@/types/user.ts";
 
 export class ActionManager {
   public onCompleteData?: (data: completeMessageType) => void
   public onFileProgress?: onFileProgressType
   public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private nickname = ''
+  public associatedNicknames: UserData['associatedNicknames'] = {}
 
   constructor(
     private readonly connector: Connector,
@@ -24,10 +26,14 @@ export class ActionManager {
     const nicknameMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)
 
     if (textMiddleware) {
-      textMiddleware.onText = (data) => this.onCompleteData?.(data)
+      textMiddleware.onText = (data) => {
+        this.onCompleteData?.({...data, nickname: this.targetPeerNickname(data.peerId)})
+      }
     }
     if (fileMiddleware) {
-      fileMiddleware.onFileComplete = (data) => this.onCompleteData?.(data)
+      fileMiddleware.onFileComplete = (data) => {
+        this.onCompleteData?.({...data, nickname: this.targetPeerNickname(data.peerId)})
+      }
       fileMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
     }
     if (typingMiddleware) {
@@ -58,15 +64,19 @@ export class ActionManager {
     }
   }
 
-  // TODO: in mega rare cases, nickname on transferred
   sendNickname(nickname: string) {
     this.nickname = nickname;
-    for (const conn of this.connector.connectedPeers) {
+    for (const conn of this.connector.peers) {
       conn.managerMiddleware.get(NicknameMiddleware)?.setNickname(this.nickname)
     }
   }
 
   targetPeerNickname(targetPeerId: string) {
-    return this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)?.targetPeerNickname || getShort(targetPeerId)
+    const nickname = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)?.targetPeerNickname
+    const associated = this.associatedNicknames[targetPeerId]
+    if (nickname && associated) return `${nickname}#${associated}`
+    if (nickname) return `${nickname}`
+    if (associated) return `${associated}`
+    return getShort(targetPeerId)
   }
 }

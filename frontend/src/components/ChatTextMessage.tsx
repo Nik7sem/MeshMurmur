@@ -1,13 +1,15 @@
 import {Box, Text} from "@chakra-ui/react";
 import {FC} from "react";
+import {Tooltip} from "@/components/ui/tooltip.tsx";
 
 interface Props {
   username: string
+  peerId: string
   message: string
   me: boolean
 }
 
-const ChatTextMessage: FC<Props> = ({username, message, me}) => {
+const ChatTextMessage: FC<Props> = ({username, peerId, message, me}) => {
   return (
     <Box
       display="flex"
@@ -23,9 +25,12 @@ const ChatTextMessage: FC<Props> = ({username, message, me}) => {
         maxW="75%"
       >
         {!me ?
-          <Text fontSize="sm" fontWeight="bold" mb={1}>
-            {username}
-          </Text> :
+          <Tooltip content={peerId} showArrow positioning={{placement: "right-end"}} openDelay={300} closeDelay={100}
+                   interactive>
+            <Text fontSize="sm" fontWeight="bold" mb={1}>
+              {username}
+            </Text>
+          </Tooltip> :
           <></>}
         <Text>{message}</Text>
       </Box>
