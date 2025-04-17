@@ -47,3 +47,7 @@ export const connectorConfig = {
   maxNumberOfPeers: 10
 }
 
+export const peerConfig = {
+  maxNameLength: 10
+}
+

@@ -16,6 +16,7 @@ import {logType} from "@/utils/p2p-library/types.ts";
 import LogLabel from "@/components/LogLabel.tsx";
 import PeerInfo from "@/components/PeerInfo.tsx";
 import PeerGraph from "./PeerGraph.tsx"
+import NicknameAssigner from "@/components/NicknameAssigner.tsx";
 
 interface Props {
   logs: logType[]
@@ -43,7 +44,7 @@ const Logs: FC<Props> = ({logs}) => {
               <Drawer.Title>
                 <SegmentGroup.Root value={menuValue} onValueChange={({value}) => setMenuValue(value)}>
                   <SegmentGroup.Indicator/>
-                  <SegmentGroup.Items items={["Logs", "Info", "Graph"]}/>
+                  <SegmentGroup.Items items={["Logs", "Info", "Nickname", "Graph"]}/>
                 </SegmentGroup.Root>
               </Drawer.Title>
             </Drawer.Header>
@@ -54,8 +55,9 @@ const Logs: FC<Props> = ({logs}) => {
                     <Box key={idx}><LogLabel type={log.type}/> <Text>{log.text}</Text></Box>
                   )}
                 </VStack> : menuValue === "Info" ?
-                  <PeerInfo/> :
-                  <PeerGraph/>
+                  <PeerInfo/> : menuValue === "Graph" ?
+                    <PeerGraph/> :
+                    <NicknameAssigner/>
               }
             </Drawer.Body>
             {/*<Drawer.Footer>*/}

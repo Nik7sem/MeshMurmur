@@ -1,9 +1,9 @@
 import {Connector} from "@/utils/p2p-library/connection/connector.ts";
 import {Logger} from "@/utils/logger.ts";
-import {SecureStorage} from "@/utils/crypto/secureStorage.ts";
 import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";
 import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
 import {askNotificationPermission} from "@/utils/notifications.ts";
+import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 
 // init globals
 window.DOCUMENT_VISIBLE = true
@@ -28,12 +28,10 @@ if (!passphrase) {
 
 // passphrase = arrayBufferToBase64(generateNonce())
 
-const secureStorage = new SecureStorage(passphrase)
+const storageManager = new SecureStorageManager(passphrase)
 
-let peerKeys = null
-try {
-  peerKeys = await secureStorage.retrieveSecureData('peer-keys');
-} catch (e) {
+const peerKeys = await storageManager.retrievePeerKeys()
+if (!peerKeys) {
   // TODO: Ask user if he wants to create new key pair
   console.log('WRONG PASSPHRASE')
 }
@@ -41,11 +39,11 @@ try {
 export const edKeyManager = peerKeys ? new ED25519KeyPairManager(peerKeys) : new ED25519KeyPairManager()
 
 if (!peerKeys) {
-  await secureStorage.storeSecureData('peer-keys', edKeyManager.exportKeyPair())
+  await storageManager.storePeerKeys(edKeyManager.exportKeyPair())
 }
 
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new Logger();
 export const connector = new Connector(peerId, logger)
 
-connector.init()
+await connector.init()

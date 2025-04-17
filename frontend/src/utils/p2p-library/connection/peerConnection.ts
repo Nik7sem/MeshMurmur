@@ -8,6 +8,7 @@ import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMidd
 import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransferMiddleware.ts";
 import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
 import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEventMiddleware.ts";
+import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
@@ -28,6 +29,7 @@ export class PeerConnection {
     this.managerMiddleware.add(FileTransferMiddleware, 2)
     this.managerMiddleware.add(TextMiddleware, 3)
     this.managerMiddleware.add(TypingEventMiddleware, 4)
+    this.managerMiddleware.add(NicknameMiddleware, 5)
     this.connection = this.connect()
   }
 

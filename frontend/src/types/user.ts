@@ -1,1 +1,4 @@
-export type UserData = {ready: boolean}
+export type UserData = {
+  nickname: string
+  associatedNicknames: { [key: string]: string }
+}

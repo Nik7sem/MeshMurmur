@@ -61,7 +61,7 @@ export class Connector {
       this.logger.info("Received invite from:", targetPeerId);
     }
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnClose(targetPeerId));
-    this.actions.registerCallbacks(targetPeerId)
+    this.actions.registerCallbacksAndData(targetPeerId)
   }
 
   private createOnClose(targetPeerId: string) {

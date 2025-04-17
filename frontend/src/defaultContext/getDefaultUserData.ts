@@ -1,8 +1,13 @@
 import {UserData} from "../types/user.ts";
-
-const defaultUserData: UserData = {ready: true}
+import {connector} from "@/init.ts";
 
 export function getDefaultUserData(): UserData {
   const storedUserData = localStorage.getItem("userData");
-  return storedUserData ? JSON.parse(storedUserData) : defaultUserData;
+  if (storedUserData) {
+    const userData = JSON.parse(storedUserData) as UserData;
+    connector.actions.sendNickname(userData.nickname)
+    return userData;
+  } else {
+    return {nickname: "", associatedNicknames: {}};
+  }
 }

@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef} from 'react';
 import ChatTextMessage from "@/components/ChatTextMessage.tsx";
-import {peerId} from "@/init.ts";
+import {connector, peerId} from "@/init.ts";
 import {Container} from "@chakra-ui/react";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
 import {getShort, isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
