@@ -23,7 +23,6 @@ export type ChannelEventHandlers = {
   onerror: (event: ChannelEventBase & { error: RTCErrorEvent }) => void;
 };
 
-
 export type jsonDataType = { data: unknown, type: string }
 export type byteDataType = { data: ArrayBuffer, metadata: unknown }
 

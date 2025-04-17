@@ -1,5 +1,5 @@
 import {ChannelEventBase, ConnectionData, eventDataType} from "@/utils/p2p-library/types.ts";
-import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
+import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {Logger} from "../logger.ts";
 
 export abstract class Signaler {

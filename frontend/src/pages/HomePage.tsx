@@ -7,8 +7,8 @@ import MessagesBlock from "@/components/MessagesBlock.tsx";
 import SendOptions from "@/components/SendOptions.tsx";
 import FileProgressBar from "@/components/FileProgressBar.tsx";
 import TypingNotification from "@/components/TypingNotification.tsx";
-import {getShort} from "@/utils/p2p-library/shortId.ts";
 import {notifyUser} from "@/utils/notifications.ts";
+import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
@@ -53,15 +53,15 @@ const HomePage = () => {
 
   useEffect(() => {
     if (addMessage && setNewFileProgress && onTyping) {
-      connector.onCompleteData = addMessage
-      connector.onFileProgress = setNewFileProgress
-      connector.onTyping = onTyping
+      connector.actions.onCompleteData = addMessage
+      connector.actions.onFileProgress = setNewFileProgress
+      connector.actions.onTyping = onTyping
     }
   }, [addMessage, onTyping, setNewFileProgress])
 
   function onChangeInput(e: ChangeEvent<HTMLInputElement>) {
     setInputValue(e.target.value)
-    connector.emitTypingEvent()
+    connector.actions.emitTypingEvent()
   }
 
   function keyDownHandler(e: KeyboardEvent<HTMLInputElement>) {
@@ -73,24 +73,17 @@ const HomePage = () => {
 
   function onClick() {
     if (inputValue.length > 0) {
-      for (const conn of connector.connectedPeers) {
-        connector.sendText({peerId: conn.targetPeerId, data: inputValue})
-      }
+      connector.actions.sendText(inputValue)
       addMessage({data: inputValue, peerId})
       setInputValue('')
     }
 
     if (uploadedFiles.length > 0) {
       for (const file of uploadedFiles) {
-        const len = connector.connectedPeers.length
-        for (const [idx, conn] of connector.connectedPeers.entries()) {
-          connector.sendFile({peerId: conn.targetPeerId, file}).then(() => {
-            if (idx == len - 1) {
-              const url = URL.createObjectURL(file)
-              addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
-            }
-          })
-        }
+        connector.actions.sendFile(file).then(() => {
+          const url = URL.createObjectURL(file)
+          addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId})
+        })
       }
       setUploadedFiles([])
     }

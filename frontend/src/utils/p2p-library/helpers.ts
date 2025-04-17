@@ -81,3 +81,7 @@ export function isCompleteText(data: completeMessageType): data is completeTextT
 export function isCompleteFile(data: completeMessageType): data is completeFileType {
   return typeof data.data === "object" && "url" in data.data
 }
+
+export function getShort(str: string, slice = 8) {
+  return str.slice(0, slice)
+}

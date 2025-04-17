@@ -18,10 +18,6 @@ const PeerInfo = () => {
         <DataList.ItemValue>{connector.potentialPeersCount}</DataList.ItemValue>
       </DataList.Item>
       <DataList.Item>
-        <DataList.ItemLabel>Connecting peers</DataList.ItemLabel>
-        <DataList.ItemValue>{connector.connectingPeersCount}</DataList.ItemValue>
-      </DataList.Item>
-      <DataList.Item>
         <DataList.ItemLabel>Connected peers</DataList.ItemLabel>
         <DataList.ItemValue>{connector.connectedPeers.length}</DataList.ItemValue>
       </DataList.Item>

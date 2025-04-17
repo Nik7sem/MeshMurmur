@@ -1,11 +1,7 @@
-import {
-  eventDataType,
-  completeMessageType,
-  onFileProgressType, ChannelEventHandlers,
-} from "@/utils/p2p-library/types.ts";
+import {ChannelEventHandlers,} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
 import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
-import {WebRTCPeerConnection} from "@/utils/p2p-library/webRTCPeerConnection.ts";
+import {WebRTCPeerConnection} from "@/utils/p2p-library/connection/webRTCPeerConnection.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddleware.ts";
 import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMiddleware.ts";
@@ -14,11 +10,8 @@ import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts"
 import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEventMiddleware.ts";
 
 export class PeerConnection {
-  public onCompleteData?: (data: completeMessageType) => void
-  public onFileProgress?: onFileProgressType
-  public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private connection: WebRTCPeerConnection
-  private managerMiddleware: ManagerMiddleware
+  public managerMiddleware: ManagerMiddleware
   public connected = false;
   public connectionType = "";
 
@@ -32,11 +25,9 @@ export class PeerConnection {
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 1)
-    const fileTransferMiddleware = this.managerMiddleware.add(FileTransferMiddleware, 2)
-    fileTransferMiddleware.onFileComplete = (data) => this.onCompleteData?.(data)
-    fileTransferMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
-    this.managerMiddleware.add(TextMiddleware, 3).onText = (data) => this.onCompleteData?.(data)
-    this.managerMiddleware.add(TypingEventMiddleware, 4).onTyping = (data) => this.onTyping?.(data)
+    this.managerMiddleware.add(FileTransferMiddleware, 2)
+    this.managerMiddleware.add(TextMiddleware, 3)
+    this.managerMiddleware.add(TypingEventMiddleware, 4)
     this.connection = this.connect()
   }
 
@@ -56,6 +47,7 @@ export class PeerConnection {
   }
 
   private onChannelOpen: ChannelEventHandlers['onopen'] = (data) => {
+    // TODO: wait for each init and doing it sequentially, dont allow call while not initialized
     this.logger.info(`${data.channelType} data channel opened!`)
     this.managerMiddleware.init(data)
   }
@@ -78,26 +70,11 @@ export class PeerConnection {
     }
   }
 
-  sendText(data: string) {
-    if (this.isBlocked()) return this.logger.warn(`Cannot send message to ${this.targetPeerId}, peer is not verified!`);
-    this.managerMiddleware.get(TextMiddleware)?.sendText(data)
-  }
-
-  async sendFile(file: File) {
-    if (this.isBlocked()) return this.logger.warn(`Cannot send file to ${this.targetPeerId}, peer is not verified!`);
-    await this.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
-  }
-
-  emitTypingEvent() {
-    if (this.isBlocked()) return this.logger.warn(`Cannot emit typing event to ${this.targetPeerId}, peer is not verified!`);
-    this.managerMiddleware.get(TypingEventMiddleware)?.emitTypingEvent()
-  }
-
   get channel() {
     return this.connection.channel
   }
 
-  isBlocked() {
+  is_initialized() {
     return this.managerMiddleware.isBlocked()
   }
 

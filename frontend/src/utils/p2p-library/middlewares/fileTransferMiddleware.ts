@@ -4,7 +4,8 @@ import {
   completeFileType, eventDataType,
   fileProgressType,
 } from "@/utils/p2p-library/types.ts";
-import {getShort} from "@/utils/p2p-library/shortId.ts";
+
+import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 interface FileMetadataMessage {
   type: "file-metadata";
@@ -67,7 +68,7 @@ export class FileTransferMiddleware extends Middleware {
     this.logger.info(`Receiving file: ${message.data.fileName}`);
   }
 
-  showProgress(previousPercent: number, chunkIdx: number, chunksLen: number, timestamp: number, sending: boolean, chunking = false): number {
+  private showProgress(previousPercent: number, chunkIdx: number, chunksLen: number, timestamp: number, sending: boolean, chunking = false): number {
     const percent = Math.round(chunkIdx / chunksLen * 100)
     if (percent > previousPercent) {
       this.onFileProgress?.({
@@ -79,7 +80,7 @@ export class FileTransferMiddleware extends Middleware {
     return percent
   }
 
-  addChunk(chunk: ChunkData) {
+  private addChunk(chunk: ChunkData) {
     if (!this.fileMetadata) return;
 
     this.received.chunks.push(chunk)
@@ -107,7 +108,7 @@ export class FileTransferMiddleware extends Middleware {
   }
 
   // TODO: Remove this function (inefficient for large files) create chunks while sending
-  splitToChunks(file: File): Promise<ArrayBuffer[]> {
+  private splitToChunks(file: File): Promise<ArrayBuffer[]> {
     return new Promise((resolve, reject) => {
       let previousPercent = 0
       const timestamp = (new Date()).getTime();
@@ -141,7 +142,7 @@ export class FileTransferMiddleware extends Middleware {
     })
   }
 
-  sendLargeData(chunks: ArrayBuffer[]): Promise<void> {
+  private sendLargeData(chunks: ArrayBuffer[]): Promise<void> {
     return new Promise((resolve, reject) => {
       let chunkIdx = 0
       let previousPercent = 0
@@ -168,7 +169,7 @@ export class FileTransferMiddleware extends Middleware {
     })
   }
 
-  async sendFile(file: File) {
+  public async sendFile(file: File) {
     if (this.state !== "idle") return this.logger.warn("Cannot send file while receiving!");
     this.logger.info(`Sending file: ${file.name}, Size: ${file.size} bytes`);
 

@@ -13,7 +13,7 @@ export class TextMiddleware extends Middleware {
     return true
   }
 
-  sendText(data: string) {
+  public sendText(data: string) {
     this.conn.channel.reliable.send({data, type: 'text'})
   }
 }

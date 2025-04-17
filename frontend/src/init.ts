@@ -1,4 +1,4 @@
-import {Connector} from "@/utils/p2p-library/connector.ts";
+import {Connector} from "@/utils/p2p-library/connection/connector.ts";
 import {Logger} from "@/utils/logger.ts";
 import {SecureStorage} from "@/utils/crypto/secureStorage.ts";
 import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";

@@ -1,7 +1,7 @@
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {rtcConfig} from "@/utils/p2p-library/conf.ts";
-import {Logger} from "../logger.ts";
-import {DataChannels} from "@/utils/p2p-library/DataChannel.ts";
+import {Logger} from "../../logger.ts";
+import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
 import {ChannelEventHandlers} from "@/utils/p2p-library/types.ts";
 
 export class WebRTCPeerConnection {

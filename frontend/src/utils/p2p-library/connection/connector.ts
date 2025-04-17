@@ -1,28 +1,22 @@
-import {Logger} from '../logger.ts'
+import {Logger} from '../../logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
-import {PeerConnection} from "@/utils/p2p-library/peerConnection.ts";
+import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {getRandomSample} from "@/utils/getRandomSample.ts";
-import {
-  completeMessageType,
-  completeTextType,
-  onFileProgressType
-} from "@/utils/p2p-library/types.ts";
+import {connectorConfig} from "@/utils/p2p-library/conf.ts";
+import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 
 export class Connector {
-  public onCompleteData?: (data: completeMessageType) => void
-  public onFileProgress?: onFileProgressType
-  public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private readonly signaler: FirebaseSignaler;
-  private connections: { [peerId: string]: PeerConnection } = {}
+  public connections: { [peerId: string]: PeerConnection } = {}
+  public actions: ActionManager
   private blackList: Set<string> = new Set()
   private potentialPeers: Set<string> = new Set()
-  private maxNumberOfOutgoingConnections = 5
-  private maxNumberOfPeers = 10
 
   constructor(
     private peerId: string,
     private logger: Logger,
   ) {
+    this.actions = new ActionManager(this);
     this.signaler = new FirebaseSignaler(peerId);
   }
 
@@ -35,7 +29,7 @@ export class Connector {
       this.potentialPeers.add(potentialPeerId);
     }
 
-    for (const targetPeerId of getRandomSample(this.potentialPeers, this.maxNumberOfPeers)) {
+    for (const targetPeerId of getRandomSample(this.potentialPeers, connectorConfig.maxNumberOfPeers)) {
       this.createConnection(targetPeerId);
     }
 
@@ -55,8 +49,8 @@ export class Connector {
     if (
       this.blackList.has(targetPeerId) ||
       targetPeerId in this.connections ||
-      this.peers.length >= this.maxNumberOfPeers ||
-      (outgoing && this.peers.length >= this.maxNumberOfOutgoingConnections)
+      this.peers.length >= connectorConfig.maxNumberOfPeers ||
+      (outgoing && this.peers.length >= connectorConfig.maxNumberOfOutgoingConnections)
     ) return
 
     this.potentialPeers.add(targetPeerId);
@@ -67,10 +61,7 @@ export class Connector {
       this.logger.info("Received invite from:", targetPeerId);
     }
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnClose(targetPeerId));
-    this.connections[targetPeerId].onCompleteData = (data) => this.onCompleteData?.(data)
-    this.connections[targetPeerId].onFileProgress = (data) => this.onFileProgress?.(data)
-    // TODO: this number of callbacks scares me...
-    this.connections[targetPeerId].onTyping = (data) => this.onTyping?.(data)
+    this.actions.registerCallbacks(targetPeerId)
   }
 
   private createOnClose(targetPeerId: string) {
@@ -90,26 +81,8 @@ export class Connector {
     return this.peers.filter((conn) => conn.connected)
   }
 
-  get connectingPeersCount() {
-    return this.peers.filter((conn) => !conn.connected).length
-  }
-
   get potentialPeersCount() {
     return this.potentialPeers.size
-  }
-
-  sendText({peerId, data}: completeTextType) {
-    this.connections[peerId].sendText(data)
-  }
-
-  async sendFile({peerId, file}: { peerId: string, file: File }) {
-    await this.connections[peerId].sendFile(file)
-  }
-
-  emitTypingEvent() {
-    for (const conn of Object.values(this.connections)) {
-      conn.emitTypingEvent()
-    }
   }
 
   cleanup() {

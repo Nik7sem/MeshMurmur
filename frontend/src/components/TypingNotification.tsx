@@ -1,6 +1,7 @@
 import React, {FC, useEffect, useState} from 'react';
 import {Box, Text, HStack} from '@chakra-ui/react';
-import {getShort} from "@/utils/p2p-library/shortId.ts";
+
+import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 interface Props {
   typingPeers: Set<string>;

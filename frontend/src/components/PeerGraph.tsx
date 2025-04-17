@@ -1,7 +1,8 @@
 import React from 'react';
 import {darkTheme, GraphCanvas, GraphEdge, GraphNode} from "reagraph";
 import {connector} from "@/init.ts";
-import {getShort} from "@/utils/p2p-library/shortId.ts";
+
+import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 const PeerGraph = () => {
   const nodes: GraphNode[] = connector.peers.map((conn) => {
@@ -14,7 +15,7 @@ const PeerGraph = () => {
       source: `me`,
       target: `${conn.targetPeerId}`,
       label: conn.connectionType,
-      fill: conn.connected && !conn.isBlocked() ? "green" : "red"
+      fill: conn.connected && !conn.is_initialized() ? "green" : "red"
     }
   })
 

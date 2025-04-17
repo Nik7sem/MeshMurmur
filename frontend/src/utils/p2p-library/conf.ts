@@ -7,6 +7,8 @@ export const firebaseConfig: FirebaseOptions = {
 export const rtcConfig: RTCConfiguration = {
   iceServers: [
     {urls: "stun:stun.l.google.com:19302"},
+    {urls: "stun:stun2.l.google.com:19302"},
+    {urls: "stun:stun.stunprotocol.org:3478"},
     {
       urls: 'turn:relay1.expressturn.com:3478',
       username: 'efQUQ79N77B5BNVVKF',
@@ -41,7 +43,7 @@ export const rtcConfig: RTCConfiguration = {
 }
 
 export const connectorConfig = {
-  numberOfSignalerPeer: 5,
+  maxNumberOfOutgoingConnections: 5,
   maxNumberOfPeers: 10
 }
 
