@@ -1,11 +1,27 @@
-import React, {ChangeEvent, useState} from 'react';
-import {Button, Center, Container, Field, Input, Table, Text} from "@chakra-ui/react";
+import React, {ChangeEvent, FC, RefObject, useState} from 'react';
+import {
+  Button,
+  Center,
+  Container,
+  createListCollection,
+  Field,
+  Input,
+  Portal,
+  Select,
+  Table,
+  Text
+} from "@chakra-ui/react";
 import {Tooltip} from "@/components/ui/tooltip.tsx";
 import useUserData from "@/hooks/useUserData.tsx";
 import {peerConfig} from "@/utils/p2p-library/conf.ts";
 import useToast from "@/hooks/useToast.tsx";
+import {connector} from "@/init.ts";
 
-const NicknameAssigner = () => {
+interface Props {
+  contentRef: RefObject<HTMLElement | null>;
+}
+
+const NicknameAssigner: FC<Props> = ({contentRef}) => {
   const {successToast} = useToast()
   const {userData, setUserData} = useUserData()
   const [inputValue, setInputValue] = useState(userData.nickname);
@@ -23,6 +39,13 @@ const NicknameAssigner = () => {
     successToast('Nickname saved!');
   }
 
+  const peerCollection = createListCollection({
+    items: connector.connectedPeers.map(conn => ({
+      label: `${conn.targetPeerId.slice(0, 6)}…${conn.targetPeerId.slice(-4)}`,
+      value: conn.targetPeerId
+    }))
+  })
+
   return (
     <Container>
       <Field.Root orientation="horizontal" invalid={invalid}>
@@ -38,7 +61,7 @@ const NicknameAssigner = () => {
       <Center mt="5px">
         <Text textStyle="2xl">Associated nicknames</Text>
       </Center>
-      <Table.Root m='10px' size="md">
+      <Table.Root mt='10px' size="md">
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Peer Id</Table.ColumnHeader>
@@ -52,10 +75,37 @@ const NicknameAssigner = () => {
               <Table.Cell>{nickname}</Table.Cell>
             </Table.Row>
           ))}
-
+          <Table.Row>
+            <Table.Cell>
+              <Select.Root collection={peerCollection} size="sm" width="320px">
+                <Select.HiddenSelect/>
+                {/*<Select.Label>Select peer Id</Select.Label>*/}
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText placeholder="Select peer Id"/>
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator/>
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal container={contentRef}>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {peerCollection.items.map(({label, value}) => (
+                        <Select.Item item={value} key={value}>
+                          {label}
+                          <Select.ItemIndicator/>
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Table.Cell>
+            <Table.Cell>NICKNAME</Table.Cell>
+          </Table.Row>
         </Table.Body>
       </Table.Root>
-
     </Container>
   );
 };

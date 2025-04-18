@@ -1,4 +1,4 @@
-import React, {FC, useState} from 'react';
+import React, {FC, useRef, useState} from 'react';
 import {
   Box,
   Collapsible,
@@ -25,6 +25,7 @@ interface Props {
 const Logs: FC<Props> = ({logs}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [menuValue, setMenuValue] = useState<string>('Logs');
+  const contentRef = useRef<HTMLDivElement>(null)
 
   return (
     <Drawer.Root size="xl" open={isOpen} onOpenChange={(e) => {
@@ -39,7 +40,7 @@ const Logs: FC<Props> = ({logs}) => {
       <Portal>
         <Drawer.Backdrop/>
         <Drawer.Positioner>
-          <Drawer.Content>
+          <Drawer.Content ref={contentRef}>
             <Drawer.Header>
               <Drawer.Title>
                 <SegmentGroup.Root value={menuValue} onValueChange={({value}) => setMenuValue(value)}>
@@ -57,7 +58,7 @@ const Logs: FC<Props> = ({logs}) => {
                 </VStack> : menuValue === "Info" ?
                   <PeerInfo/> : menuValue === "Graph" ?
                     <PeerGraph/> :
-                    <NicknameAssigner/>
+                    <NicknameAssigner contentRef={contentRef}/>
               }
             </Drawer.Body>
             {/*<Drawer.Footer>*/}
