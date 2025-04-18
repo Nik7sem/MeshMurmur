@@ -7,14 +7,16 @@ import {
 } from '@chakra-ui/react';
 import {useColorModeValue} from "@/components/ui/color-mode.tsx";
 import {completeFileType} from "@/utils/p2p-library/types.ts";
+import TooltipPeerId from "@/components/TooltipPeerId.tsx";
 
 interface Props {
   username: string; // peer username
+  peerId: string;
   data: completeFileType['data'] // file metadata and file url object
   me: boolean; // if peer is sender
 }
 
-const ChatFileMessage: FC<Props> = ({username, data, me}) => {
+const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
   const {url, fileName, fileSize, fileType} = data;
 
   // Format file size
@@ -59,9 +61,11 @@ const ChatFileMessage: FC<Props> = ({username, data, me}) => {
         position="relative"
       >
         {!me && (
-          <Text fontSize="sm" fontWeight="bold" mb={1}>
-            {username}
-          </Text>
+          <TooltipPeerId peerId={peerId}>
+            <Text fontSize="sm" fontWeight="bold" mb={1}>
+              {username}
+            </Text>
+          </TooltipPeerId>
         )}
 
         {isImage ? (

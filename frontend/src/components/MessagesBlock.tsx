@@ -43,7 +43,7 @@ const MessagesBlock: FC<Props> = ({messages}) => {
           if (isCompleteText(data)) {
             return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
           } else if (isCompleteFile(data)) {
-            return <ChatFileMessage data={data.data} username={data.nickname} me={me} key={idx}/>
+            return <ChatFileMessage data={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
           }
         }
       )}

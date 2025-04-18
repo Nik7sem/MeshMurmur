@@ -16,7 +16,7 @@ import {logType} from "@/utils/p2p-library/types.ts";
 import LogLabel from "@/components/LogLabel.tsx";
 import PeerInfo from "@/components/PeerInfo.tsx";
 import PeerGraph from "./PeerGraph.tsx"
-import NicknameAssigner from "@/components/NicknameAssigner.tsx";
+import NicknameAssigner from "@/components/NicknameAssigner/NicknameAssigner.tsx";
 
 interface Props {
   logs: logType[]
