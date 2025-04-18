@@ -2,6 +2,7 @@ import React, {FC, useEffect, useState} from 'react';
 import {Box, Text, HStack} from '@chakra-ui/react';
 
 import {getShort} from "@/utils/p2p-library/helpers.ts";
+import {connector} from "@/init.ts";
 
 interface Props {
   typingPeers: Set<string>;
@@ -12,17 +13,17 @@ const TypingNotification: FC<Props> = ({typingPeers}) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const names = Array.from(typingPeers);
+    const names = Array.from(typingPeers).map(peerId => connector.actions.targetPeerNickname(peerId));
     const count = names.length;
 
     if (count > 0) {
       let newMessage = '';
       if (count === 1) {
-        newMessage = `${getShort(names[0])} is typing`;
+        newMessage = `${names[0]} is typing`;
       } else if (count === 2) {
-        newMessage = `${getShort(names[0])} and ${getShort(names[1])} are typing`;
+        newMessage = `${names[0]} and ${names[1]} are typing`;
       } else {
-        newMessage = `${getShort(names[0])} and ${count - 1} others are typing`;
+        newMessage = `${names[0]} and ${count - 1} others are typing`;
       }
       setMessage(newMessage);
       setVisible(true);

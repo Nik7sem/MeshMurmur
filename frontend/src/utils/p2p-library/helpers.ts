@@ -1,6 +1,9 @@
 // TODO: Move here all helper functions
 
-import {completeFileType, completeMessageType, completeTextType} from "@/utils/p2p-library/types.ts";
+import {
+  completeMessageType, completeTextType, completeFileType
+} from "@/utils/p2p-library/types.ts";
+import {peerConfig} from "@/utils/p2p-library/conf.ts";
 
 /**
  * Creates a chunk with metadata header and payload
@@ -82,6 +85,6 @@ export function isCompleteFile(data: completeMessageType): data is completeFileT
   return typeof data.data === "object" && "url" in data.data
 }
 
-export function getShort(str: string, slice = 8) {
+export function getShort(str: string, slice = peerConfig.maxNameLength) {
   return str.slice(0, slice)
 }

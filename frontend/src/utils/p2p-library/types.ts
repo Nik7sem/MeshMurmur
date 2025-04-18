@@ -26,9 +26,9 @@ export type ChannelEventHandlers = {
 export type jsonDataType = { data: unknown, type: string }
 export type byteDataType = { data: ArrayBuffer, metadata: unknown }
 
-type completeDataTypeCommon = { peerId: string }
-export type completeTextType = completeDataTypeCommon & { data: string }
-export type completeFileType = completeDataTypeCommon & {
+
+export type processedTextType = { data: string }
+export type processedFileType = {
   data: {
     url: string
     fileName: string
@@ -37,7 +37,11 @@ export type completeFileType = completeDataTypeCommon & {
   }
 }
 
-export type completeMessageType = completeTextType & { nickname: string } | completeFileType & { nickname: string }
+type commonCompleteType = { peerId: string, nickname: string }
+export type completeTextType = commonCompleteType & processedTextType
+export type completeFileType = commonCompleteType & processedFileType
+
+export type completeMessageType = completeTextType | completeFileType
 
 export type fileProgressType = { title: string, progress: number, bitrate: number }
 export type onFileProgressType = (data: fileProgressType) => void

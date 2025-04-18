@@ -25,14 +25,15 @@ export class ActionManager {
     const typingMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(TypingEventMiddleware)
     const nicknameMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)
 
+    const targetPeerNickname = this.targetPeerNickname(targetPeerId)
     if (textMiddleware) {
       textMiddleware.onText = (data) => {
-        this.onCompleteData?.({...data, nickname: this.targetPeerNickname(data.peerId)})
+        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: targetPeerNickname})
       }
     }
     if (fileMiddleware) {
       fileMiddleware.onFileComplete = (data) => {
-        this.onCompleteData?.({...data, nickname: this.targetPeerNickname(data.peerId)})
+        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: targetPeerNickname})
       }
       fileMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
     }
@@ -72,6 +73,9 @@ export class ActionManager {
   }
 
   targetPeerNickname(targetPeerId: string) {
+    if (!(targetPeerId in this.connector.connections)) {
+      return getShort(targetPeerId)
+    }
     const nickname = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)?.targetPeerNickname
     const associated = this.associatedNicknames[targetPeerId]
     if (nickname && associated) return `${nickname}#${associated}`

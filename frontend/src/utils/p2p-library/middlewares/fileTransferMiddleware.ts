@@ -1,7 +1,7 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {
   ChannelEventBase,
-  completeFileType, eventDataType,
+  processedFileType, eventDataType,
   fileProgressType,
 } from "@/utils/p2p-library/types.ts";
 
@@ -33,7 +33,7 @@ export class FileTransferMiddleware extends Middleware {
     timestamp: number,
   } = {chunks: [], percent: 0, timestamp: 0};
   private fileMetadata: FileMetadataMessage["data"] | null = null;
-  public onFileComplete?: (data: completeFileType) => void
+  public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 
   async init(eventData: ChannelEventBase) {
@@ -102,7 +102,7 @@ export class FileTransferMiddleware extends Middleware {
     this.received.chunks.sort((lhs, rhs) => lhs.metadata.chunkId - rhs.metadata.chunkId)
     const blob = new Blob(this.received.chunks.map((data) => data.data), {type: this.fileMetadata.fileType});
     const url = URL.createObjectURL(blob);
-    this.onFileComplete?.({peerId: this.conn.targetPeerId, data: {...this.fileMetadata, url}})
+    this.onFileComplete?.({data: {...this.fileMetadata, url}})
     this.state = 'idle'
     this.logger.info(`File ${this.fileMetadata.fileName} received`);
   }
