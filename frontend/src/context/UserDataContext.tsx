@@ -9,7 +9,7 @@ interface UserDataSetter {
 
 
 export const UserDataContext = createContext<UserDataSetter>({
-  userData: getDefaultUserData(),
+  userData: await getDefaultUserData(),
   setUserData: () => {
   },
 })

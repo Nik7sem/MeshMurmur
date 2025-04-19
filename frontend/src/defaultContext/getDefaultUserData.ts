@@ -1,8 +1,8 @@
 import {UserData} from "../types/user.ts";
-import {connector} from "@/init.ts";
+import {connector, storageManager} from "@/init.ts";
 
-export function getDefaultUserData(): UserData {
-  const storedUserData = localStorage.getItem("userData");
+export async function getDefaultUserData(): Promise<UserData> {
+  const storedUserData = await storageManager.retrieveUserData();
   if (storedUserData) {
     const userData = JSON.parse(storedUserData) as UserData;
     connector.actions.sendNickname(userData.nickname)

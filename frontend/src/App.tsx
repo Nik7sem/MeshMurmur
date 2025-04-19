@@ -14,8 +14,10 @@ const router = createHashRouter(createRoutesFromElements(
   </Route>
 ))
 
+const defaultUserData = await getDefaultUserData()
+
 function App() {
-  const [userData, setUserData] = useState<UserData>(getDefaultUserData)
+  const [userData, setUserData] = useState<UserData>(defaultUserData)
 
   return (
     <UserDataContext.Provider value={{userData, setUserData}}>

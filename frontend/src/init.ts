@@ -28,7 +28,7 @@ if (!passphrase) {
 
 // passphrase = arrayBufferToBase64(generateNonce())
 
-const storageManager = new SecureStorageManager(passphrase)
+export const storageManager = new SecureStorageManager(passphrase)
 
 const peerKeys = await storageManager.retrievePeerKeys()
 if (!peerKeys) {

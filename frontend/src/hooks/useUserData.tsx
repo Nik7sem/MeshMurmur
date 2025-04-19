@@ -1,7 +1,7 @@
 import {useContext} from "react";
 import {UserDataContext} from "../context/UserDataContext.tsx";
 import {UserData} from "../types/user.ts";
-import {connector} from "@/init.ts";
+import {connector, storageManager} from "@/init.ts";
 
 const useUserData = () => {
   const {userData, setUserData} = useContext(UserDataContext)
@@ -12,7 +12,7 @@ const useUserData = () => {
     }
     connector.actions.associatedNicknames = newUserData.associatedNicknames
     setUserData(newUserData)
-    localStorage.setItem("userData", JSON.stringify(newUserData))
+    storageManager.storeUserData(JSON.stringify(newUserData)).then()
   }
 
   return {userData, setUserData: setData}
