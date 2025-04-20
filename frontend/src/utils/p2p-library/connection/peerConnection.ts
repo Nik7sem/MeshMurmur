@@ -9,6 +9,7 @@ import {FileTransferMiddleware} from "@/utils/p2p-library/middlewares/fileTransf
 import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts";
 import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEventMiddleware.ts";
 import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
+import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
@@ -30,6 +31,7 @@ export class PeerConnection {
     this.managerMiddleware.add(TextMiddleware, 3)
     this.managerMiddleware.add(TypingEventMiddleware, 4)
     this.managerMiddleware.add(NicknameMiddleware, 5)
+    this.managerMiddleware.add(DiscoveryMiddleware, 6)
     this.connection = this.connect()
   }
 

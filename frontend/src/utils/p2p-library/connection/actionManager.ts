@@ -6,17 +6,21 @@ import {TextMiddleware} from "@/utils/p2p-library/middlewares/textMiddleware.ts"
 import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
 import {getShort} from "@/utils/p2p-library/helpers.ts";
 import {UserData} from "@/types/user.ts";
+import {PeerDiscoveryCoordinator} from "@/utils/p2p-library/coordinators/PeerDiscoveryCoordinator.ts";
+import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 
 export class ActionManager {
   public onCompleteData?: (data: completeMessageType) => void
   public onFileProgress?: onFileProgressType
   public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private nickname = ''
+  private peerDiscoveryCoordinator: PeerDiscoveryCoordinator
   public associatedNicknames: UserData['associatedNicknames'] = {}
 
   constructor(
     private readonly connector: Connector,
   ) {
+    this.peerDiscoveryCoordinator = new PeerDiscoveryCoordinator(connector);
   }
 
   registerCallbacksAndData(targetPeerId: string) {
@@ -24,16 +28,16 @@ export class ActionManager {
     const fileMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(FileTransferMiddleware)
     const typingMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(TypingEventMiddleware)
     const nicknameMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)
+    const discoveryMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(DiscoveryMiddleware)
 
-    const targetPeerNickname = this.targetPeerNickname(targetPeerId)
     if (textMiddleware) {
       textMiddleware.onText = (data) => {
-        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: targetPeerNickname})
+        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: this.targetPeerNickname(targetPeerId)})
       }
     }
     if (fileMiddleware) {
       fileMiddleware.onFileComplete = (data) => {
-        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: targetPeerNickname})
+        this.onCompleteData?.({...data, peerId: targetPeerId, nickname: this.targetPeerNickname(targetPeerId)})
       }
       fileMiddleware.onFileProgress = (data) => this.onFileProgress?.(data)
     }
@@ -44,6 +48,9 @@ export class ActionManager {
       if (this.nickname) {
         nicknameMiddleware.setNickname(this.nickname)
       }
+    }
+    if (discoveryMiddleware) {
+      discoveryMiddleware.onGossipMessage = (data) => this.peerDiscoveryCoordinator.mergeGossip(data.knownPeers)
     }
   }
 

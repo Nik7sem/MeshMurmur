@@ -1,7 +1,7 @@
-export function getRandomSample<T>(set: Set<T>, sampleSize: number): Array<T> {
-  const array = Array.from(set); // Convert Set to Array
+export function getRandomSample<T>(iterable: Set<T> | Array<T>, sampleSize: number): Array<T> {
+  const array = Array.from(iterable); // Convert Iterable to Array
   const shuffled = array.sort(() => Math.random() - 0.5); // Shuffle the array
-  return shuffled.slice(0, Math.min(sampleSize, set.size)); // Take `sampleSize` elements
+  return shuffled.slice(0, Math.min(sampleSize, array.length)); // Take `sampleSize` elements
 }
 
 
