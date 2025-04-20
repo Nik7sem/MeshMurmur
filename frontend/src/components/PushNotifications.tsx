@@ -10,7 +10,7 @@ const PushNotifications = () => {
   }, [])
 
   function onClick() {
-
+    setCalleeToken("NOTHING TO DO")
   }
 
   return (
