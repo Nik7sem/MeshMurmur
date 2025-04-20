@@ -14,7 +14,7 @@ export class ActionManager {
   public onFileProgress?: onFileProgressType
   public onTyping?: (data: { typing: boolean, peerId: string }) => void
   private nickname = ''
-  private peerDiscoveryCoordinator: PeerDiscoveryCoordinator
+  public peerDiscoveryCoordinator: PeerDiscoveryCoordinator
   public associatedNicknames: UserData['associatedNicknames'] = {}
 
   constructor(

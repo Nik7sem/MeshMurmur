@@ -57,6 +57,11 @@ const HomePage = () => {
       connector.actions.onFileProgress = setNewFileProgress
       connector.actions.onTyping = onTyping
     }
+    return () => {
+      connector.actions.onCompleteData = undefined
+      connector.actions.onFileProgress = undefined
+      connector.actions.onTyping = undefined
+    }
   }, [addMessage, onTyping, setNewFileProgress])
 
   function onChangeInput(e: ChangeEvent<HTMLInputElement>) {

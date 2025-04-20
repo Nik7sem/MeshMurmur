@@ -67,13 +67,13 @@ export class Connector {
 
   private createOnPeerConnectionChanged(targetPeerId: string) {
     return (status: 'connected' | 'disconnected', block: boolean) => {
-      this.onPeerConnectionChanged?.(targetPeerId, status)
       if (status === "disconnected") {
         delete this.connections[targetPeerId]
         if (block) {
           this.blackList.add(targetPeerId)
         }
       }
+      this.onPeerConnectionChanged?.(targetPeerId, status)
     }
   }
 

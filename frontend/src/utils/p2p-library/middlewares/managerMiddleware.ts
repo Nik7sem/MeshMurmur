@@ -4,7 +4,6 @@ import {ChannelEventBase, eventDataType} from "@/utils/p2p-library/types.ts";
 export class ManagerMiddleware extends Middleware {
   private middlewares: { [key: string]: { middleware: Middleware, priority: number } } = {};
   private prioritizedList: Middleware[] = []
-  public initialized = false
 
   add<T extends Middleware>(middlewareClass: new (...args: any[]) => T, priority: number): T {
     const key = middlewareClass.name;
@@ -22,7 +21,6 @@ export class ManagerMiddleware extends Middleware {
     for (const middleware of this.prioritizedList) {
       await middleware.init(eventData);
     }
-    this.initialized = true;
   }
 
   call(data: eventDataType) {

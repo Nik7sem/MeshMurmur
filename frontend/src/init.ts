@@ -19,7 +19,7 @@ document.addEventListener('visibilitychange', () => {
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
 
-export const AppVersion = 'Alpha v1.2.0'
+export const AppVersion = 'Alpha v1.5.0'
 askNotificationPermission()
 
 let passphrase = localStorage.getItem('passphrase')
@@ -28,7 +28,7 @@ if (!passphrase) {
   localStorage.setItem('passphrase', passphrase)
 }
 
-// passphrase = arrayBufferToBase64(generateNonce())
+passphrase = arrayBufferToBase64(generateNonce())
 
 export const storageManager = new SecureStorageManager(passphrase)
 
