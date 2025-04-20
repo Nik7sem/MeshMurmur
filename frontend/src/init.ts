@@ -4,6 +4,8 @@ import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManage
 import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
 import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
+import {initializeApp} from "firebase/app";
+import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 
 // init globals
 window.DOCUMENT_VISIBLE = true
@@ -41,6 +43,8 @@ export const edKeyManager = peerKeys ? new ED25519KeyPairManager(peerKeys) : new
 if (!peerKeys) {
   await storageManager.storePeerKeys(edKeyManager.exportKeyPair())
 }
+
+export const firebaseApp = initializeApp(firebaseConfig);
 
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new Logger();

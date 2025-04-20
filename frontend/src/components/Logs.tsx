@@ -17,6 +17,7 @@ import LogLabel from "@/components/LogLabel.tsx";
 import PeerInfo from "@/components/PeerInfo.tsx";
 import PeerGraph from "./PeerGraph.tsx"
 import NicknameAssigner from "@/components/NicknameAssigner/NicknameAssigner.tsx";
+import PushNotifications from "@/components/PushNotifications.tsx";
 
 interface Props {
   logs: logType[]
@@ -45,7 +46,7 @@ const Logs: FC<Props> = ({logs}) => {
               <Drawer.Title>
                 <SegmentGroup.Root value={menuValue} onValueChange={({value}) => setMenuValue(value)}>
                   <SegmentGroup.Indicator/>
-                  <SegmentGroup.Items items={["Logs", "Info", "Nickname", "Graph"]}/>
+                  <SegmentGroup.Items items={["Logs", "Info", "Nickname", "Graph", "PushNotifications"]}/>
                 </SegmentGroup.Root>
               </Drawer.Title>
             </Drawer.Header>
@@ -57,8 +58,9 @@ const Logs: FC<Props> = ({logs}) => {
                   )}
                 </VStack> : menuValue === "Info" ?
                   <PeerInfo/> : menuValue === "Graph" ?
-                    <PeerGraph/> :
-                    <NicknameAssigner contentRef={contentRef}/>
+                    <PeerGraph/> : menuValue === "Nickname" ?
+                      <NicknameAssigner contentRef={contentRef}/> :
+                      <PushNotifications/>
               }
             </Drawer.Body>
             {/*<Drawer.Footer>*/}

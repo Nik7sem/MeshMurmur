@@ -1,4 +1,3 @@
-import {initializeApp, FirebaseApp} from "firebase/app";
 import {
   getDatabase,
   Database,
@@ -15,17 +14,15 @@ import {
   DataSnapshot,
 } from "firebase/database";
 import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
-import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
+import {firebaseApp} from "@/init.ts";
 
 export class FirebaseSignaler extends Signaler {
-  private readonly firebaseApp: FirebaseApp;
   private readonly db: Database;
 
   constructor(private readonly peerId: string) {
     super()
-    this.firebaseApp = initializeApp(firebaseConfig);
-    this.db = getDatabase(this.firebaseApp);
+    this.db = getDatabase(firebaseApp);
   }
 
   async registerPeer() {

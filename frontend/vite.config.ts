@@ -2,6 +2,7 @@ import {defineConfig, PluginOption} from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from "vite-tsconfig-paths"
 import * as fs from "fs";
+import {resolve} from "path";
 
 const fullReloadAlways: PluginOption = {
   name: 'full-reload-always',
@@ -27,5 +28,21 @@ export default defineConfig({
     },
   },
   base: process.env.NODE_ENV === 'production' ? '/MeshMurmur/' : '/',
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        'service-worker': resolve(__dirname, 'src/service-worker.ts')
+      },
+      output: {
+        entryFileNames: chunk => {
+          if (chunk.name == 'service-worker') {
+            return `[name].js`
+          }
+          return `assets/[name].[hash].js`
+        },
+      }
+    }
+  },
   plugins: [react(), tsconfigPaths(), fullReloadAlways],
 })
