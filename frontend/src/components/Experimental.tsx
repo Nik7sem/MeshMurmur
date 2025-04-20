@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Button, Container, Field, Input, Text} from "@chakra-ui/react";
+import {Alert, Button, Checkbox, Container, Field, Input, Separator, Text} from "@chakra-ui/react";
 
-const PushNotifications = () => {
+const Experimental = () => {
   const [myToken, setMyToken] = useState("");
   const [calleeToken, setCalleeToken] = useState("");
+  const [anonymous, setAnonymous] = useState(() => !!localStorage.getItem("anonymous"))
 
   useEffect(() => {
     setMyToken("NO TOKEN")
@@ -11,6 +12,16 @@ const PushNotifications = () => {
 
   function onClick() {
     setCalleeToken("NOTHING TO DO")
+  }
+
+  function onChange(val: boolean) {
+    if (val) {
+      localStorage.setItem("anonymous", "true");
+    } else {
+      localStorage.removeItem("anonymous");
+    }
+
+    setAnonymous(val)
   }
 
   return (
@@ -33,8 +44,18 @@ const PushNotifications = () => {
         <Field.HelperText>Token of the user you want to send the notification to</Field.HelperText>
       </Field.Root>
       <Button mt="10px" onClick={onClick}>Subscribe</Button>
+      <Separator mt="10px"/>
+      <Checkbox.Root
+        mt="10px"
+        checked={anonymous}
+        onCheckedChange={(e) => onChange(!!e.checked)}
+      >
+        <Checkbox.HiddenInput/>
+        <Checkbox.Control/>
+        <Checkbox.Label>Make anonymous</Checkbox.Label>
+      </Checkbox.Root>
     </Container>
   );
 };
 
-export default PushNotifications;
+export default Experimental;
