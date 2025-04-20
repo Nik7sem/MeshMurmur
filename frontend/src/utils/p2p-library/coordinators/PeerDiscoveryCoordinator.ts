@@ -10,19 +10,15 @@ export type PeerInfoType = {
 
 export class PeerDiscoveryCoordinator {
   public peerMap: { [key: string]: PeerInfoType } = {};
-  private GossipInterval = 4000
+  private GossipInterval = Math.random() * 7000 + 3000
   private sampleSize = 3
 
   constructor(private connector: Connector) {
-    this.connector.onPeerConnectionChanged = (targetPeerId, status) => {
-      if (status === 'connected') {
-        this.peerMap[targetPeerId] = {
-          peerId: targetPeerId,
-          connections: [this.connector.peerId],
-          updatedAt: Date.now()
-        }
-      } else if (status === 'disconnected') {
-        delete this.peerMap[targetPeerId]
+    this.connector.onPeerConnectionChanged = () => {
+      this.peerMap[this.connector.peerId] = {
+        peerId: this.connector.peerId,
+        connections: this.connector.connectedPeers.map(peer => peer.targetPeerId),
+        updatedAt: Date.now()
       }
     }
     setInterval(() => {
@@ -34,7 +30,6 @@ export class PeerDiscoveryCoordinator {
   }
 
   mergeGossip(received: PeerInfoType[]) {
-    console.log("Received", received)
     for (const info of received) {
       if (!(info.peerId in this.peerMap) || info.updatedAt > this.peerMap[info.peerId].updatedAt) {
         this.peerMap[info.peerId] = info;
