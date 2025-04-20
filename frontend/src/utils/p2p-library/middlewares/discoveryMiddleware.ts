@@ -1,7 +1,6 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {eventDataType} from "@/utils/p2p-library/types.ts";
 import {PeerInfoType} from "@/utils/p2p-library/coordinators/PeerDiscoveryCoordinator.ts";
-import {peerId} from "@/init.ts";
 
 type GossipMessage = {
   from: string,
@@ -21,6 +20,6 @@ export class DiscoveryMiddleware extends Middleware {
   }
 
   sendGossipMessage(knownPeers: GossipMessage['knownPeers']) {
-    this.conn.channel.unreliable.send({data: {from: peerId, knownPeers}, type: 'gossip'});
+    this.conn.channel.unreliable.send({data: {from: this.conn.peerId, knownPeers}, type: 'gossip'});
   }
 }

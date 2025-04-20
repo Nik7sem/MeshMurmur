@@ -22,7 +22,7 @@ export class PeerConnection {
     public readonly targetPeerId: string,
     private logger: Logger,
     private signaler: Signaler,
-    private onClose: (block: boolean) => void,
+    private onPeerConnectionChanged: (status: 'connected' | 'disconnected', block: boolean) => void,
     private timeout = 30000
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
@@ -66,6 +66,7 @@ export class PeerConnection {
         this.logger.success(`Connection is using ${info.type} server.`);
         this.connectionType = info.type
       }
+      this.onPeerConnectionChanged('connected', false);
       this.logger.success("Successfully connected to peer!")
     } else {
       this.disconnect()
@@ -79,6 +80,6 @@ export class PeerConnection {
 
   disconnect(block = false) {
     this.connection.cleanup()
-    this.onClose(block)
+    this.onPeerConnectionChanged("disconnected", block)
   }
 }

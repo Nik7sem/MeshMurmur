@@ -9,15 +9,16 @@ export class Connector {
   private readonly signaler: FirebaseSignaler;
   public connections: { [peerId: string]: PeerConnection } = {}
   public actions: ActionManager
+  public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'disconnected') => void
   private blackList: Set<string> = new Set()
   private potentialPeers: Set<string> = new Set()
 
   constructor(
-    private peerId: string,
+    public peerId: string,
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this);
-    this.signaler = new FirebaseSignaler(peerId);
+    this.signaler = new FirebaseSignaler(this.peerId);
   }
 
   async init() {
@@ -60,15 +61,18 @@ export class Connector {
     } else {
       this.logger.info("Received invite from:", targetPeerId);
     }
-    this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnClose(targetPeerId));
+    this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnPeerConnectionChanged(targetPeerId));
     this.actions.registerCallbacksAndData(targetPeerId)
   }
 
-  private createOnClose(targetPeerId: string) {
-    return (block: boolean) => {
-      delete this.connections[targetPeerId]
-      if (block) {
-        this.blackList.add(targetPeerId)
+  private createOnPeerConnectionChanged(targetPeerId: string) {
+    return (status: 'connected' | 'disconnected', block: boolean) => {
+      this.onPeerConnectionChanged?.(targetPeerId, status)
+      if (status === "disconnected") {
+        delete this.connections[targetPeerId]
+        if (block) {
+          this.blackList.add(targetPeerId)
+        }
       }
     }
   }
