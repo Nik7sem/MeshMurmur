@@ -50,7 +50,6 @@ document.addEventListener('visibilitychange', () => {
 })
 
 window.addEventListener('beforeunload', () => {
-  connector.actions.emitDisconnectEvent()
   connector.cleanup()
 })
 

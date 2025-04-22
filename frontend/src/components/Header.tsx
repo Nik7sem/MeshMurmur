@@ -29,11 +29,7 @@ const Header = () => {
       <Heading size="3xl">MeshMurmur</Heading>
       <Logs logs={logs}/>
       <Box>
-        <Tooltip
-          content={connector.connectedPeers.map(({peerId}) => connector.actions.targetPeerNickname(peerId)).join('\n')}
-          showArrow positioning={{placement: "bottom"}} openDelay={300} closeDelay={100} interactive>
-          <Status.Root colorPalette="green"><Status.Indicator/>{connector.connectedPeers.length}</Status.Root>
-        </Tooltip>
+        <Status.Root colorPalette="green"><Status.Indicator/>{connector.connectedPeers.length}</Status.Root>
       </Box>
       <Toaster/>
     </Flex>

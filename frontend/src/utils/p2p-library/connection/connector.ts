@@ -41,6 +41,9 @@ export class Connector {
     this.signaler.subscribeToPeers((targetPeerId) => {
         this.createConnection(targetPeerId);
       }, (oldPeerId) => {
+        if (oldPeerId in this.connections) {
+          this.connections[oldPeerId].disconnect();
+        }
         this.potentialPeers.delete(oldPeerId);
       }
     )
