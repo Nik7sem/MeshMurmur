@@ -43,6 +43,7 @@ export class Connector {
       }, (oldPeerId) => {
         if (oldPeerId in this.connections) {
           this.connections[oldPeerId].disconnect();
+          this.logger.info(`Peer ${oldPeerId} disconnected by exit`);
         }
         this.potentialPeers.delete(oldPeerId);
       }
