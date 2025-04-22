@@ -6,6 +6,7 @@ import {logType} from "@/utils/p2p-library/types.ts";
 import {connector, logger, peerId} from "@/init.ts";
 import useToast from "@/hooks/useToast.tsx";
 import {Toaster} from "@/components/ui/toaster"
+import {Tooltip} from "@/components/ui/tooltip.tsx";
 
 const Header = () => {
   const [logs, setLogs] = useState<logType[]>([])
@@ -27,7 +28,13 @@ const Header = () => {
       <ColorModeButton alignSelf="start"/>
       <Heading size="3xl">MeshMurmur</Heading>
       <Logs logs={logs}/>
-      <Box><Status.Root colorPalette="green"><Status.Indicator/>{connector.connectedPeers.length}</Status.Root></Box>
+      <Box>
+        <Tooltip
+          content={connector.connectedPeers.map(({peerId}) => connector.actions.targetPeerNickname(peerId)).join('\n')}
+          showArrow positioning={{placement: "bottom"}} openDelay={300} closeDelay={100} interactive>
+          <Status.Root colorPalette="green"><Status.Indicator/>{connector.connectedPeers.length}</Status.Root>
+        </Tooltip>
+      </Box>
       <Toaster/>
     </Flex>
   );

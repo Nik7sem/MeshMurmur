@@ -6,17 +6,8 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {initializeApp} from "firebase/app";
 import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
-
-// init globals
-window.DOCUMENT_VISIBLE = true
-window.SCROLL_TO_BOTTOM = true
-
-document.addEventListener('visibilitychange', () => {
-  window.DOCUMENT_VISIBLE = !document.hidden
-})
-
 // init constants
-export const AppVersion = 'Alpha v2.0.0'
+export const AppVersion = 'Alpha v2.1.0'
 askNotificationPermission()
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
@@ -49,3 +40,17 @@ export const logger = new Logger();
 export const connector = new Connector(peerId, logger)
 
 await connector.init()
+
+// init globals
+window.DOCUMENT_VISIBLE = true
+window.SCROLL_TO_BOTTOM = true
+
+document.addEventListener('visibilitychange', () => {
+  window.DOCUMENT_VISIBLE = !document.hidden
+})
+
+window.addEventListener('beforeunload', () => {
+  connector.actions.emitDisconnectEvent()
+  connector.cleanup()
+})
+

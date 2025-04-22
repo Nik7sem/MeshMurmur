@@ -8,6 +8,7 @@ import {getShort} from "@/utils/p2p-library/helpers.ts";
 import {UserData} from "@/types/user.ts";
 import {PeerDiscoveryCoordinator} from "@/utils/p2p-library/coordinators/PeerDiscoveryCoordinator.ts";
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
+import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
 
 export class ActionManager {
   public onCompleteData?: (data: completeMessageType) => void
@@ -29,6 +30,7 @@ export class ActionManager {
     const typingMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(TypingEventMiddleware)
     const nicknameMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)
     const discoveryMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(DiscoveryMiddleware)
+    const disconnectMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(DisconnectEventMiddleware)
 
     if (textMiddleware) {
       textMiddleware.onText = (data) => {
@@ -52,6 +54,9 @@ export class ActionManager {
     if (discoveryMiddleware) {
       discoveryMiddleware.onGossipMessage = (data) => this.peerDiscoveryCoordinator.mergeGossip(data.knownPeers)
     }
+    if (disconnectMiddleware) {
+      disconnectMiddleware.onDisconnect = () => console.log('disconnect')
+    }
   }
 
   sendText(data: string) {
@@ -69,6 +74,12 @@ export class ActionManager {
   emitTypingEvent() {
     for (const conn of this.connector.connectedPeers) {
       conn.managerMiddleware.get(TypingEventMiddleware)?.emitTypingEvent()
+    }
+  }
+
+  emitDisconnectEvent() {
+    for (const conn of this.connector.connectedPeers) {
+      conn.managerMiddleware.get(DisconnectEventMiddleware)?.emit()
     }
   }
 
