@@ -11,7 +11,7 @@ export class Connector {
   public actions: ActionManager
   public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'disconnected') => void
   private blackList: Set<string> = new Set()
-  private potentialPeers: Set<string> = new Set()
+  public potentialPeers: Set<string> = new Set()
 
   constructor(
     public peerId: string,
@@ -50,12 +50,14 @@ export class Connector {
     )
   }
 
-  private createConnection(targetPeerId: string, outgoing = true) {
+  public createConnection(targetPeerId: string, outgoing = true, unlimitedConnections = false) {
     if (
       this.blackList.has(targetPeerId) ||
       targetPeerId in this.connections ||
-      this.peers.length >= connectorConfig.maxNumberOfPeers ||
-      (outgoing && this.peers.length >= connectorConfig.maxNumberOfOutgoingConnections)
+      !unlimitedConnections && (
+        this.peers.length >= connectorConfig.maxNumberOfPeers ||
+        (outgoing && this.peers.length >= connectorConfig.maxNumberOfOutgoingConnections)
+      )
     ) return
 
     this.potentialPeers.add(targetPeerId);
@@ -87,10 +89,6 @@ export class Connector {
 
   get connectedPeers() {
     return this.peers.filter((conn) => conn.connected)
-  }
-
-  get potentialPeersCount() {
-    return this.potentialPeers.size
   }
 
   cleanup() {

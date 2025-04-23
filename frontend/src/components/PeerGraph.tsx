@@ -42,7 +42,7 @@ const PeerGraph = () => {
   }, [updateGraph])
 
   return (
-    <GraphCanvas theme={darkTheme} edgeArrowPosition="end" edgeInterpolation="curved" edgeLabelPosition="inline"
+    <GraphCanvas theme={darkTheme} edgeArrowPosition="end" edgeInterpolation="linear" edgeLabelPosition="inline"
                  labelFontUrl={labelFont} labelType="all" nodes={graphNodes} edges={graphEdges}
                  layoutOverrides={{linkDistance: 150, nodeStrength: -100}}/>
   );

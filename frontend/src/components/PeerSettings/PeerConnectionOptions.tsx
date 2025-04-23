@@ -7,22 +7,36 @@ interface Props {
   contentRef: RefObject<HTMLElement | null>;
 }
 
-type PeersType = { id: string, nickname: string, connected: boolean }[]
+type PeerInfoType = { id: string, nickname: string, state: string }
 
 const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
-  const [peers, setPeers] = useState<PeersType>([]);
+  const [peers, setPeers] = useState<PeerInfoType[]>([]);
 
   const updatePeers = useCallback(() => {
-    const newPeers: { id: string, nickname: string, connected: boolean }[] = []
-    for (const targetPeerId of Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap)) {
+    const newPeers: PeerInfoType[] = []
+    const discoveredPeers = new Set(Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap))
+    for (const targetPeerId of discoveredPeers) {
+      const state = targetPeerId in connector.connections && connector.connections[targetPeerId].connected ? "connected" : "discovered";
+
       if (connector.peerId != targetPeerId) {
         newPeers.push({
           id: targetPeerId,
           nickname: connector.actions.targetPeerNickname(targetPeerId),
-          connected: targetPeerId in connector.connections
+          state
         });
       }
     }
+
+    for (const targetPeerId of connector.potentialPeers) {
+      if (!discoveredPeers.has(targetPeerId)) {
+        newPeers.push({
+          id: targetPeerId,
+          nickname: connector.actions.targetPeerNickname(targetPeerId),
+          state: "firebase"
+        });
+      }
+    }
+
     setPeers(newPeers)
   }, [])
 
@@ -33,6 +47,15 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
       connector.actions.peerDiscoveryCoordinator.eventEmitter.off('mapChanged', updatePeers)
     }
   }, [updatePeers])
+
+  function onSelect(targetPeerId: string, value: string) {
+    if (value === 'disconnect') {
+      connector.actions.emitDisconnectEvent(targetPeerId)
+      connector.connections[targetPeerId].disconnect(false)
+    } else if (value === 'connect') {
+      connector.createConnection(targetPeerId, true, true)
+    }
+  }
 
   return (
     <Table.Root mt="10px" size="sm" striped>
@@ -45,13 +68,13 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {peers.map(({id, connected, nickname}) =>
+        {peers.map(({id, state, nickname}) =>
           <Table.Row key={id}>
             <Table.Cell>{id}</Table.Cell>
             <Table.Cell>{nickname}</Table.Cell>
-            <Table.Cell>{connected ? 'connected' : 'not'}</Table.Cell>
+            <Table.Cell>{state}</Table.Cell>
             <Table.Cell>
-              <Menu.Root onSelect={({value}) => console.log(id, value)}>
+              <Menu.Root onSelect={({value}) => onSelect(id, value)}>
                 <Menu.Trigger asChild>
                   <Button variant="outline" size="sm">
                     Open
@@ -61,7 +84,7 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
                   <Menu.Positioner>
                     <Menu.Content>
                       {
-                        connected ?
+                        state === 'connected' ?
                           <Menu.Item
                             value="disconnect"
                             color="fg.error"

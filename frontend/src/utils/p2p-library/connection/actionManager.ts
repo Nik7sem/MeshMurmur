@@ -77,7 +77,11 @@ export class ActionManager {
     }
   }
 
-  emitDisconnectEvent() {
+  emitDisconnectEvent(targetPeerId?: string) {
+    if (targetPeerId) {
+      this.connector.connections[targetPeerId].managerMiddleware.get(DisconnectEventMiddleware)?.emitDisconnect()
+      return
+    }
     for (const conn of this.connector.connectedPeers) {
       conn.managerMiddleware.get(DisconnectEventMiddleware)?.emitDisconnect()
     }

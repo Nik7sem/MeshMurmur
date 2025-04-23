@@ -16,9 +16,9 @@ export type PeerInfoType = {
 export class PeerDiscoveryCoordinator {
   public peerMap: { [key: string]: PeerInfoType } = {};
   public eventEmitter = new TypedEventEmitter<{ mapChanged: void }>();
-  private GossipInterval = Math.random() * 6000 + 3000
+  private GossipInterval = Math.random() * 3000 + 3000
   private sampleSize = 3
-  private maxAge = 12_000
+  private maxAge = 15_000
 
   constructor(private connector: Connector) {
     this.updateSelfConnections()

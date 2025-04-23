@@ -6,7 +6,7 @@ import {Logger} from "@/utils/logger.ts";
 export class DisconnectEventMiddleware extends Middleware {
   public onDisconnect?: () => void
 
-  constructor(logger: Logger, conn: PeerConnection) {
+  constructor(conn: PeerConnection, logger: Logger) {
     super(conn, logger);
   }
 
