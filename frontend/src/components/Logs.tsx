@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import {logType} from "@/utils/p2p-library/types.ts";
 import LogLabel from "@/components/LogLabel.tsx";
-import PeerInfo from "@/components/PeerInfo.tsx";
+import PeerInfo from "@/components/PeerSettings/PeerInfo.tsx";
 import PeerGraph from "./PeerGraph.tsx"
 import NicknameAssigner from "@/components/NicknameAssigner/NicknameAssigner.tsx";
 import Experimental from "@/components/Experimental.tsx";

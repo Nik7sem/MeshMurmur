@@ -35,9 +35,9 @@ const PeerGraph = () => {
 
   useEffect(() => {
     updateGraph()
-    connector.actions.peerDiscoveryCoordinator.onMapChange = updateGraph
+    connector.actions.peerDiscoveryCoordinator.eventEmitter.on('mapChanged', updateGraph)
     return () => {
-      connector.actions.peerDiscoveryCoordinator.onMapChange = undefined
+      connector.actions.peerDiscoveryCoordinator.eventEmitter.off('mapChanged', updateGraph)
     }
   }, [updateGraph])
 

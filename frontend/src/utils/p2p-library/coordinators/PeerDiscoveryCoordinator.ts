@@ -1,10 +1,10 @@
 import {Connector} from "@/utils/p2p-library/connection/connector.ts";
 import {getRandomSample} from "@/utils/getRandomSample.ts";
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
+import {TypedEventEmitter} from "@/utils/eventEmitter.ts";
 
 export type PeerInfoType = {
   peerId: string;
-  nickname: string;
   connections: {
     peerId: string;
     connected: boolean,
@@ -15,7 +15,7 @@ export type PeerInfoType = {
 
 export class PeerDiscoveryCoordinator {
   public peerMap: { [key: string]: PeerInfoType } = {};
-  public onMapChange?: () => void;
+  public eventEmitter = new TypedEventEmitter<{ mapChanged: void }>();
   private GossipInterval = Math.random() * 6000 + 3000
   private sampleSize = 3
   private maxAge = 12_000
@@ -38,13 +38,12 @@ export class PeerDiscoveryCoordinator {
   updateSelfConnections() {
     this.peerMap[this.connector.peerId] = {
       peerId: this.connector.peerId,
-      nickname: '', // TODO: assign nickname
       connections: this.connector.peers.map(peer => (
         {peerId: peer.targetPeerId, connected: peer.connected, connectionType: peer.connectionType}
       )),
       updatedAt: Date.now()
     }
-    this.onMapChange?.()
+    this.eventEmitter.emit('mapChanged');
   }
 
   mergeGossip(received: PeerInfoType[]) {
@@ -55,7 +54,7 @@ export class PeerDiscoveryCoordinator {
         changed = true;
       }
     }
-    if (changed) this.onMapChange?.()
+    if (changed) this.eventEmitter.emit('mapChanged')
   }
 
   getCleanPeerMap(): { [key: string]: PeerInfoType } {
