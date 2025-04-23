@@ -7,7 +7,6 @@ import {
   onChildAdded,
   onChildRemoved,
   onDisconnect,
-  onValue,
   off,
   remove,
   get,
@@ -68,8 +67,8 @@ export class FirebaseSignaler extends Signaler {
   }
 
   async sendInvite(targetPeerId: string) {
-    const descriptionRef = ref(this.db, `peers/${targetPeerId}/invite`);
-    await set(descriptionRef, this.peerId);
+    const descriptionRef = ref(this.db, `peers/${targetPeerId}/invites`);
+    await push(descriptionRef, this.peerId);
   }
 
   async send(targetPeerId: string, connectionData: ConnectionData) {
@@ -78,8 +77,8 @@ export class FirebaseSignaler extends Signaler {
   }
 
   onInvite(callback: (targetPeerId: string) => void) {
-    const invitesListRef = ref(this.db, `peers/${this.peerId}/invite`);
-    onValue(invitesListRef, (snapshot: DataSnapshot) => {
+    const invitesListRef = ref(this.db, `peers/${this.peerId}/invites`);
+    onChildAdded(invitesListRef, (snapshot: DataSnapshot) => {
       const data = snapshot.val();
       if (data) {
         callback(data);

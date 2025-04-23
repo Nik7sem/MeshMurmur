@@ -43,8 +43,8 @@ export const rtcConfig: RTCConfiguration = {
 }
 
 export const AppConfig = {
-  maxNumberOfOutgoingConnections: 1,
-  maxNumberOfPeers: 2,
+  maxNumberOfOutgoingConnections: 5,
+  maxNumberOfPeers: 10,
   maxNameLength: 15,
   connectingTimeout: 30000,
 }
