@@ -2,10 +2,11 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {darkTheme, GraphCanvas, GraphEdge, GraphNode} from "reagraph";
 import {connector, peerId} from "@/init.ts";
 
-import {getShort} from "@/utils/p2p-library/helpers.ts";
-
 function toEdge(from: string, to: string) {
   return `${from}->${to}`
+}
+
+function dfs(curPeerId: number,) {
 }
 
 const PeerGraph = () => {
@@ -41,8 +42,8 @@ const PeerGraph = () => {
     const newGraphEdges: GraphEdge[] = []
 
     for (const targetPeerId of nodes) {
-      if (targetPeerId === peerId) newGraphNodes.push({id: peerId, label: 'me'})
-      newGraphNodes.push({id: targetPeerId, label: getShort(targetPeerId)})
+      if (targetPeerId === peerId) newGraphNodes.push({id: peerId, fill: 'green', label: 'me'})
+      newGraphNodes.push({id: targetPeerId, fill: 'gray', label: connector.actions.targetPeerNickname(targetPeerId)})
     }
 
     for (const [id, {from, to, label, fill}] of Object.entries(edges)) {

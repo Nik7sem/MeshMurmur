@@ -57,7 +57,7 @@ const Logs: FC<Props> = ({logs}) => {
                     <Box key={idx}><LogLabel type={log.type}/> <Text>{log.text}</Text></Box>
                   )}
                 </VStack> : menuValue === "Info" ?
-                  <PeerInfo/> : menuValue === "Graph" ?
+                  <PeerInfo contentRef={contentRef}/> : menuValue === "Graph" ?
                     <PeerGraph/> : menuValue === "Nickname" ?
                       <NicknameAssigner contentRef={contentRef}/> :
                       <Experimental/>

@@ -48,6 +48,6 @@ export const connectorConfig = {
 }
 
 export const peerConfig = {
-  maxNameLength: 10
+  maxNameLength: 15
 }
 
