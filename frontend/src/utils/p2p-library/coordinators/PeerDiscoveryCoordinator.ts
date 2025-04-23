@@ -4,7 +4,12 @@ import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMidd
 
 export type PeerInfoType = {
   peerId: string;
-  connections: string[];
+  nickname: string;
+  connections: {
+    peerId: string;
+    connected: boolean,
+    connectionType: string
+  }[];
   updatedAt: number;
 }
 
@@ -33,8 +38,10 @@ export class PeerDiscoveryCoordinator {
   updateSelfConnections() {
     this.peerMap[this.connector.peerId] = {
       peerId: this.connector.peerId,
-      // Don't know what is better, peers or connected peers
-      connections: this.connector.peers.map(peer => peer.targetPeerId),
+      nickname: '', // TODO: assign nickname
+      connections: this.connector.peers.map(peer => (
+        {peerId: peer.targetPeerId, connected: peer.connected, connectionType: peer.connectionType}
+      )),
       updatedAt: Date.now()
     }
     this.onMapChange?.()

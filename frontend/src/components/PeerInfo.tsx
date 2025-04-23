@@ -27,20 +27,20 @@ const PeerInfo: FC<Props> = ({contentRef}) => {
       <Table.Root mt="10px" size="sm" striped>
         <Table.Header>
           <Table.Row>
+            <Table.ColumnHeader>PeerId</Table.ColumnHeader>
             <Table.ColumnHeader>Nickname</Table.ColumnHeader>
             <Table.ColumnHeader>State</Table.ColumnHeader>
             <Table.ColumnHeader>Actions</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {connector.peers.map((conn, idx) => (
+          {Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap).map((targetPeerId, idx) =>
             <Table.Row key={idx}>
-              <TooltipPeerId peerId={conn.targetPeerId}>
-                <Table.Cell>{connector.actions.targetPeerNickname(conn.targetPeerId)}</Table.Cell>
-              </TooltipPeerId>
-              <Table.Cell>{conn.connected ? 'connected' : 'not'}</Table.Cell>
+              <Table.Cell>{targetPeerId}</Table.Cell>
+              <Table.Cell>{connector.actions.targetPeerNickname(targetPeerId)}</Table.Cell>
+              <Table.Cell>{targetPeerId in connector.connections ? 'connected' : 'not'}</Table.Cell>
               <Table.Cell>
-                <Menu.Root onSelect={({value}) => console.log(conn.targetPeerId, value)}>
+                <Menu.Root onSelect={({value}) => console.log(targetPeerId, value)}>
                   <Menu.Trigger asChild>
                     <Button variant="outline" size="sm">
                       Open
@@ -63,7 +63,7 @@ const PeerInfo: FC<Props> = ({contentRef}) => {
                 </Menu.Root>
               </Table.Cell>
             </Table.Row>
-          ))}
+          )}
         </Table.Body>
       </Table.Root>
     </Container>
