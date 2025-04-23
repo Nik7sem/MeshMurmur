@@ -11,9 +11,11 @@ import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEvent
 import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
+import {peerConfig} from "@/utils/p2p-library/conf.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
+  private connectTimeoutId: NodeJS.Timeout | null = null;
   public managerMiddleware: ManagerMiddleware
   public connected = false;
   public connectionType = "";
@@ -24,7 +26,6 @@ export class PeerConnection {
     private logger: Logger,
     private signaler: Signaler,
     private onPeerConnectionChanged: (status: 'connected' | 'disconnected', block: boolean) => void,
-    private timeout = 30000
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 1)
@@ -38,11 +39,11 @@ export class PeerConnection {
   }
 
   private connect(): WebRTCPeerConnection {
-    setTimeout(() => {
+    this.connectTimeoutId = setTimeout(() => {
       if (!this.connected) {
         this.onFinalState("timeout")
       }
-    }, this.timeout)
+    }, peerConfig.connectingTimeout)
 
     return new WebRTCPeerConnection(this.peerId, this.targetPeerId, this.signaler, this.logger, this.onFinalState, this.onData, this.onChannelOpen)
   }
@@ -81,6 +82,7 @@ export class PeerConnection {
   }
 
   disconnect(block = false) {
+    if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
     this.connection.cleanup()
     this.onPeerConnectionChanged("disconnected", block)
   }

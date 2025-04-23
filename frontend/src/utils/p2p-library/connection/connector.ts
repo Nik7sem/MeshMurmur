@@ -9,8 +9,8 @@ export class Connector {
   private readonly signaler: FirebaseSignaler;
   public connections: { [peerId: string]: PeerConnection } = {}
   public actions: ActionManager
-  public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'disconnected') => void
-  private blackList: Set<string> = new Set()
+  public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'connecting' | 'disconnected') => void
+  public blackList: Set<string> = new Set()
   public potentialPeers: Set<string> = new Set()
 
   constructor(
@@ -69,6 +69,7 @@ export class Connector {
     }
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnPeerConnectionChanged(targetPeerId));
     this.actions.registerCallbacksAndData(targetPeerId)
+    this.onPeerConnectionChanged?.(targetPeerId, 'connecting')
   }
 
   private createOnPeerConnectionChanged(targetPeerId: string) {

@@ -16,7 +16,16 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
     const newPeers: PeerInfoType[] = []
     const discoveredPeers = new Set(Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap))
     for (const targetPeerId of discoveredPeers) {
-      const state = targetPeerId in connector.connections && connector.connections[targetPeerId].connected ? "connected" : "discovered";
+      let state = ''
+      if (targetPeerId in connector.connections) {
+        if (connector.connections[targetPeerId].connected) {
+          state = "connected"
+        } else {
+          state = "connecting"
+        }
+      } else {
+        state = "discovered"
+      }
 
       if (connector.peerId != targetPeerId) {
         newPeers.push({
@@ -29,10 +38,20 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
 
     for (const targetPeerId of connector.potentialPeers) {
       if (!discoveredPeers.has(targetPeerId)) {
+        let state = ''
+        if (targetPeerId in connector.connections) {
+          if (connector.connections[targetPeerId].connected) {
+            state = "connected"
+          } else {
+            state = "connecting"
+          }
+        } else {
+          state = "firebase"
+        }
         newPeers.push({
           id: targetPeerId,
           nickname: connector.actions.targetPeerNickname(targetPeerId),
-          state: "firebase"
+          state
         });
       }
     }
@@ -84,7 +103,7 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
                   <Menu.Positioner>
                     <Menu.Content>
                       {
-                        state === 'connected' ?
+                        ['connected', 'connecting'].includes(state) ?
                           <Menu.Item
                             value="disconnect"
                             color="fg.error"

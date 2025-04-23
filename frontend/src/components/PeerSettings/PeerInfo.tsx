@@ -2,6 +2,7 @@ import React, {FC, RefObject} from 'react';
 import {Center, Container, DataList, Separator, Text} from "@chakra-ui/react";
 import {AppVersion, peerId} from "@/init.ts";
 import PeerConnectionOptions from "@/components/PeerSettings/PeerConnectionOptions.tsx";
+import PeerBlackList from "@/components/PeerSettings/PeerBlackList.tsx";
 
 interface Props {
   contentRef: RefObject<HTMLElement | null>;
@@ -25,6 +26,10 @@ const PeerInfo: FC<Props> = ({contentRef}) => {
         <Text fontSize="2xl">Peers</Text>
       </Center>
       <PeerConnectionOptions contentRef={contentRef}/>
+      <Center margin="15px">
+        <Text fontSize="2xl">Block List</Text>
+      </Center>
+      <PeerBlackList/>
     </Container>
   );
 };

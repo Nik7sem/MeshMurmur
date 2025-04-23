@@ -11,13 +11,22 @@ const PeerGraph = () => {
     const newGraphNodes: GraphNode[] = []
     const newGraphEdges: GraphEdge[] = []
 
-    const nodes = Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap)
+    const nodes = [...new Set([
+      ...Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap),
+      ...connector.peers.map(conn => conn.targetPeerId)
+    ])]
+
     for (const targetPeerId of nodes) {
-      if (targetPeerId === peerId) newGraphNodes.push({id: peerId, fill: 'green', label: 'me'})
+      if (targetPeerId === peerId) {
+        newGraphNodes.push({id: peerId, fill: 'green', label: 'me'})
+        continue
+      }
       newGraphNodes.push({id: targetPeerId, fill: 'gray', label: connector.actions.targetPeerNickname(targetPeerId)})
     }
 
     for (const from of nodes) {
+      if (!(from in connector.actions.peerDiscoveryCoordinator.peerMap)) continue
+
       for (const v of connector.actions.peerDiscoveryCoordinator.peerMap[from].connections) {
         newGraphEdges.push({
           id: `${from}->${v.peerId}`,

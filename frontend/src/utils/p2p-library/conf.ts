@@ -48,6 +48,7 @@ export const connectorConfig = {
 }
 
 export const peerConfig = {
-  maxNameLength: 15
+  maxNameLength: 15,
+  connectingTimeout: 30000,
 }
 
