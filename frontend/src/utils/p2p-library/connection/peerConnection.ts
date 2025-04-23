@@ -11,7 +11,7 @@ import {TypingEventMiddleware} from "@/utils/p2p-library/middlewares/typingEvent
 import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddleware.ts";
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
-import {peerConfig} from "@/utils/p2p-library/conf.ts";
+import {AppConfig} from "@/utils/p2p-library/conf.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
@@ -43,7 +43,7 @@ export class PeerConnection {
       if (!this.connected) {
         this.onFinalState("timeout")
       }
-    }, peerConfig.connectingTimeout)
+    }, AppConfig.connectingTimeout)
 
     return new WebRTCPeerConnection(this.peerId, this.targetPeerId, this.signaler, this.logger, this.onFinalState, this.onData, this.onChannelOpen)
   }

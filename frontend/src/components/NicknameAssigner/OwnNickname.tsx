@@ -1,7 +1,6 @@
 import React, {ChangeEvent, useState} from 'react';
 import {Button, Field, Input} from "@chakra-ui/react";
-import {Tooltip} from "@/components/ui/tooltip.tsx";
-import {peerConfig} from "@/utils/p2p-library/conf.ts";
+import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import useToast from "@/hooks/useToast.tsx";
 import useUserData from "@/hooks/useUserData.tsx";
 
@@ -18,7 +17,7 @@ const OwnNickname = () => {
 
   function onSave() {
     if (inputValue.length === 0 ||
-      inputValue.length > peerConfig.maxNameLength) return setInvalid(true);
+      inputValue.length > AppConfig.maxNameLength) return setInvalid(true);
     setUserData({...userData, nickname: inputValue});
     successToast('Nickname saved!');
   }

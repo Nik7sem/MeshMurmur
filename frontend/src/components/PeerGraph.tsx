@@ -17,11 +17,17 @@ const PeerGraph = () => {
     ])]
 
     for (const targetPeerId of nodes) {
+      const connectionsLen = connector.actions.peerDiscoveryCoordinator.peerMap[targetPeerId].connections.length.toString()
       if (targetPeerId === peerId) {
-        newGraphNodes.push({id: peerId, fill: 'green', label: 'me'})
+        newGraphNodes.push({id: peerId, fill: 'green', label: 'me', subLabel: connectionsLen})
         continue
       }
-      newGraphNodes.push({id: targetPeerId, fill: 'gray', label: connector.actions.targetPeerNickname(targetPeerId)})
+      newGraphNodes.push({
+        id: targetPeerId,
+        fill: 'gray',
+        label: connector.actions.targetPeerNickname(targetPeerId),
+        subLabel: connectionsLen
+      })
     }
 
     for (const from of nodes) {

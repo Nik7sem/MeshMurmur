@@ -7,7 +7,9 @@ interface Props {
   contentRef: RefObject<HTMLElement | null>;
 }
 
-type PeerInfoType = { id: string, nickname: string, state: string }
+type StateType = 'connected' | 'connecting' | 'discovered' | 'signaler'
+type PeerInfoType = { id: string, connections: string, nickname: string, state: StateType }
+const statesValues = {'connected': 1, 'connecting': 2, 'discovered': 3, 'signaler': 4}
 
 const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
   const [peers, setPeers] = useState<PeerInfoType[]>([]);
@@ -16,7 +18,7 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
     const newPeers: PeerInfoType[] = []
     const discoveredPeers = new Set(Object.keys(connector.actions.peerDiscoveryCoordinator.peerMap))
     for (const targetPeerId of discoveredPeers) {
-      let state = ''
+      let state: StateType = 'signaler'
       if (targetPeerId in connector.connections) {
         if (connector.connections[targetPeerId].connected) {
           state = "connected"
@@ -30,6 +32,7 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
       if (connector.peerId != targetPeerId) {
         newPeers.push({
           id: targetPeerId,
+          connections: connector.actions.peerDiscoveryCoordinator.peerMap[targetPeerId].connections.length.toString(),
           nickname: connector.actions.targetPeerNickname(targetPeerId),
           state
         });
@@ -38,7 +41,7 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
 
     for (const targetPeerId of connector.potentialPeers) {
       if (!discoveredPeers.has(targetPeerId)) {
-        let state = ''
+        let state: StateType = 'signaler'
         if (targetPeerId in connector.connections) {
           if (connector.connections[targetPeerId].connected) {
             state = "connected"
@@ -46,16 +49,19 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
             state = "connecting"
           }
         } else {
-          state = "firebase"
+          state = "signaler"
         }
         newPeers.push({
           id: targetPeerId,
+          connections: "-",
           nickname: connector.actions.targetPeerNickname(targetPeerId),
           state
         });
       }
     }
-
+    newPeers.sort((a, b) => {
+      return statesValues[a.state] - statesValues[b.state]
+    })
     setPeers(newPeers)
   }, [])
 
@@ -82,15 +88,17 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
         <Table.Row>
           <Table.ColumnHeader>PeerId</Table.ColumnHeader>
           <Table.ColumnHeader>Nickname</Table.ColumnHeader>
+          <Table.ColumnHeader>Connections</Table.ColumnHeader>
           <Table.ColumnHeader>State</Table.ColumnHeader>
           <Table.ColumnHeader>Actions</Table.ColumnHeader>
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {peers.map(({id, state, nickname}) =>
+        {peers.map(({id, state, connections, nickname}) =>
           <Table.Row key={id}>
             <Table.Cell>{id}</Table.Cell>
             <Table.Cell>{nickname}</Table.Cell>
+            <Table.Cell>{connections}</Table.Cell>
             <Table.Cell>{state}</Table.Cell>
             <Table.Cell>
               <Menu.Root onSelect={({value}) => onSelect(id, value)}>

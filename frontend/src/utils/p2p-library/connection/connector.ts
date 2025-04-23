@@ -2,7 +2,7 @@ import {Logger} from '../../logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {getRandomSample} from "@/utils/getRandomSample.ts";
-import {connectorConfig} from "@/utils/p2p-library/conf.ts";
+import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 
 export class Connector {
@@ -30,7 +30,7 @@ export class Connector {
       this.potentialPeers.add(potentialPeerId);
     }
 
-    for (const targetPeerId of getRandomSample(this.potentialPeers, connectorConfig.maxNumberOfPeers)) {
+    for (const targetPeerId of getRandomSample(this.potentialPeers, AppConfig.maxNumberOfPeers)) {
       this.createConnection(targetPeerId);
     }
 
@@ -51,16 +51,17 @@ export class Connector {
   }
 
   public createConnection(targetPeerId: string, outgoing = true, unlimitedConnections = false) {
+    this.potentialPeers.add(targetPeerId);
+
     if (
       this.blackList.has(targetPeerId) ||
       targetPeerId in this.connections ||
       !unlimitedConnections && (
-        this.peers.length >= connectorConfig.maxNumberOfPeers ||
-        (outgoing && this.peers.length >= connectorConfig.maxNumberOfOutgoingConnections)
+        this.peers.length >= AppConfig.maxNumberOfPeers ||
+        (outgoing && this.peers.length >= AppConfig.maxNumberOfOutgoingConnections)
       )
     ) return
 
-    this.potentialPeers.add(targetPeerId);
     if (outgoing) {
       this.signaler.sendInvite(targetPeerId)
       this.logger.info("Send invite to:", targetPeerId);

@@ -3,7 +3,7 @@ import {Button, Center, Container, createListCollection, Input, Portal, Select, 
 import useToast from "@/hooks/useToast.tsx";
 import useUserData from "@/hooks/useUserData.tsx";
 import {connector} from "@/init.ts";
-import {peerConfig} from "@/utils/p2p-library/conf.ts";
+import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import TooltipPeerId from "@/components/TooltipPeerId.tsx";
 
 interface Props {
@@ -29,7 +29,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
 
   function onClick() {
     if (!nickname || selectedPeerId.length === 0 || !selectedPeerId[0]) return;
-    if (nickname.length > peerConfig.maxNameLength) return errorToast('Nickname is too long!');
+    if (nickname.length > AppConfig.maxNameLength) return errorToast('Nickname is too long!');
 
     const associatedNicknames = {...userData.associatedNicknames}
     associatedNicknames[selectedPeerId[0]] = nickname
