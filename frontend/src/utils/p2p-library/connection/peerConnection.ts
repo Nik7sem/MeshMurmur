@@ -66,11 +66,11 @@ export class PeerConnection {
       const {info} = parseRTCStats(stats)
       if (info) {
         this.logger.info(`Candidates info: `, info);
-        // this.logger.success(`Connection is using ${info.type} server.`);
+        this.logger.info(`Connection is using ${info.type} server.`);
         this.connectionType = info.type
       }
       this.onPeerConnectionChanged('connected', false);
-      // this.logger.success("Successfully connected to peer!")
+      this.logger.info(`Connected to ${this.targetPeerId}`)
     } else {
       this.disconnect()
       this.logger.error(`Error in connection to peer: ${state}!`)

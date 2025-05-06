@@ -62,7 +62,7 @@ export class SignatureMiddleware extends Middleware {
         } else {
           console.error('Signature verification succeeded before initialization!')
         }
-        this.logger.success("Signature verification succeeded!")
+        this.logger.info("Signature verification succeeded!")
       } else {
         this.blockPeer()
       }

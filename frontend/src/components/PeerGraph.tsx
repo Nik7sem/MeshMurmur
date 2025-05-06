@@ -17,7 +17,9 @@ const PeerGraph = () => {
     ])]
 
     for (const targetPeerId of nodes) {
-      const connectionsLen = connector.actions.peerDiscoveryCoordinator.peerMap[targetPeerId].connections.length.toString()
+      const connectionsLen = (targetPeerId in connector.actions.peerDiscoveryCoordinator.peerMap) ?
+        connector.actions.peerDiscoveryCoordinator.peerMap[targetPeerId].connections.length.toString() : "0"
+
       if (targetPeerId === peerId) {
         newGraphNodes.push({id: peerId, fill: 'green', label: 'me', subLabel: connectionsLen})
         continue

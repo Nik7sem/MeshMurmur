@@ -17,7 +17,7 @@ export class Connector {
     public peerId: string,
     private logger: Logger,
   ) {
-    this.actions = new ActionManager(this);
+    this.actions = new ActionManager(this, logger);
     this.signaler = new FirebaseSignaler(this.peerId);
   }
 
@@ -42,8 +42,8 @@ export class Connector {
         this.createConnection(targetPeerId);
       }, (oldPeerId) => {
         if (oldPeerId in this.connections) {
+          this.logger.warn(`${this.actions.targetPeerNickname(oldPeerId)} disconnected by exit`);
           this.connections[oldPeerId].disconnect();
-          this.logger.info(`Peer ${oldPeerId} disconnected by exit`);
         }
         this.potentialPeers.delete(oldPeerId);
       }
@@ -80,6 +80,12 @@ export class Connector {
         if (block) {
           this.blackList.add(targetPeerId)
         }
+      } else if (status === "connected") {
+        // TODO: Remove this, and make proper solution with callback when all middlewares fully initialized
+        // Temporal solution
+        setTimeout(() => {
+          this.logger.success(`Connected to ${this.actions.targetPeerNickname(targetPeerId)}`);
+        }, 1000)
       }
       this.onPeerConnectionChanged?.(targetPeerId, status)
     }

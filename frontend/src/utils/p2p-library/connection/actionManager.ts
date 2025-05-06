@@ -9,6 +9,7 @@ import {UserData} from "@/types/user.ts";
 import {PeerDiscoveryCoordinator} from "@/utils/p2p-library/coordinators/PeerDiscoveryCoordinator.ts";
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
+import {Logger} from "@/utils/logger.ts";
 
 export class ActionManager {
   public onCompleteData?: (data: completeMessageType) => void
@@ -20,6 +21,7 @@ export class ActionManager {
 
   constructor(
     private readonly connector: Connector,
+    private readonly logger: Logger
   ) {
     this.peerDiscoveryCoordinator = new PeerDiscoveryCoordinator(connector);
   }
@@ -52,7 +54,10 @@ export class ActionManager {
       }
     }
     if (disconnectMiddleware) {
-      disconnectMiddleware.onDisconnect = () => this.connector.connections[targetPeerId].disconnect()
+      disconnectMiddleware.onDisconnect = () => {
+        this.logger.warn(`${this.targetPeerNickname(targetPeerId)} disconnected by his own will`);
+        this.connector.connections[targetPeerId].disconnect()
+      }
     }
     if (discoveryMiddleware) {
       discoveryMiddleware.onGossipMessage = (data) => this.peerDiscoveryCoordinator.mergeGossip(data.knownPeers)
