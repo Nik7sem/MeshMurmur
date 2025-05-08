@@ -8,6 +8,7 @@ import {
 import {useColorModeValue} from "@/components/ui/color-mode.tsx";
 import {completeFileType} from "@/utils/p2p-library/types.ts";
 import TooltipPeerId from "@/components/TooltipPeerId.tsx";
+import ImagePreviewDialog from "@/components/ChatMessage/ImagePreviewDialog.tsx";
 
 interface Props {
   username: string; // peer username
@@ -30,6 +31,7 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
 
   const isImage = fileType.startsWith('image/');
   const isVideo = fileType.startsWith('video/');
+  const isAudio = fileType.startsWith('audio/');
 
   // Bubble background color
   const light = me ? 'blue.100' : 'gray.100';
@@ -69,13 +71,21 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
         )}
 
         {isImage ? (
-          <Image
+          <ImagePreviewDialog
             src={url}
             alt={fileName}
-            borderRadius="md"
-            w="full"
-            maxH="300px"
-            objectFit="cover"
+            trigger={(onOpen) => (
+              <Image
+                src={url}
+                alt={fileName}
+                borderRadius="md"
+                w="full"
+                maxH="300px"
+                objectFit="cover"
+                cursor="pointer"
+                onClick={onOpen}
+              />
+            )}
           />
         ) : isVideo ? (
           // Simply wrap <video> in a Box so it can size to the container.
@@ -89,6 +99,16 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
                 height: 'auto',
               }}
             />
+          </Box>
+        ) : isAudio ? (
+          <Box>
+            <audio controls style={{width: '100%'}}>
+              <source src={url} type={fileType}/>
+              Your browser does not support the audio element.
+            </audio>
+            <Text fontSize="xs" color="gray.500">
+              {fileName} · {formatFileSize(fileSize)}
+            </Text>
           </Box>
         ) : (
           <Box>

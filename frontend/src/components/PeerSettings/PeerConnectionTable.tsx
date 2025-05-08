@@ -1,5 +1,5 @@
 import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
-import {Button, Menu, Portal, Table, Text} from "@chakra-ui/react";
+import {Button, Menu, Portal, Show, Table, Text} from "@chakra-ui/react";
 import {connector} from "@/init.ts";
 
 
@@ -83,7 +83,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   }
 
   return (
-    peers.length > 0 ?
+    <Show when={peers.length > 0} fallback={<Text>Empty</Text>}>
       <Table.Root mt="10px" size="sm" striped>
         <Table.Header>
           <Table.Row>
@@ -131,7 +131,8 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
             </Table.Row>
           )}
         </Table.Body>
-      </Table.Root> : <Text>Empty</Text>
+      </Table.Root>
+    </Show>
   );
 };
 

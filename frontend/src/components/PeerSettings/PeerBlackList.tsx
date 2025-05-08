@@ -1,14 +1,14 @@
 import React from 'react';
-import {VStack, Text} from "@chakra-ui/react";
+import {VStack, Text, Show} from "@chakra-ui/react";
 import {connector} from "@/init.ts";
 
 const PeerBlackList = () => {
   return (
-    connector.blackList.size > 0 ?
+    <Show when={connector.blackList.size > 0} fallback={<Text>Empty</Text>}>
       <VStack>
         {Array.from(connector.blackList).map((targetPeerId) => <Text>{targetPeerId}</Text>)}
-      </VStack> :
-      <Text>Empty</Text>
+      </VStack>
+    </Show>
   );
 };
 

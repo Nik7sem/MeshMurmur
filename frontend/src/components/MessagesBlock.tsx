@@ -1,10 +1,10 @@
 import React, {FC, useEffect, useRef} from 'react';
-import ChatTextMessage from "@/components/ChatTextMessage.tsx";
+import ChatTextMessage from "@/components/ChatMessage/ChatTextMessage.tsx";
 import {peerId} from "@/init.ts";
 import {Container} from "@chakra-ui/react";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
 import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
-import ChatFileMessage from "@/components/ChatFileMessage.tsx";
+import ChatFileMessage from "@/components/ChatMessage/ChatFileMessage.tsx";
 import {smoothScroll} from "@/utils/smoothScroll.ts";
 
 interface Props {
