@@ -1,5 +1,5 @@
 import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
-import {Button, Menu, Portal, Table} from "@chakra-ui/react";
+import {Button, Menu, Portal, Table, Text} from "@chakra-ui/react";
 import {connector} from "@/init.ts";
 
 
@@ -11,7 +11,7 @@ type StateType = 'connected' | 'connecting' | 'discovered' | 'signaler'
 type PeerInfoType = { id: string, connections: string, nickname: string, state: StateType }
 const statesValues = {'connected': 1, 'connecting': 2, 'discovered': 3, 'signaler': 4}
 
-const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
+const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   const [peers, setPeers] = useState<PeerInfoType[]>([]);
 
   const updatePeers = useCallback(() => {
@@ -83,55 +83,56 @@ const PeerConnectionOptions: FC<Props> = ({contentRef}) => {
   }
 
   return (
-    <Table.Root mt="10px" size="sm" striped>
-      <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeader>PeerId</Table.ColumnHeader>
-          <Table.ColumnHeader>Nickname</Table.ColumnHeader>
-          <Table.ColumnHeader>Connections</Table.ColumnHeader>
-          <Table.ColumnHeader>State</Table.ColumnHeader>
-          <Table.ColumnHeader>Actions</Table.ColumnHeader>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {peers.map(({id, state, connections, nickname}) =>
-          <Table.Row key={id}>
-            <Table.Cell>{id}</Table.Cell>
-            <Table.Cell>{nickname}</Table.Cell>
-            <Table.Cell>{connections}</Table.Cell>
-            <Table.Cell>{state}</Table.Cell>
-            <Table.Cell>
-              <Menu.Root onSelect={({value}) => onSelect(id, value)}>
-                <Menu.Trigger asChild>
-                  <Button variant="outline" size="sm">
-                    Open
-                  </Button>
-                </Menu.Trigger>
-                <Portal container={contentRef}>
-                  <Menu.Positioner>
-                    <Menu.Content>
-                      {
-                        ['connected', 'connecting'].includes(state) ?
-                          <Menu.Item
-                            value="disconnect"
-                            color="fg.error"
-                            _hover={{bg: "bg.error", color: "fg.error"}}
-                          >
-                            Disconnect...
-                          </Menu.Item>
-                          :
-                          <Menu.Item value="connect">Connect</Menu.Item>
-                      }
-                    </Menu.Content>
-                  </Menu.Positioner>
-                </Portal>
-              </Menu.Root>
-            </Table.Cell>
+    peers.length > 0 ?
+      <Table.Root mt="10px" size="sm" striped>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeader>PeerId</Table.ColumnHeader>
+            <Table.ColumnHeader>Nickname</Table.ColumnHeader>
+            <Table.ColumnHeader>Connections</Table.ColumnHeader>
+            <Table.ColumnHeader>State</Table.ColumnHeader>
+            <Table.ColumnHeader>Actions</Table.ColumnHeader>
           </Table.Row>
-        )}
-      </Table.Body>
-    </Table.Root>
+        </Table.Header>
+        <Table.Body>
+          {peers.map(({id, state, connections, nickname}) =>
+            <Table.Row key={id}>
+              <Table.Cell>{id}</Table.Cell>
+              <Table.Cell>{nickname}</Table.Cell>
+              <Table.Cell>{connections}</Table.Cell>
+              <Table.Cell>{state}</Table.Cell>
+              <Table.Cell>
+                <Menu.Root onSelect={({value}) => onSelect(id, value)}>
+                  <Menu.Trigger asChild>
+                    <Button variant="outline" size="sm">
+                      Open
+                    </Button>
+                  </Menu.Trigger>
+                  <Portal container={contentRef}>
+                    <Menu.Positioner>
+                      <Menu.Content>
+                        {
+                          ['connected', 'connecting'].includes(state) ?
+                            <Menu.Item
+                              value="disconnect"
+                              color="fg.error"
+                              _hover={{bg: "bg.error", color: "fg.error"}}
+                            >
+                              Disconnect...
+                            </Menu.Item>
+                            :
+                            <Menu.Item value="connect">Connect</Menu.Item>
+                        }
+                      </Menu.Content>
+                    </Menu.Positioner>
+                  </Portal>
+                </Menu.Root>
+              </Table.Cell>
+            </Table.Row>
+          )}
+        </Table.Body>
+      </Table.Root> : <Text>Empty</Text>
   );
 };
 
-export default PeerConnectionOptions;
+export default PeerConnectionTable;

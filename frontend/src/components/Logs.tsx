@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import {logType} from "@/utils/p2p-library/types.ts";
 import LogLabel from "@/components/LogLabel.tsx";
-import PeerInfo from "@/components/PeerSettings/PeerInfo.tsx";
+import PeerSettings from "@/components/PeerSettings/PeerSettings.tsx";
 import PeerGraph from "./PeerGraph.tsx"
 import NicknameAssigner from "@/components/NicknameAssigner/NicknameAssigner.tsx";
 import Experimental from "@/components/Experimental.tsx";
@@ -46,7 +46,7 @@ const Logs: FC<Props> = ({logs}) => {
               <Drawer.Title>
                 <SegmentGroup.Root value={menuValue} onValueChange={({value}) => setMenuValue(value)}>
                   <SegmentGroup.Indicator/>
-                  <SegmentGroup.Items items={["Logs", "Info", "Nickname", "Graph", "Experimental"]}/>
+                  <SegmentGroup.Items items={["Logs", "Settings", "Nickname", "Graph", "Experimental"]}/>
                 </SegmentGroup.Root>
               </Drawer.Title>
             </Drawer.Header>
@@ -56,8 +56,8 @@ const Logs: FC<Props> = ({logs}) => {
                   {logs.map((log, idx) =>
                     <Box key={idx}><LogLabel type={log.type}/> <Text>{log.text}</Text></Box>
                   )}
-                </VStack> : menuValue === "Info" ?
-                  <PeerInfo contentRef={contentRef}/> : menuValue === "Graph" ?
+                </VStack> : menuValue === "Settings" ?
+                  <PeerSettings contentRef={contentRef}/> : menuValue === "Graph" ?
                     <PeerGraph/> : menuValue === "Nickname" ?
                       <NicknameAssigner contentRef={contentRef}/> :
                       <Experimental/>

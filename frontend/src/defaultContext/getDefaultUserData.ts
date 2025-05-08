@@ -1,14 +1,15 @@
 import {UserData} from "../types/user.ts";
-import {connector, storageManager} from "@/init.ts";
+import {storageManager} from "@/init.ts";
+
+let data: null | UserData = null
 
 export async function getDefaultUserData(): Promise<UserData> {
+  if (data) return data;
+
   const storedUserData = await storageManager.retrieveUserData();
   if (storedUserData) {
-    const userData = JSON.parse(storedUserData) as UserData;
-    connector.actions.sendNickname(userData.nickname)
-    connector.actions.associatedNicknames = userData.associatedNicknames
-    return userData;
+    return (data = JSON.parse(storedUserData))
   } else {
-    return {nickname: "", associatedNicknames: {}};
+    return {autoconnect: true, nickname: "", associatedNicknames: {}};
   }
 }

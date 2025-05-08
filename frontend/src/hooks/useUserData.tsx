@@ -10,6 +10,9 @@ const useUserData = () => {
     if (userData.nickname !== newUserData.nickname) {
       connector.actions.sendNickname(newUserData.nickname)
     }
+    if (userData.autoconnect !== newUserData.autoconnect) {
+      connector.setAutoconnect(newUserData.autoconnect)
+    }
     connector.actions.associatedNicknames = newUserData.associatedNicknames
     setUserData(newUserData)
     storageManager.storeUserData(JSON.stringify(newUserData)).then()

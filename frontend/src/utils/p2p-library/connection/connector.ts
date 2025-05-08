@@ -15,6 +15,7 @@ export class Connector {
 
   constructor(
     public peerId: string,
+    private autoconnect: boolean,
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
@@ -22,7 +23,7 @@ export class Connector {
   }
 
   async init() {
-    await this.signaler.registerPeer()
+    await this.signaler.registerPeer({ready: this.autoconnect})
     this.logger.info("Registered peer:", this.peerId);
 
     // TODO: Add peer reconnecting
@@ -50,17 +51,21 @@ export class Connector {
     )
   }
 
-  public createConnection(targetPeerId: string, outgoing = true, unlimitedConnections = false) {
+  public setAutoconnect(autoconnect: boolean) {
+    this.autoconnect = autoconnect;
+    this.signaler.setPeerData({ready: this.autoconnect});
+  }
+
+  public createConnection(targetPeerId: string, outgoing = true, manual = false) {
     this.potentialPeers.add(targetPeerId);
 
-    if (
-      this.blackList.has(targetPeerId) ||
-      targetPeerId in this.connections ||
-      !unlimitedConnections && (
-        this.peers.length >= AppConfig.maxNumberOfPeers ||
-        (outgoing && this.peers.length >= AppConfig.maxNumberOfOutgoingConnections)
-      )
-    ) return
+    if (targetPeerId in this.connections) return
+    if (!manual) {
+      if (this.blackList.has(targetPeerId)) return
+      if (!this.autoconnect) return
+      if (this.peers.length >= AppConfig.maxNumberOfPeers) return
+      if (outgoing && this.peers.length >= AppConfig.maxNumberOfOutgoingConnections) return
+    }
 
     if (outgoing) {
       this.signaler.sendInvite(targetPeerId)

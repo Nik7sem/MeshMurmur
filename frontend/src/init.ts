@@ -6,6 +6,7 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {initializeApp} from "firebase/app";
 import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
+import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
 export const AppVersion = 'Alpha v3.0.1'
 askNotificationPermission()
@@ -33,11 +34,15 @@ if (!peerKeys) {
   await storageManager.storePeerKeys(edKeyManager.exportKeyPair())
 }
 
-export const firebaseApp = initializeApp(firebaseConfig);
+const defaultUserData = await getDefaultUserData()
 
+export const firebaseApp = initializeApp(firebaseConfig);
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new Logger();
-export const connector = new Connector(peerId, logger)
+export const connector = new Connector(peerId, defaultUserData.autoconnect, logger)
+
+connector.actions.sendNickname(defaultUserData.nickname)
+connector.actions.associatedNicknames = defaultUserData.associatedNicknames
 
 await connector.init()
 

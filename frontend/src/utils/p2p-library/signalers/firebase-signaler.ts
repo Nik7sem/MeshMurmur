@@ -24,9 +24,9 @@ export class FirebaseSignaler extends Signaler {
     this.db = getDatabase(firebaseApp);
   }
 
-  async registerPeer() {
+  async registerPeer(peerData: PeerDataType) {
     const peerRef = ref(this.db, `peers/${this.peerId}`);
-    await set(peerRef, {ready: true} as PeerDataType);
+    await set(peerRef, peerData);
 
     // remove on disconnect
     onDisconnect(peerRef).remove().catch((err) => {
@@ -34,6 +34,11 @@ export class FirebaseSignaler extends Signaler {
         console.error("could not establish onDisconnect event", err);
       }
     })
+  }
+
+  async setPeerData(peerData: PeerDataType) {
+    const peerRef = ref(this.db, `peers/${this.peerId}`);
+    await set(peerRef, peerData);
   }
 
   async getAvailablePeers() {
