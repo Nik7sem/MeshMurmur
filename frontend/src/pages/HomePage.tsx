@@ -1,10 +1,9 @@
-import React, {ChangeEvent, KeyboardEvent, useCallback, useEffect, useState} from 'react';
-import {Button, Center, Container, Input} from "@chakra-ui/react";
-import {LuSend} from "react-icons/lu";
+import React, {useCallback, useEffect, useState} from 'react';
+import {Center, Container} from "@chakra-ui/react";
 import {completeMessageType, fileProgressType} from "@/utils/p2p-library/types.ts";
-import {connector, peerId} from "@/init.ts";
+import {connector} from "@/init.ts";
 import MessagesBlock from "@/components/MessagesBlock.tsx";
-import SendOptions from "@/components/SendOptions.tsx";
+import SendOptions from "@/components/SendOptions/SendOptions.tsx";
 import FileProgressBar from "@/components/FileProgressBar.tsx";
 import TypingNotification from "@/components/TypingNotification.tsx";
 import {notifyUser} from "@/utils/notifications.ts";
@@ -12,8 +11,6 @@ import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [inputValue, setInputValue] = useState<string>('')
   const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
   const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
 
@@ -64,48 +61,10 @@ const HomePage = () => {
     }
   }, [addMessage, onTyping, setNewFileProgress])
 
-  function onChangeInput(e: ChangeEvent<HTMLInputElement>) {
-    setInputValue(e.target.value)
-    connector.actions.emitTypingEvent()
-  }
-
-  function keyDownHandler(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      onClick()
-    }
-  }
-
-  function onClick() {
-    if (inputValue.length > 0) {
-      connector.actions.sendText(inputValue)
-      addMessage({data: inputValue, peerId, nickname: ''})
-      setInputValue('')
-    }
-
-    if (uploadedFiles.length > 0) {
-      for (const file of uploadedFiles) {
-        connector.actions.sendFile(file).then(() => {
-          const url = URL.createObjectURL(file)
-          addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId, nickname: ''})
-        })
-      }
-      setUploadedFiles([])
-    }
-  }
-
   return (
     <Container width="100%">
       <MessagesBlock messages={messages}/>
-      <Center marginTop="1vh">
-        <SendOptions onClick={onClick} files={uploadedFiles} setFiles={setUploadedFiles}/>
-        <Input onKeyDown={keyDownHandler} value={inputValue} onChange={onChangeInput}
-               onPaste={(e) => setUploadedFiles([...e.clipboardData.files])}
-        />
-        <Button marginLeft='5' onClick={onClick} aria-label="Send message">
-          <LuSend/>
-        </Button>
-      </Center>
+      <SendOptions addMessage={addMessage}/>
       <Center>
         <FileProgressBar data={fileProgressData}/>
       </Center>
