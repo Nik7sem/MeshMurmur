@@ -8,7 +8,9 @@ export async function getDefaultUserData(): Promise<UserData> {
 
   const storedUserData = await storageManager.retrieveUserData();
   if (storedUserData) {
-    return (data = JSON.parse(storedUserData))
+    data = JSON.parse(storedUserData) as UserData;
+    if (data.autoconnect === undefined) data.autoconnect = true;
+    return data;
   } else {
     return {autoconnect: true, nickname: "", associatedNicknames: {}};
   }
