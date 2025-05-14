@@ -16,10 +16,15 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
   const [selectedPeerId, setSelectedPeerId] = useState<string[]>([])
   const [nickname, setNickname] = useState<string>("")
 
+  const peerIds: string[] = [...new Set([
+    ...connector.connectedPeers.map(conn => conn.targetPeerId),
+    ...Object.keys(connector.actions.associatedNicknames)
+  ])]
+
   const peerCollection = createListCollection({
-    items: connector.connectedPeers.map(conn => ({
-      label: `${conn.targetPeerId.slice(0, 16)}…${conn.targetPeerId.slice(-16)}`,
-      value: conn.targetPeerId
+    items: peerIds.map(targetPeerId => ({
+      label: `${targetPeerId.slice(0, 16)}…${targetPeerId.slice(-16)}`,
+      value: targetPeerId
     }))
   })
 
