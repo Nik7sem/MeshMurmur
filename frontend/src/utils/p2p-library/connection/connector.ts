@@ -4,6 +4,7 @@ import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {getRandomSample} from "@/utils/getRandomSample.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
+import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.tsx";
 
 export class Connector {
   private readonly signaler: FirebaseSignaler;
@@ -19,7 +20,8 @@ export class Connector {
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
-    this.signaler = new FirebaseSignaler(this.peerId);
+    this.signaler = new FirebaseSignaler(this.peerId)
+    // this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
   }
 
   async init() {

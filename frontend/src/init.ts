@@ -1,11 +1,9 @@
 import {Connector} from "@/utils/p2p-library/connection/connector.ts";
-import {Logger} from "@/utils/logger.ts";
+import {MainLogger} from "@/utils/logger.ts";
 import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";
 import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
 import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
-import {initializeApp} from "firebase/app";
-import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
 export const AppVersion = 'Alpha v3.5'
@@ -36,9 +34,8 @@ if (!peerKeys) {
 
 const defaultUserData = await getDefaultUserData()
 
-export const firebaseApp = initializeApp(firebaseConfig);
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
-export const logger = new Logger();
+export const logger = new MainLogger();
 export const connector = new Connector(peerId, defaultUserData.autoconnect, logger)
 
 connector.actions.sendNickname(defaultUserData.nickname)

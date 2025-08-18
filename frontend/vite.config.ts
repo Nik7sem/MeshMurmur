@@ -18,7 +18,7 @@ export default defineConfig({
     port: 8000,
     host: '0.0.0.0',
     https: {
-      cert: fs.readFileSync('./certs/server-cert.pem'),
+      cert: fs.readFileSync('./certs/fullchain.pem'),
       key: fs.readFileSync('./certs/server-key.pem')
     },
   },
