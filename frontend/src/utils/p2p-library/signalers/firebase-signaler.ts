@@ -42,26 +42,28 @@ export class FirebaseSignaler extends Signaler {
     await set(peerRef, peerData);
   }
 
-  async getAvailablePeers() {
+  private async getAvailablePeers() {
     const peersRef = ref(this.db, "peers");
     const snapshot = await get(peersRef);
     if (!snapshot.exists()) return [];
     return Object.keys(snapshot.val()).filter((id) => id !== this.peerId);
   }
 
-  subscribeToPeers(addNewPeer: (peerId: string) => void, removeOldPeer: (peerId: string) => void) {
+  subscribeToPeers(addPeer: (peerId: string) => void, removePeer: (peerId: string) => void) {
+    this.getAvailablePeers().then(peers => peers.forEach((peerId) => addPeer(peerId)));
+
     const peersRef = ref(this.db, "peers");
     onChildAdded(peersRef, (snapshot: DataSnapshot) => {
       const peerId = snapshot.key!
       if (peerId && peerId !== this.peerId) {
-        addNewPeer(peerId);
+        addPeer(peerId);
       }
     })
 
     onChildRemoved(peersRef, (snapshot: DataSnapshot) => {
       const peerId = snapshot.key!
       if (peerId && peerId !== this.peerId) {
-        removeOldPeer(peerId);
+        removePeer(peerId);
       }
     })
   }

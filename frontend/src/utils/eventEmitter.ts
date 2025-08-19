@@ -33,9 +33,19 @@ export class TypedEventEmitter<T extends Record<string, any>> {
     callback: (payload: T[K]) => void
   ): void {
     if (this.events[eventName]) {
-      this.events[eventName] = this.events[eventName]!.filter(
+      this.events[eventName] = this.events[eventName].filter(
         cb => cb !== callback
       );
     }
+  }
+
+  offEvent<K extends keyof T>(
+    eventName: K,
+  ): void {
+    this.events[eventName] = []
+  }
+
+  offAll() {
+    this.events = {};
   }
 }

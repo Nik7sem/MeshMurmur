@@ -1,13 +1,13 @@
 import {Logger} from '../../logger.ts'
 import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
-import {getRandomSample} from "@/utils/getRandomSample.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.tsx";
+import {Signaler} from "@/utils/p2p-library/abstract.ts";
 
 export class Connector {
-  private readonly signaler: FirebaseSignaler;
+  private readonly signaler: Signaler;
   public connections: { [peerId: string]: PeerConnection } = {}
   public actions: ActionManager
   public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'connecting' | 'disconnected') => void
@@ -20,37 +20,31 @@ export class Connector {
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
-    this.signaler = new FirebaseSignaler(this.peerId)
-    // this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
+    // this.signaler = new FirebaseSignaler(this.peerId)
+    this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
   }
 
   async init() {
-    await this.signaler.registerPeer({ready: this.autoconnect})
-    this.logger.info("Registered peer:", this.peerId);
-
     // TODO: Add peer reconnecting
-    for (const potentialPeerId of await this.signaler.getAvailablePeers()) {
-      this.potentialPeers.add(potentialPeerId);
-    }
-
-    for (const targetPeerId of getRandomSample(this.potentialPeers, AppConfig.maxNumberOfPeers)) {
-      this.createConnection(targetPeerId);
-    }
-
     this.signaler.onInvite((targetPeerId) => {
       this.createConnection(targetPeerId, false);
     })
 
     this.signaler.subscribeToPeers((targetPeerId) => {
+        this.logger.info(`Discovered peer: ${targetPeerId}`);
         this.createConnection(targetPeerId);
-      }, (oldPeerId) => {
-        if (oldPeerId in this.connections) {
-          this.logger.warn(`${this.actions.targetPeerNickname(oldPeerId)} disconnected by exit`);
-          this.connections[oldPeerId].disconnect();
+      }, (removedPeerId) => {
+        this.logger.info(`Removed peer: ${removedPeerId}`);
+        if (removedPeerId in this.connections) {
+          this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
+          this.connections[removedPeerId].disconnect();
         }
-        this.potentialPeers.delete(oldPeerId);
+        this.potentialPeers.delete(removedPeerId);
       }
     )
+
+    this.signaler.registerPeer({ready: this.autoconnect})
+    this.logger.info("Registered peer:", this.peerId);
   }
 
   public setAutoconnect(autoconnect: boolean) {
@@ -59,6 +53,8 @@ export class Connector {
   }
 
   public createConnection(targetPeerId: string, outgoing = true, manual = false) {
+    if (targetPeerId === this.peerId) return
+
     this.potentialPeers.add(targetPeerId);
 
     if (targetPeerId in this.connections) return

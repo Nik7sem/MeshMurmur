@@ -1,4 +1,4 @@
-import {ChannelEventBase, ConnectionData, eventDataType} from "@/utils/p2p-library/types.ts";
+import {ChannelEventBase, ConnectionData, eventDataType, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {Logger} from "../logger.ts";
 
@@ -10,6 +10,18 @@ export abstract class Signaler {
   abstract off(targetPeerId: string): void
 
   abstract cleanup(targetPeerId: string): void
+
+  abstract registerPeer(peerData: PeerDataType): void
+
+  abstract subscribeToPeers(addPeer: (peerId: string) => void, removePeer: (peerId: string) => void): void
+
+  abstract unsubscribeFromNewPeers(): void
+
+  abstract sendInvite(targetPeerId: string): void
+
+  abstract onInvite(callback: (targetPeerId: string) => void): void
+
+  abstract setPeerData(peerData: PeerDataType): void
 }
 
 export abstract class Middleware {
