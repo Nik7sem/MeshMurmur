@@ -21,7 +21,7 @@ const PeerActions = () => {
               <Alert.Root status="error">
                 <Alert.Indicator/>
                 <Alert.Title>
-                  Dangerous!!!
+                  Never share your private key with others.
                 </Alert.Title>
               </Alert.Root>
               <Collapsible.Root unmountOnExit>

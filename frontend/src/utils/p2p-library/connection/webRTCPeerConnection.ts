@@ -1,4 +1,4 @@
-import {Signaler} from "@/utils/p2p-library/abstract.ts";
+import {BasicSignaler} from "@/utils/p2p-library/abstract.ts";
 import {rtcConfig} from "@/utils/p2p-library/conf.ts";
 import {Logger} from "../../logger.ts";
 import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
@@ -16,7 +16,7 @@ export class WebRTCPeerConnection {
   constructor(
     peerId: string,
     private readonly targetPeerId: string,
-    private readonly signaler: Signaler,
+    private readonly signaler: BasicSignaler,
     private readonly logger: Logger,
     private readonly onFinalState: (state: RTCPeerConnectionState) => void,
     onData: ChannelEventHandlers['ondata'],
@@ -60,7 +60,7 @@ export class WebRTCPeerConnection {
 
     // offer
     this.pc.onnegotiationneeded = async () => {
-      if (this.polite) return // Possible and weird solution to all negotiation problems
+      if (this.polite) return // Weird solution to all negotiation problems
       try {
         this.makingOffer = true;
         await this.pc.setLocalDescription();

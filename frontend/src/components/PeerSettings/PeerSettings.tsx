@@ -18,7 +18,7 @@ const PeerSettings: FC<Props> = ({contentRef}) => {
       <Separator margin="10px"/>
 
       <Center margin="8px"><Text fontSize="2xl">Options</Text></Center>
-      <PeerOptions/>
+      <PeerOptions contentRef={contentRef}/>
       <Separator margin="10px"/>
 
       <Center margin="8px"><Text fontSize="2xl">Actions</Text></Center>

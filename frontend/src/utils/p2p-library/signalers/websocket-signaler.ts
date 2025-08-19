@@ -49,6 +49,10 @@ export class WebsocketSignaler extends Signaler {
     this.connect()
   }
 
+  info() {
+    return `WebsockerSignaler (${this.url})`
+  }
+
   connect() {
     this.ws.onopen = () => {
       this.logger.info("Connection opened")

@@ -2,7 +2,7 @@ import {ChannelEventBase, ConnectionData, eventDataType, PeerDataType} from "@/u
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {Logger} from "../logger.ts";
 
-export abstract class Signaler {
+export abstract class BasicSignaler {
   abstract send(targetPeerId: string, connectionData: ConnectionData): void
 
   abstract on(targetPeerId: string, callback: (connectionData: ConnectionData) => void): void
@@ -10,6 +10,10 @@ export abstract class Signaler {
   abstract off(targetPeerId: string): void
 
   abstract cleanup(targetPeerId: string): void
+}
+
+export abstract class Signaler extends BasicSignaler {
+  abstract info(): string;
 
   abstract registerPeer(peerData: PeerDataType): void
 

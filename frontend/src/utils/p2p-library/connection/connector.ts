@@ -5,6 +5,7 @@ import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
+import {createSignaler, signalerType} from "@/utils/p2p-library/signalers/createSignaler.ts";
 
 export class Connector {
   private readonly signaler: Signaler;
@@ -16,12 +17,12 @@ export class Connector {
 
   constructor(
     public peerId: string,
+    signaler: signalerType,
     private autoconnect: boolean,
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
-    this.signaler = new FirebaseSignaler(this.peerId)
-    // this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
+    this.signaler = createSignaler(signaler, this.peerId, this.logger);
   }
 
   async init() {
@@ -61,7 +62,7 @@ export class Connector {
     )
 
     this.signaler.registerPeer({ready: this.autoconnect})
-    this.logger.info("Registered peer:", this.peerId);
+    this.logger.info(`Registered peer [${this.signaler.info()}]:`, this.peerId);
   }
 
   public setAutoconnect(autoconnect: boolean) {

@@ -25,6 +25,10 @@ export class FirebaseSignaler extends Signaler {
     this.db = getDatabase(initializeApp(firebaseConfig));
   }
 
+  info() {
+    return `FirebaseSignaler`
+  }
+
   async registerPeer(peerData: PeerDataType) {
     const peerRef = ref(this.db, `peers/${this.peerId}`);
     await set(peerRef, peerData);
