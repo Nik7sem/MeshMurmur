@@ -54,7 +54,6 @@ export class PeerConnection {
   }
 
   private onChannelOpen: ChannelEventHandlers['onopen'] = async (data) => {
-    this.logger.info(`${data.channelType} data channel opened!`)
     await this.managerMiddleware.init(data)
   }
 

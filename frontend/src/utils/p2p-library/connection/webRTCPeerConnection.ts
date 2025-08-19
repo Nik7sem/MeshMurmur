@@ -26,10 +26,15 @@ export class WebRTCPeerConnection {
     this.pc = new RTCPeerConnection(rtcConfig);
     this.channel = new DataChannels(this.pc,
       {
-        onopen: onChannelOpen,
         ondata: onData,
-        onclose: ({channelType}) => this.logger.info(`${channelType} channel closed`),
-        onerror: ({error}) => this.logger.info(error)
+        onopen: (data) => {
+          // this.logger.info(`${data.channelType} data channel opened!`)
+          onChannelOpen(data)
+        },
+        onclose: ({channelType}) => null,
+        onerror: ({error}) => null,
+        // onclose: ({channelType}) => this.logger.info(`${channelType} channel closed`),
+        // onerror: ({error}) => this.logger.info(error)
       }
     )
     this.connect()
@@ -37,7 +42,7 @@ export class WebRTCPeerConnection {
 
   connect() {
     this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
-    this.startDebugListeners()
+    // this.startDebugListeners()
 
     // TODO: Leave only one: on final state or on data channel open
     this.pc.onconnectionstatechange = () => {
@@ -55,6 +60,7 @@ export class WebRTCPeerConnection {
 
     // offer
     this.pc.onnegotiationneeded = async () => {
+      if (this.polite) return // Possible and weird solution to all negotiation problems
       try {
         this.makingOffer = true;
         await this.pc.setLocalDescription();

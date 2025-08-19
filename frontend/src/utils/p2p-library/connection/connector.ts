@@ -3,7 +3,7 @@ import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
-import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.tsx";
+import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 
 export class Connector {
