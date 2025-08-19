@@ -9,6 +9,7 @@ export class WebRTCPeerConnection {
   private readonly polite: boolean = false;
   private makingOffer = false
   private ignoreOffer = false;
+  private isSettingRemoteAnswerPending = false;
 
   public readonly channel: DataChannels;
 
@@ -36,7 +37,7 @@ export class WebRTCPeerConnection {
 
   connect() {
     this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
-    // this.startDebugListeners()
+    this.startDebugListeners()
 
     // TODO: Leave only one: on final state or on data channel open
     this.pc.onconnectionstatechange = () => {
@@ -46,17 +47,10 @@ export class WebRTCPeerConnection {
       this.onFinalState(this.pc.connectionState);
     }
 
-    // Log more errors
-    this.pc.onicecandidateerror = (event) => {
-      this.logger.info("Ice candidate error: ", event.errorText);
-    }
-
     // Handle ICE candidates
     this.pc.onicecandidate = ({candidate}) => {
-      if (candidate) {
-        this.signaler.send(this.targetPeerId, {candidate: candidate.toJSON()})
-        this.logger.info(`Send ice candidate: `, candidate)
-      }
+      this.signaler.send(this.targetPeerId, {candidate: candidate ? candidate.toJSON() : null})
+      this.logger.info(`Send ice candidate: `, candidate)
     };
 
     // offer
@@ -77,7 +71,9 @@ export class WebRTCPeerConnection {
     this.signaler.on(this.targetPeerId, async ({description, candidate}) => {
       try {
         if (description) {
-          const offerCollision = description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable");
+          const readyForOffer = !this.makingOffer &&
+            (this.pc.signalingState === "stable" || this.isSettingRemoteAnswerPending);
+          const offerCollision = description.type === "offer" && !readyForOffer;
 
           this.ignoreOffer = !this.polite && offerCollision;
           if (this.ignoreOffer) {
@@ -85,7 +81,10 @@ export class WebRTCPeerConnection {
             return;
           }
 
+          this.isSettingRemoteAnswerPending = description.type === "answer";
           await this.pc.setRemoteDescription(description);
+          this.isSettingRemoteAnswerPending = false;
+
           this.logger.info(`Receive ${description.type}: `, description);
           if (description.type === "offer") {
             await this.pc.setLocalDescription();
@@ -120,6 +119,14 @@ export class WebRTCPeerConnection {
     this.pc.onicegatheringstatechange = () => {
       this.logger.info("ICE gathering state changed:", this.pc.iceGatheringState);
     };
+
+    this.pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state changed:', this.pc.iceConnectionState)
+    };
+
+    this.pc.onicecandidateerror = (event) => {
+      this.logger.info("Ice candidate error: ", event.errorText, event.url);
+    }
   }
 
   async getStats() {

@@ -4,7 +4,7 @@ export type logType = { text: string, type: "success" | "info" | "warn" | "error
 
 type SDP = RTCSessionDescriptionInit;
 type ICE = RTCIceCandidateInit;
-export type ConnectionData = { description?: SDP, candidate?: ICE };
+export type ConnectionData = { description?: SDP, candidate?: ICE | null };
 
 export type dataChannelTransferType = 'reliable' | 'unordered' | 'unreliable';
 
