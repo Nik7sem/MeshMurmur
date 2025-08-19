@@ -49,8 +49,12 @@ export class FirebaseSignaler extends Signaler {
     return Object.keys(snapshot.val()).filter((id) => id !== this.peerId);
   }
 
-  subscribeToPeers(addPeer: (peerId: string) => void, removePeer: (peerId: string) => void) {
-    this.getAvailablePeers().then(peers => peers.forEach((peerId) => addPeer(peerId)));
+  subscribeToPeers(
+    addPeer: (peerId: string) => void,
+    removePeer: (peerId: string) => void,
+    updatePeerList: (peerIds: string[]) => void
+  ) {
+    this.getAvailablePeers().then(peers => updatePeerList(peers));
 
     const peersRef = ref(this.db, "peers");
     onChildAdded(peersRef, (snapshot: DataSnapshot) => {

@@ -40,7 +40,7 @@ const server = Bun.serve({
         Registry.delete(ws.data.peerId)
         ws.publish("peer-change", Payload({
           t: 'signal:peer-change',
-          peers: [{status: "disconnected", peerId: ws.data.peerId}]
+          peer: {status: "disconnected", peerId: ws.data.peerId}
         }));
       }
     },
@@ -62,7 +62,7 @@ const server = Bun.serve({
         ws.subscribe("peer-change")
         ws.publish("peer-change", Payload({
           t: 'signal:peer-change',
-          peers: [{status: "connected", peerId: ws.data.peerId}]
+          peer: {status: "connected", peerId: ws.data.peerId}
         }));
 
         console.log(`Registered peer: ${ws.data.peerId}`);
@@ -74,8 +74,8 @@ const server = Bun.serve({
         console.log(`SDP from ${ws.data.peerId} to ${msg.to}`);
       } else if (msg.t === "signal:peer-list") {
         ws.sendText(Payload({
-          t: 'signal:peer-change',
-          peers: Array.from(Registry.keys()).map((peerId) => ({status: "connected", peerId}))
+          t: 'signal:peer-list',
+          peers: Array.from(Registry.keys())
         }))
         console.log(`Peer-list from ${ws.data.peerId}`);
       }

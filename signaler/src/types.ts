@@ -11,6 +11,7 @@ export type ServerMsg =
   | { t: "auth:error"; reason: string }
   | { t: "signal:sdp"; from: string; sdp: any }
   | { t: "signal:invite"; from: string }
-  | { t: "signal:peer-change"; peers: { status: "connected" | "disconnected", peerId: string }[] }
+  | { t: "signal:peer-change"; peer: { status: "connected" | "disconnected", peerId: string } }
+  | { t: "signal:peer-list"; peers: string[] }
   | { t: "error"; reason: string }
 

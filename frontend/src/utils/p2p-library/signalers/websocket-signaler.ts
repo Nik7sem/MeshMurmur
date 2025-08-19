@@ -16,7 +16,8 @@ type ServerMsg =
   | { t: "auth:error"; reason: string }
   | { t: "signal:sdp"; from: string; sdp: any }
   | { t: "signal:invite"; from: string }
-  | { t: "signal:peer-change"; peers: { status: "connected" | "disconnected", peerId: string }[] }
+  | { t: "signal:peer-change"; peer: { status: "connected" | "disconnected", peerId: string } }
+  | { t: "signal:peer-list"; peers: string[] }
   | { t: "error"; reason: string }
 
 
@@ -32,6 +33,7 @@ export class WebsocketSignaler extends Signaler {
     onInvite: string,
     addPeer: string,
     removePeer: string,
+    updatePeerList: string[],
     onSDPChange: SDPChangeDataType,
   }>();
   private sdpCallbacks: { [key: string]: (data: SDPChangeDataType) => void } = {}
@@ -68,13 +70,13 @@ export class WebsocketSignaler extends Signaler {
         return
       }
 
-      if (msg.t === "signal:peer-change") {
-        for (const {status, peerId} of msg.peers) {
-          if (status === "connected") {
-            this.eventEmitter.emit("addPeer", peerId)
-          } else {
-            this.eventEmitter.emit("removePeer", peerId)
-          }
+      if (msg.t === "signal:peer-list") {
+        this.eventEmitter.emit("updatePeerList", msg.peers.filter((peerId) => peerId !== this.peerId))
+      } else if (msg.t === "signal:peer-change") {
+        if (msg.peer.status === "connected") {
+          this.eventEmitter.emit("addPeer", msg.peer.peerId)
+        } else {
+          this.eventEmitter.emit("removePeer", msg.peer.peerId)
         }
       } else if (msg.t === "signal:invite") {
         this.eventEmitter.emit("onInvite", msg.from)
@@ -101,9 +103,14 @@ export class WebsocketSignaler extends Signaler {
 
   }
 
-  subscribeToPeers(addPeer: (peerId: string) => void, removePeer: (peerId: string) => void) {
+  subscribeToPeers(
+    addPeer: (peerId: string) => void,
+    removePeer: (peerId: string) => void,
+    updatePeerList: (peerIds: string[]) => void
+  ) {
     this.eventEmitter.on("addPeer", addPeer)
     this.eventEmitter.on("removePeer", removePeer)
+    this.eventEmitter.on("updatePeerList", updatePeerList)
   }
 
   unsubscribeFromNewPeers() {

@@ -13,7 +13,11 @@ export abstract class Signaler {
 
   abstract registerPeer(peerData: PeerDataType): void
 
-  abstract subscribeToPeers(addPeer: (peerId: string) => void, removePeer: (peerId: string) => void): void
+  abstract subscribeToPeers(
+    addPeer: (peerId: string) => void,
+    removePeer: (peerId: string) => void,
+    updatePeerList: (peerIds: string[]) => void
+  ): void
 
   abstract unsubscribeFromNewPeers(): void
 

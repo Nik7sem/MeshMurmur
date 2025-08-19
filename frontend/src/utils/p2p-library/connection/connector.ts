@@ -20,26 +20,43 @@ export class Connector {
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
-    // this.signaler = new FirebaseSignaler(this.peerId)
-    this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
+    this.signaler = new FirebaseSignaler(this.peerId)
+    // this.signaler = new WebsocketSignaler(this.peerId, logger.createChild('WebsocketSignaler'));
   }
 
   async init() {
     // TODO: Add peer reconnecting
+
+    const connect = (targetPeerId: string) => {
+      this.logger.info(`Discovered peer: ${targetPeerId}`);
+      this.createConnection(targetPeerId);
+    }
+
+    const disconnect = (removedPeerId: string) => {
+      this.logger.info(`Removed peer: ${removedPeerId}`);
+      if (removedPeerId in this.connections) {
+        this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
+        this.connections[removedPeerId].disconnect();
+      }
+      this.potentialPeers.delete(removedPeerId);
+    }
+
     this.signaler.onInvite((targetPeerId) => {
       this.createConnection(targetPeerId, false);
     })
 
-    this.signaler.subscribeToPeers((targetPeerId) => {
-        this.logger.info(`Discovered peer: ${targetPeerId}`);
-        this.createConnection(targetPeerId);
-      }, (removedPeerId) => {
-        this.logger.info(`Removed peer: ${removedPeerId}`);
-        if (removedPeerId in this.connections) {
-          this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
-          this.connections[removedPeerId].disconnect();
+    this.signaler.subscribeToPeers(connect, disconnect, (peers) => {
+        const peersSet = new Set(peers)
+        for (const peerId of this.potentialPeers) {
+          if (!peersSet.has(peerId)) {
+            disconnect(peerId);
+          }
         }
-        this.potentialPeers.delete(removedPeerId);
+        for (const peerId of peersSet) {
+          if (!this.potentialPeers.has(peerId)) {
+            connect(peerId);
+          }
+        }
       }
     )
 
