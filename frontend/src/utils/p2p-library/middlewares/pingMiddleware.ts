@@ -2,17 +2,25 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class PingMiddleware extends Middleware {
-  private resolve: ((value: boolean) => void) | null = null;
+  private resolve: ((value: number) => void) | null = null;
   private timeoutId: NodeJS.Timeout | null = null;
+  private startPingTime: number = 0
   private readonly pingTimeout = 1500;
 
-  resolvePing(value: boolean) {
-    this.resolve!(value);
-    this.resolve = null;
+  resolvePing(success: boolean) {
+    if (success) {
+      this.resolve!(new Date().getTime() - this.startPingTime);
+    } else {
+      this.resolve!(0);
+    }
+
     if (this.timeoutId) {
       clearTimeout(this.timeoutId)
-      this.timeoutId = null;
     }
+
+    this.startPingTime = 0
+    this.resolve = null;
+    this.timeoutId = null;
   }
 
   call(eventData: eventDataType) {
@@ -31,11 +39,12 @@ export class PingMiddleware extends Middleware {
     return true
   }
 
-  public sendPing() {
+  public sendPing(): Promise<number> {
+    this.startPingTime = new Date().getTime();
     this.conn.channel.reliable.send({type: 'ping', data: 'ping'})
     this.logger.info(`Ping to ${this.conn.targetPeerId}`)
     return new Promise((resolve, reject) => {
-      this.resolvePing = resolve
+      this.resolve = resolve
       this.timeoutId = setTimeout(() => {
         this.resolvePing(false)
       }, this.pingTimeout)

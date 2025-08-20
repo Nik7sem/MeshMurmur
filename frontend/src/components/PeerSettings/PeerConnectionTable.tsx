@@ -81,11 +81,13 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
     } else if (value === 'connect') {
       connector.createConnection(targetPeerId, true, true)
     } else if (value === 'ping') {
-      if (connector.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.sendPing()) {
-        logger.success("Pong received!")
-      } else {
-        logger.error("No response...")
-      }
+      connector.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.sendPing().then(latency => {
+        if (latency) {
+          logger.success(`Ping latency: ${latency} ms`)
+        } else {
+          logger.error("No response...")
+        }
+      })
     }
   }
 
