@@ -7,7 +7,7 @@ export type signalerType = 'FirebaseSignaler' | 'WebsocketSignalerBipki' | 'Webs
 
 export function createSignaler(signaler: signalerType, peerId: string, logger: Logger): Signaler {
   if (signaler === 'WebsocketSignalerBipki') {
-    return new WebsocketSignaler(peerId, logger.createChild('WebsocketSignalerBipki'), "wss://localhost:8001");
+    return new WebsocketSignaler(peerId, logger.createChild('WebsocketSignalerBipki'), "wss://signaler.ddns.net:50000");
   } else if (signaler === 'WebsocketSignalerDev') {
     return new WebsocketSignaler(peerId, logger.createChild('WebsocketSignalerDev'), "wss://localhost:8001");
   } else {
