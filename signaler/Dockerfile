@@ -6,4 +6,4 @@ RUN bun install --production --frozen-lockfile
 
 COPY . .
 
-CMD ["bun", "index.ts"]
+CMD ["bun", "monitor.ts"]
