@@ -33,11 +33,12 @@ export class Connector {
       this.createConnection(targetPeerId);
     }
 
-    const disconnect = (removedPeerId: string) => {
+    const disconnect = async (removedPeerId: string) => {
       this.logger.info(`Removed peer: ${removedPeerId}`);
       if (removedPeerId in this.connections) {
-        this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
-        this.connections[removedPeerId].disconnect();
+        if (await this.connections[removedPeerId].disconnect()) {
+          this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
+        }
       }
       this.potentialPeers.delete(removedPeerId);
     }

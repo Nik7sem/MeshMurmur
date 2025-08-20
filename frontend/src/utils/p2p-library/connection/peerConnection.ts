@@ -12,6 +12,8 @@ import {NicknameMiddleware} from "@/utils/p2p-library/middlewares/nicknameMiddle
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
+import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
+import {logger} from "@/init.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
@@ -35,6 +37,7 @@ export class PeerConnection {
     this.managerMiddleware.add(NicknameMiddleware, 5)
     this.managerMiddleware.add(DisconnectEventMiddleware, 6)
     this.managerMiddleware.add(DiscoveryMiddleware, 7)
+    this.managerMiddleware.add(PingMiddleware, 8)
     this.connection = this.connect()
   }
 
@@ -80,9 +83,14 @@ export class PeerConnection {
     return this.connection.channel
   }
 
-  disconnect(block = false) {
+  async disconnect(block = false, force = false): Promise<boolean> {
+    if (!block && !force && await this.managerMiddleware.get(PingMiddleware)?.sendPing()) {
+      this.logger.info(`Still connected to ${this.targetPeerId}`)
+      return false
+    }
     if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
     this.connection.cleanup()
     this.onPeerConnectionChanged("disconnected", block)
+    return true
   }
 }

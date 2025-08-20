@@ -56,7 +56,7 @@ export class ActionManager {
     if (disconnectMiddleware) {
       disconnectMiddleware.onDisconnect = () => {
         this.logger.warn(`${this.targetPeerNickname(targetPeerId)} disconnected by his own will`);
-        this.connector.connections[targetPeerId].disconnect()
+        this.connector.connections[targetPeerId].disconnect(false, true);
       }
     }
     if (discoveryMiddleware) {

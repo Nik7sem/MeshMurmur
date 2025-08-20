@@ -1,6 +1,7 @@
 import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
 import {Button, Menu, Portal, Show, Table, Text} from "@chakra-ui/react";
-import {connector} from "@/init.ts";
+import {connector, logger} from "@/init.ts";
+import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 
 
 interface Props {
@@ -76,9 +77,15 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   function onSelect(targetPeerId: string, value: string) {
     if (value === 'disconnect') {
       connector.actions.emitDisconnectEvent(targetPeerId)
-      connector.connections[targetPeerId].disconnect(false)
+      connector.connections[targetPeerId].disconnect(false, true)
     } else if (value === 'connect') {
       connector.createConnection(targetPeerId, true, true)
+    } else if (value === 'ping') {
+      if (connector.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.sendPing()) {
+        logger.success("Pong received!")
+      } else {
+        logger.error("No response...")
+      }
     }
   }
 
@@ -113,13 +120,16 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
                       <Menu.Content>
                         {
                           ['connected', 'connecting'].includes(state) ?
-                            <Menu.Item
-                              value="disconnect"
-                              color="fg.error"
-                              _hover={{bg: "bg.error", color: "fg.error"}}
-                            >
-                              Disconnect...
-                            </Menu.Item>
+                            <>
+                              <Menu.Item
+                                value="disconnect"
+                                color="fg.error"
+                                _hover={{bg: "bg.error", color: "fg.error"}}
+                              >
+                                Disconnect...
+                              </Menu.Item>
+                              <Menu.Item value="ping">Ping</Menu.Item>
+                            </>
                             :
                             <Menu.Item value="connect">Connect</Menu.Item>
                         }
