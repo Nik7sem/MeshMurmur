@@ -1,0 +1,27 @@
+services:
+  signaler:
+    platform: linux/amd64
+    build: .
+    image: siegfriedschmidt/signaler
+    container_name: signaler
+    #ports:
+    #  - "127.0.0.1:8001:8001"
+    environment:
+      - PORT=8001
+      - HOSTNAME=0.0.0.0
+      - NODE_ENV=production
+    restart: "no"
+
+  caddy:
+    image: caddy:2.10.0
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "56789:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+      - ./caddy-config:/config
+    depends_on:
+      - signaler
+    restart: unless-stopped

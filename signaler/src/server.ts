@@ -38,6 +38,7 @@ const server = Bun.serve({
       ws.unsubscribe("peer-change");
       if ("peerId" in ws.data) {
         Registry.delete(ws.data.peerId)
+        console.log(`Exited peer: ${ws.data.peerId}`);
         ws.publish("peer-change", Payload({
           t: 'signal:peer-change',
           peer: {status: "disconnected", peerId: ws.data.peerId}
@@ -82,3 +83,6 @@ const server = Bun.serve({
     }
   }
 });
+
+console.log(`Server listening on "${HOSTNAME}:${PORT}" in "${NODE_ENV}" mode`);
+
