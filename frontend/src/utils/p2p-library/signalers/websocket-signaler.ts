@@ -20,6 +20,14 @@ type ServerMsg =
   | { t: "signal:peer-list"; peers: string[] }
   | { t: "error"; reason: string }
 
+interface WebsocketConfig {
+  url: string;
+}
+
+export interface WebsocketSignalerInterface {
+  type: 'websocket';
+  config: WebsocketConfig;
+}
 
 function Payload(msg: ClientMsg) {
   return JSON.stringify(msg)
@@ -42,15 +50,15 @@ export class WebsocketSignaler extends Signaler {
   constructor(
     private readonly peerId: string,
     private logger: Logger,
-    private readonly url = "wss://localhost:8001",
+    private readonly config: WebsocketConfig,
   ) {
     super()
-    this.ws = new WebSocket(url)
+    this.ws = new WebSocket(this.config.url)
     this.connect()
   }
 
   info() {
-    return `WebsockerSignaler (${this.url})`
+    return `WebsockerSignaler (${this.config.url})`
   }
 
   connect() {
@@ -61,7 +69,7 @@ export class WebsocketSignaler extends Signaler {
     this.ws.onclose = () => {
       this.logger.info("Connection closed, try to reconnect in 1000 ms...")
       setTimeout(() => {
-        this.ws = new WebSocket(this.url)
+        this.ws = new WebSocket(this.config.url)
         this.connect()
       }, 1000)
     }

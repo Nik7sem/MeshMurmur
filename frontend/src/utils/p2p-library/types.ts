@@ -1,8 +1,12 @@
+import {signalers} from "@/utils/p2p-library/conf.ts";
+
 export type PeerDataType = { ready: boolean };
 
 export type connectionStageType = "connected" | "connecting" | "pinging" | "disconnected";
 
 export type logType = { text: string, type: "success" | "info" | "warn" | "error" }
+
+export type signalerNameType = keyof typeof signalers
 
 type SDP = RTCSessionDescriptionInit;
 type ICE = RTCIceCandidateInit;

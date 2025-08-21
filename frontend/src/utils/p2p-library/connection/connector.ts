@@ -3,8 +3,8 @@ import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
-import {createSignaler, signalerType} from "@/utils/p2p-library/signalers/createSignaler.ts";
-import {connectionStageType} from "@/utils/p2p-library/types.ts";
+import {createSignaler} from "@/utils/p2p-library/signalers/createSignaler.ts";
+import {connectionStageType, signalerNameType} from "@/utils/p2p-library/types.ts";
 import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 
 export class Connector {
@@ -17,7 +17,7 @@ export class Connector {
 
   constructor(
     public peerId: string,
-    signaler: signalerType,
+    signaler: signalerNameType,
     private autoconnect: boolean,
     private logger: Logger,
   ) {

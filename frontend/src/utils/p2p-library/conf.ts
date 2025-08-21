@@ -1,8 +1,26 @@
-import {FirebaseOptions} from "firebase/app";
+import {FirebaseSignalerInterface} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
+import {WebsocketSignalerInterface} from "@/utils/p2p-library/signalers/websocket-signaler.ts";
 
-export const firebaseConfig: FirebaseOptions = {
-  databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/",
-};
+export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSignalerInterface> = {
+  "FirebaseSignaler": {
+    type: "firebase",
+    config: {
+      databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
+    }
+  },
+  "WebsocketSignalerBipki": {
+    type: "websocket",
+    config: {
+      url: "wss://signaler.ddns.net:50000"
+    }
+  },
+  "WebsocketSignalerDev": {
+    type: "websocket",
+    config: {
+      url: "wss://localhost:8001"
+    }
+  }
+}
 
 export const rtcConfig: RTCConfiguration = {
   // iceTransportPolicy: 'relay',

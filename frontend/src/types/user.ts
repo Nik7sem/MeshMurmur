@@ -1,8 +1,8 @@
-import {signalerType} from "@/utils/p2p-library/signalers/createSignaler.ts";
+import {signalerNameType} from "@/utils/p2p-library/types.ts";
 
 export type UserData = {
   autoconnect: boolean
-  signaler: signalerType
+  signaler: signalerNameType
   nickname: string
   associatedNicknames: { [key: string]: string }
 }

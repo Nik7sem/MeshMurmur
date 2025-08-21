@@ -14,15 +14,22 @@ import {
 } from "firebase/database";
 import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
-import {initializeApp} from "firebase/app";
-import {firebaseConfig} from "@/utils/p2p-library/conf.ts";
+import {FirebaseOptions, initializeApp} from "firebase/app";
+
+export interface FirebaseSignalerInterface {
+  type: 'firebase';
+  config: FirebaseOptions;
+}
 
 export class FirebaseSignaler extends Signaler {
   private readonly db: Database;
 
-  constructor(private readonly peerId: string) {
+  constructor(
+    private readonly peerId: string,
+    config: FirebaseOptions,
+  ) {
     super()
-    this.db = getDatabase(initializeApp(firebaseConfig));
+    this.db = getDatabase(initializeApp(config));
   }
 
   info() {
