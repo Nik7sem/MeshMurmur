@@ -1,4 +1,4 @@
-import {ChannelEventHandlers,} from "@/utils/p2p-library/types.ts";
+import {ChannelEventHandlers, connectionStageType,} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
 import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
 import {WebRTCPeerConnection} from "@/utils/p2p-library/connection/webRTCPeerConnection.ts";
@@ -13,13 +13,12 @@ import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMidd
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
-import {logger} from "@/init.ts";
 
 export class PeerConnection {
   private connection: WebRTCPeerConnection
   private connectTimeoutId: NodeJS.Timeout | null = null;
   public managerMiddleware: ManagerMiddleware
-  public connected = false;
+  public connectionStage: connectionStageType = "connecting";
   public connectionType = "";
 
   constructor(
@@ -27,7 +26,7 @@ export class PeerConnection {
     public readonly targetPeerId: string,
     private logger: Logger,
     private signaler: Signaler,
-    private onPeerConnectionChanged: (status: 'connected' | 'disconnected', block: boolean) => void,
+    private onPeerConnectionChanged: (status: connectionStageType, block: boolean) => void,
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 1)
@@ -41,9 +40,13 @@ export class PeerConnection {
     this.connection = this.connect()
   }
 
+  public is_connected() {
+    return this.connectionStage === "connected"
+  }
+
   private connect(): WebRTCPeerConnection {
     this.connectTimeoutId = setTimeout(() => {
-      if (!this.connected) {
+      if (!this.is_connected()) {
         this.onFinalState("timeout")
       }
     }, AppConfig.connectingTimeout)
@@ -63,7 +66,8 @@ export class PeerConnection {
   private onFinalState = async (state: RTCPeerConnectionState | "timeout") => {
     this.signaler.cleanup(this.targetPeerId)
     if (state === "connected") {
-      this.connected = true
+      this.connectionStage = "connected"
+      if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
       const stats = await this.connection.getStats()
       const {info} = parseRTCStats(stats)
       if (info) {
@@ -74,7 +78,7 @@ export class PeerConnection {
       this.onPeerConnectionChanged('connected', false);
       this.logger.info(`Connected to ${this.targetPeerId}`)
     } else {
-      this.disconnect()
+      this.disconnect(false, true)
       this.logger.error(`Error in connection to peer: ${state}!`)
     }
   }
@@ -84,12 +88,17 @@ export class PeerConnection {
   }
 
   async disconnect(block = false, force = false): Promise<boolean> {
-    if (!block && !force && await this.managerMiddleware.get(PingMiddleware)?.sendPing()) {
-      this.logger.info(`Still connected to ${this.targetPeerId}`)
-      return false
+    if (!block && !force && this.connectionStage === "connected") {
+      this.connectionStage = "pinging"
+      if (await this.managerMiddleware.get(PingMiddleware)?.sendPing()) {
+        this.connectionStage = "connected"
+        this.logger.info(`Still connected to ${this.targetPeerId}`)
+        return false
+      }
     }
     if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
     this.connection.cleanup()
+    this.connectionStage = "disconnected"
     this.onPeerConnectionChanged("disconnected", block)
     return true
   }

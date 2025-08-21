@@ -2,15 +2,16 @@ import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
 import {Button, Menu, Portal, Show, Table, Text} from "@chakra-ui/react";
 import {connector, logger} from "@/init.ts";
 import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
+import {connectionStageType} from "@/utils/p2p-library/types.ts";
 
 
 interface Props {
   contentRef: RefObject<HTMLElement | null>;
 }
 
-type StateType = 'connected' | 'connecting' | 'discovered' | 'signaler'
+type StateType = connectionStageType | 'discovered' | 'signaler'
 type PeerInfoType = { id: string, connections: string, nickname: string, state: StateType }
-const statesValues = {'connected': 1, 'connecting': 2, 'discovered': 3, 'signaler': 4}
+const statesValues = {'pinging': 1, 'connected': 1, 'connecting': 2, 'disconnected': 3, 'discovered': 3, 'signaler': 4}
 
 const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   const [peers, setPeers] = useState<PeerInfoType[]>([]);
@@ -21,11 +22,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
     for (const targetPeerId of discoveredPeers) {
       let state: StateType = 'signaler'
       if (targetPeerId in connector.connections) {
-        if (connector.connections[targetPeerId].connected) {
-          state = "connected"
-        } else {
-          state = "connecting"
-        }
+        state = connector.connections[targetPeerId].connectionStage
       } else {
         state = "discovered"
       }
@@ -44,11 +41,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
       if (!discoveredPeers.has(targetPeerId)) {
         let state: StateType = 'signaler'
         if (targetPeerId in connector.connections) {
-          if (connector.connections[targetPeerId].connected) {
-            state = "connected"
-          } else {
-            state = "connecting"
-          }
+          state = connector.connections[targetPeerId].connectionStage
         } else {
           state = "signaler"
         }

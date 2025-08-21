@@ -39,7 +39,7 @@ export class PeerDiscoveryCoordinator {
     this.peerMap[this.connector.peerId] = {
       peerId: this.connector.peerId,
       connections: this.connector.peers.map(peer => (
-        {peerId: peer.targetPeerId, connected: peer.connected, connectionType: peer.connectionType}
+        {peerId: peer.targetPeerId, connected: peer.is_connected(), connectionType: peer.connectionType}
       )),
       updatedAt: Date.now()
     }

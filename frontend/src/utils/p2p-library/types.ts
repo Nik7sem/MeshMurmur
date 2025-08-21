@@ -1,5 +1,7 @@
 export type PeerDataType = { ready: boolean };
 
+export type connectionStageType = "connected" | "connecting" | "pinging" | "disconnected";
+
 export type logType = { text: string, type: "success" | "info" | "warn" | "error" }
 
 type SDP = RTCSessionDescriptionInit;

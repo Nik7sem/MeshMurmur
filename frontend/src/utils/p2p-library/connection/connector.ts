@@ -1,17 +1,17 @@
 import {Logger} from '../../logger.ts'
-import {FirebaseSignaler} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
-import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signaler.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {createSignaler, signalerType} from "@/utils/p2p-library/signalers/createSignaler.ts";
+import {connectionStageType} from "@/utils/p2p-library/types.ts";
+import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 
 export class Connector {
   private readonly signaler: Signaler;
   public connections: { [peerId: string]: PeerConnection } = {}
   public actions: ActionManager
-  public onPeerConnectionChanged?: (targetPeerId: string, status: 'connected' | 'connecting' | 'disconnected') => void
+  public onPeerConnectionChanged?: (targetPeerId: string, status: connectionStageType) => void
   public blackList: Set<string> = new Set()
   public potentialPeers: Set<string> = new Set()
 
@@ -76,7 +76,13 @@ export class Connector {
 
     this.potentialPeers.add(targetPeerId);
 
-    if (targetPeerId in this.connections) return
+    if (targetPeerId in this.connections) {
+      if (this.connections[targetPeerId].connectionStage === 'pinging') {
+        this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
+      }
+      return
+    }
+
     if (!manual) {
       if (this.blackList.has(targetPeerId)) return
       if (!this.autoconnect) return
@@ -96,7 +102,7 @@ export class Connector {
   }
 
   private createOnPeerConnectionChanged(targetPeerId: string) {
-    return (status: 'connected' | 'disconnected', block: boolean) => {
+    return (status: connectionStageType, block: boolean) => {
       if (status === "disconnected") {
         delete this.connections[targetPeerId]
         if (block) {
@@ -118,7 +124,7 @@ export class Connector {
   }
 
   get connectedPeers() {
-    return this.peers.filter((conn) => conn.connected)
+    return this.peers.filter((conn) => conn.is_connected())
   }
 
   cleanup() {

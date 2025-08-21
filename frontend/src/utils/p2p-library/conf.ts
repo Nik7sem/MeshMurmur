@@ -48,4 +48,5 @@ export const AppConfig = {
   maxNumberOfPeers: 10,
   maxNameLength: 15,
   connectingTimeout: 30000,
+  pingTimeout: 1538,
 }
