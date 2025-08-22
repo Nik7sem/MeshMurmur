@@ -1,9 +1,9 @@
 import React, {FC, RefObject} from 'react';
 import {Box, Checkbox, createListCollection, ListCollection, Portal, Select} from "@chakra-ui/react";
 import useUserData from "@/hooks/useUserData.tsx";
-import {signalerType} from "@/utils/p2p-library/signalers/createSignaler.ts";
+import {signalerNameType} from "@/utils/p2p-library/types.ts";
 
-const signalers: ListCollection<{ label: signalerType, value: signalerType }> = createListCollection({
+const signalers: ListCollection<{ label: signalerNameType, value: signalerNameType }> = createListCollection({
   items: [
     {label: "FirebaseSignaler", value: "FirebaseSignaler"},
     {label: "WebsocketSignalerBipki", value: "WebsocketSignalerBipki"},
@@ -18,7 +18,7 @@ interface Props {
 const PeerOptions: FC<Props> = ({contentRef}) => {
   const {userData, setUserData} = useUserData()
 
-  function onValue(selected: signalerType) {
+  function onValue(selected: signalerNameType) {
     setUserData({...userData, signaler: selected})
   }
 
@@ -34,7 +34,7 @@ const PeerOptions: FC<Props> = ({contentRef}) => {
         <Checkbox.Label>Autoconnect</Checkbox.Label>
       </Checkbox.Root>
       <Select.Root mt="10px" collection={signalers} size="sm" width="320px" value={[userData.signaler]}
-                   onValueChange={(e) => onValue((e.value as signalerType[])[0])}>
+                   onValueChange={(e) => onValue((e.value as signalerNameType[])[0])}>
         <Select.HiddenSelect/>
         <Select.Label>Select signaler</Select.Label>
         <Select.Control>

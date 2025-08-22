@@ -1,12 +1,11 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Box, Center, DataList, Flex, Heading, Status, Text} from "@chakra-ui/react";
+import {Box, Flex, Heading, Status} from "@chakra-ui/react";
 import {ColorModeButton} from "@/components/ui/color-mode.tsx";
 import Logs from "@/components/Logs.tsx";
 import {logType} from "@/utils/p2p-library/types.ts";
-import {connector, logger, peerId} from "@/init.ts";
+import {connector, logger} from "@/init.ts";
 import useToast from "@/hooks/useToast.tsx";
 import {Toaster} from "@/components/ui/toaster"
-import {Tooltip} from "@/components/ui/tooltip.tsx";
 
 const Header = () => {
   const [logs, setLogs] = useState<logType[]>([])

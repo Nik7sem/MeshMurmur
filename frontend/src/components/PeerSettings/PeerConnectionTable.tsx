@@ -11,7 +11,15 @@ interface Props {
 
 type StateType = connectionStageType | 'discovered' | 'signaler'
 type PeerInfoType = { id: string, connections: string, nickname: string, state: StateType }
-const statesValues = {'pinging': 1, 'connected': 1, 'connecting': 2, 'disconnected': 3, 'discovered': 3, 'signaler': 4}
+const stateValues = {
+  'pinging': 1,
+  'connected': 1,
+  'connecting': 2,
+  'reconnecting': 2,
+  'disconnected': 3,
+  'discovered': 3,
+  'signaler': 4
+}
 
 const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   const [peers, setPeers] = useState<PeerInfoType[]>([]);
@@ -54,7 +62,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
       }
     }
     newPeers.sort((a, b) => {
-      return statesValues[a.state] - statesValues[b.state]
+      return stateValues[a.state] - stateValues[b.state]
     })
     setPeers(newPeers)
   }, [])
