@@ -51,7 +51,7 @@ export class PeerConnection {
       }
     }, AppConfig.connectingTimeout)
 
-    return new WebRTCPeerConnection(this.peerId, this.targetPeerId, this.signaler, this.logger, this.onFinalState, this.onData, this.onChannelOpen)
+    return new WebRTCPeerConnection(this.peerId, this.targetPeerId, this.signaler, this.logger.createChild("WebRTC"), this.onFinalState, this.onData, this.onChannelOpen)
   }
 
   private onData: ChannelEventHandlers['ondata'] = (data) => {
@@ -93,6 +93,10 @@ export class PeerConnection {
       if (await this.managerMiddleware.get(PingMiddleware)?.sendPing()) {
         this.connectionStage = "connected"
         this.logger.info(`Still connected to ${this.targetPeerId}`)
+        return false
+      }
+      // avoiding typescript warning about types which have no overlap (false)
+      if (this.connectionStage as connectionStageType === 'reconnecting') {
         return false
       }
     }

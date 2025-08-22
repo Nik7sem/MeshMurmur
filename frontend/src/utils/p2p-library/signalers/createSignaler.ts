@@ -10,6 +10,6 @@ export function createSignaler(signalerName: signalerNameType, peerId: string, l
   if (signaler.type === 'firebase') {
     return new FirebaseSignaler(peerId, signaler.config);
   } else {
-    return new WebsocketSignaler(peerId, logger, signaler.config);
+    return new WebsocketSignaler(peerId, logger.createChild(signalerName), signaler.config);
   }
 }

@@ -71,16 +71,19 @@ export class Connector {
     this.signaler.setPeerData({ready: this.autoconnect});
   }
 
-  public createConnection(targetPeerId: string, outgoing = true, manual = false) {
+  public async createConnection(targetPeerId: string, outgoing = true, manual = false) {
     if (targetPeerId === this.peerId) return
 
     this.potentialPeers.add(targetPeerId);
 
     if (targetPeerId in this.connections) {
-      if (this.connections[targetPeerId].connectionStage === 'pinging') {
+      if (!outgoing && this.connections[targetPeerId].connectionStage === 'pinging') {
+        this.connections[targetPeerId].connectionStage = 'reconnecting'
         this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
+        await this.connections[targetPeerId].disconnect(false, true)
+      } else {
+        return
       }
-      return
     }
 
     if (!manual) {

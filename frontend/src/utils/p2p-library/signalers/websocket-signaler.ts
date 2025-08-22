@@ -67,6 +67,8 @@ export class WebsocketSignaler extends Signaler {
       this.onOpen()
     }
     this.ws.onclose = () => {
+      // this.ws = new WebSocket(this.config.url)
+      // this.connect()
       this.logger.info("Connection closed, try to reconnect in 1000 ms...")
       setTimeout(() => {
         this.ws = new WebSocket(this.config.url)
