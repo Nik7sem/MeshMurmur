@@ -77,7 +77,7 @@ export class Connector {
     this.potentialPeers.add(targetPeerId);
 
     if (targetPeerId in this.connections) {
-      if (!outgoing && this.connections[targetPeerId].connectionStage === 'pinging') {
+      if (!outgoing && ['pinging', 'connecting'].includes(this.connections[targetPeerId].connectionStage)) {
         this.connections[targetPeerId].connectionStage = 'reconnecting'
         this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
         await this.connections[targetPeerId].disconnect(false, true)

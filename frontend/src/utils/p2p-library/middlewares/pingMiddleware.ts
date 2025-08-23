@@ -8,10 +8,12 @@ export class PingMiddleware extends Middleware {
   private startPingTime: number = 0
 
   resolvePing(success: boolean) {
-    if (success) {
-      this.resolve!(new Date().getTime() - this.startPingTime);
-    } else {
-      this.resolve!(0);
+    if (this.resolve) {
+      if (success) {
+        this.resolve(new Date().getTime() - this.startPingTime);
+      } else {
+        this.resolve(0);
+      }
     }
 
     if (this.timeoutId) {

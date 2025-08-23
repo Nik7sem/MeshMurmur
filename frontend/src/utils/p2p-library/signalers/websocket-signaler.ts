@@ -46,6 +46,8 @@ export class WebsocketSignaler extends Signaler {
   }>();
   private sdpCallbacks: { [key: string]: (data: SDPChangeDataType) => void } = {}
   private onOpen: () => void = () => undefined
+  private reconnectionAttempt = 0;
+  private readonly reconnectTimout = 100
 
   constructor(
     private readonly peerId: string,
@@ -64,16 +66,16 @@ export class WebsocketSignaler extends Signaler {
   connect() {
     this.ws.onopen = () => {
       this.logger.info("Connection opened")
+      this.reconnectionAttempt = 0
       this.onOpen()
     }
     this.ws.onclose = () => {
-      // this.ws = new WebSocket(this.config.url)
-      // this.connect()
-      this.logger.info("Connection closed, try to reconnect in 1000 ms...")
+      const currentReconnectTimout = this.reconnectTimout * 5 ** this.reconnectionAttempt++
+      this.logger.info(`Connection closed, try to reconnect in ${currentReconnectTimout} ms...`)
       setTimeout(() => {
         this.ws = new WebSocket(this.config.url)
         this.connect()
-      }, 1000)
+      }, currentReconnectTimout)
     }
     this.ws.onmessage = ({data}) => {
       let msg: ServerMsg;
