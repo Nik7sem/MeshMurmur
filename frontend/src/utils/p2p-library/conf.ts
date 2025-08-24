@@ -5,7 +5,9 @@ export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSign
   "FirebaseSignaler": {
     type: "firebase",
     config: {
-      databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
+      options: {
+        databaseURL: "https://meshmurmur-default-rtdb.europe-west1.firebasedatabase.app/"
+      }
     }
   },
   "WebsocketSignalerBipki": {

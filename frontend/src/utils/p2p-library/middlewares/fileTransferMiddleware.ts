@@ -32,7 +32,7 @@ export class FileTransferMiddleware extends Middleware {
     percent: number,
     timestamp: number,
   } = {chunks: [], percent: 0, timestamp: 0};
-  private fileMetadata: FileMetadataMessage["data"] | null = null;
+  private fileMetadata?: FileMetadataMessage["data"];
   public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 

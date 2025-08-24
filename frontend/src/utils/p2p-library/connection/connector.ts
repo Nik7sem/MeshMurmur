@@ -28,13 +28,7 @@ export class Connector {
   async init() {
     // TODO: Add peer reconnecting
 
-    const connect = (targetPeerId: string) => {
-      this.logger.info(`Discovered peer: ${targetPeerId}`);
-      this.createConnection(targetPeerId);
-    }
-
     const disconnect = async (removedPeerId: string) => {
-      this.logger.info(`Removed peer: ${removedPeerId}`);
       if (removedPeerId in this.connections) {
         if (await this.connections[removedPeerId].disconnect()) {
           this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
@@ -43,24 +37,22 @@ export class Connector {
       this.potentialPeers.delete(removedPeerId);
     }
 
-    this.signaler.onInvite((targetPeerId) => {
-      this.createConnection(targetPeerId, false);
-    })
-
-    this.signaler.subscribeToPeers(connect, disconnect, (peers) => {
-        const peersSet = new Set(peers)
-        for (const peerId of this.potentialPeers) {
-          if (!peersSet.has(peerId)) {
-            disconnect(peerId);
-          }
-        }
-        for (const peerId of peersSet) {
-          if (!this.potentialPeers.has(peerId)) {
-            connect(peerId);
-          }
+    this.signaler.onInvite = (targetPeerId) => this.createConnection(targetPeerId, false);
+    this.signaler.onAddedPeer = this.createConnection
+    this.signaler.onRemovedPeer = disconnect
+    this.signaler.onPeerList = (peerIds) => {
+      const peersSet = new Set(peerIds)
+      for (const peerId of this.potentialPeers) {
+        if (!peersSet.has(peerId)) {
+          disconnect(peerId);
         }
       }
-    )
+      for (const peerId of peersSet) {
+        if (!this.potentialPeers.has(peerId)) {
+          this.createConnection(peerId);
+        }
+      }
+    }
 
     this.signaler.registerPeer({ready: this.autoconnect})
     this.logger.info(`Registered peer [${this.signaler.info()}]:`, this.peerId);
@@ -77,7 +69,7 @@ export class Connector {
     this.potentialPeers.add(targetPeerId);
 
     if (targetPeerId in this.connections) {
-      if (!outgoing && ['pinging', 'connecting'].includes(this.connections[targetPeerId].connectionStage)) {
+      if (!outgoing && this.connections[targetPeerId].connectionStage === 'pinging') {
         this.connections[targetPeerId].connectionStage = 'reconnecting'
         this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
         await this.connections[targetPeerId].disconnect(false, true)
@@ -95,10 +87,8 @@ export class Connector {
 
     if (outgoing) {
       this.signaler.sendInvite(targetPeerId)
-      this.logger.info("Send invite to:", targetPeerId);
-    } else {
-      this.logger.info("Received invite from:", targetPeerId);
     }
+
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnPeerConnectionChanged(targetPeerId));
     this.actions.registerCallbacksAndData(targetPeerId)
     this.onPeerConnectionChanged?.(targetPeerId, 'connecting')

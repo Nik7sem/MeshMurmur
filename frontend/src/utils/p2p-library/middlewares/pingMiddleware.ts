@@ -3,17 +3,15 @@ import {eventDataType} from "@/utils/p2p-library/types.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 
 export class PingMiddleware extends Middleware {
-  private resolve: ((value: number) => void) | null = null;
-  private timeoutId: NodeJS.Timeout | null = null;
+  private resolve?: (value: number) => void
+  private timeoutId?: NodeJS.Timeout
   private startPingTime: number = 0
 
   resolvePing(success: boolean) {
-    if (this.resolve) {
-      if (success) {
-        this.resolve(new Date().getTime() - this.startPingTime);
-      } else {
-        this.resolve(0);
-      }
+    if (success) {
+      this.resolve?.(new Date().getTime() - this.startPingTime);
+    } else {
+      this.resolve?.(0);
     }
 
     if (this.timeoutId) {
@@ -21,8 +19,8 @@ export class PingMiddleware extends Middleware {
     }
 
     this.startPingTime = 0
-    this.resolve = null;
-    this.timeoutId = null;
+    this.resolve = undefined;
+    this.timeoutId = undefined;
   }
 
   call(eventData: eventDataType) {

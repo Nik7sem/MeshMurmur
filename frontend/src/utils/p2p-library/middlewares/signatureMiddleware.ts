@@ -14,8 +14,8 @@ export class SignatureMiddleware extends Middleware {
   private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.conn.targetPeerId))
   private timeout = 4000
   private timeoutId = 0
-  private resolveInit: null | (() => void) = null
-  private initPromise: null | Promise<void> = null
+  private resolveInit?: () => void
+  private initPromise?: Promise<void>
   public verified = false
 
   async init(eventData: ChannelEventBase): Promise<void> {

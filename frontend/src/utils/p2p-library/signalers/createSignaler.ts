@@ -7,9 +7,10 @@ import {WebsocketSignaler} from "@/utils/p2p-library/signalers/websocket-signale
 
 export function createSignaler(signalerName: signalerNameType, peerId: string, logger: Logger): Signaler {
   const signaler = signalers[signalerName]
+  const childLogger = logger.createChild(signalerName)
   if (signaler.type === 'firebase') {
-    return new FirebaseSignaler(peerId, signaler.config);
+    return new FirebaseSignaler(peerId, signaler.config, childLogger);
   } else {
-    return new WebsocketSignaler(peerId, logger.createChild(signalerName), signaler.config);
+    return new WebsocketSignaler(peerId, signaler.config, childLogger);
   }
 }

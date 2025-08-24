@@ -1,7 +1,6 @@
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
-import {TypedEventEmitter} from "@/utils/eventEmitter.ts";
 
 type ClientMsg =
   | { t: "auth:init"; peerId: string }
@@ -33,50 +32,40 @@ function Payload(msg: ClientMsg) {
   return JSON.stringify(msg)
 }
 
-type SDPChangeDataType = { connectionData: ConnectionData, from: string }
-
 export class WebsocketSignaler extends Signaler {
-  private ws: WebSocket;
-  private eventEmitter = new TypedEventEmitter<{
-    onInvite: string,
-    addPeer: string,
-    removePeer: string,
-    updatePeerList: string[],
-    onSDPChange: SDPChangeDataType,
-  }>();
-  private sdpCallbacks: { [key: string]: (data: SDPChangeDataType) => void } = {}
-  private onOpen: () => void = () => undefined
   private reconnectionAttempt = 0;
   private readonly reconnectTimout = 100
 
+  private ws!: WebSocket;
+  private onOpen: () => void = () => undefined
+
   constructor(
     private readonly peerId: string,
-    private logger: Logger,
     private readonly config: WebsocketConfig,
+    logger: Logger
   ) {
-    super()
-    this.ws = new WebSocket(this.config.url)
+    super(logger);
     this.connect()
   }
 
   info() {
-    return `WebsockerSignaler (${this.config.url})`
+    return `WebsocketSignaler (${this.config.url})`
   }
 
   connect() {
+    this.ws = new WebSocket(this.config.url)
     this.ws.onopen = () => {
       this.logger.info("Connection opened")
       this.reconnectionAttempt = 0
       this.onOpen()
     }
+
     this.ws.onclose = () => {
       const currentReconnectTimout = this.reconnectTimout * 5 ** this.reconnectionAttempt++
       this.logger.info(`Connection closed, try to reconnect in ${currentReconnectTimout} ms...`)
-      setTimeout(() => {
-        this.ws = new WebSocket(this.config.url)
-        this.connect()
-      }, currentReconnectTimout)
+      setTimeout(() => this.connect(), currentReconnectTimout)
     }
+
     this.ws.onmessage = ({data}) => {
       let msg: ServerMsg;
       try {
@@ -87,22 +76,25 @@ export class WebsocketSignaler extends Signaler {
       }
 
       if (msg.t === "signal:peer-list") {
-        this.eventEmitter.emit("updatePeerList", msg.peers.filter((peerId) => peerId !== this.peerId))
+        this.onPeerList?.(msg.peers.filter((peerId) => peerId !== this.peerId))
       } else if (msg.t === "signal:peer-change") {
         if (msg.peer.status === "connected") {
-          this.eventEmitter.emit("addPeer", msg.peer.peerId)
+          this.logger.info(`Added peer: ${msg.peer.peerId}`);
+          this.onAddedPeer?.(msg.peer.peerId)
         } else {
-          this.eventEmitter.emit("removePeer", msg.peer.peerId)
+          this.logger.info(`Removed peer: ${msg.peer.peerId}`);
+          this.onRemovedPeer?.(msg.peer.peerId)
         }
       } else if (msg.t === "signal:invite") {
-        this.eventEmitter.emit("onInvite", msg.from)
+        this.logger.info(`Received invite from: ${msg.from}`);
+        this.onInvite?.(msg.from)
       } else if (msg.t === "signal:sdp") {
-        this.eventEmitter.emit("onSDPChange", {connectionData: msg.sdp, from: msg.from})
+        this.onSDP(msg.sdp, msg.from)
       }
     }
   }
 
-  async registerPeer(peerData: PeerDataType) {
+  registerPeer(peerData: PeerDataType) {
     const onOpen = () => {
       this.ws.send(Payload({t: "auth:init", peerId: this.peerId}))
       this.ws.send(Payload({t: "signal:peer-list"}))
@@ -115,52 +107,16 @@ export class WebsocketSignaler extends Signaler {
     }
   }
 
-  async setPeerData(peerData: PeerDataType) {
+  setPeerData(peerData: PeerDataType) {
 
   }
 
-  subscribeToPeers(
-    addPeer: (peerId: string) => void,
-    removePeer: (peerId: string) => void,
-    updatePeerList: (peerIds: string[]) => void
-  ) {
-    this.eventEmitter.on("addPeer", addPeer)
-    this.eventEmitter.on("removePeer", removePeer)
-    this.eventEmitter.on("updatePeerList", updatePeerList)
-  }
-
-  unsubscribeFromNewPeers() {
-    this.eventEmitter.offEvent("addPeer")
-    this.eventEmitter.offEvent("removePeer")
-  }
-
-  async sendInvite(targetPeerId: string) {
+  sendInvite(targetPeerId: string) {
+    this.logger.info("Sent invite to:", targetPeerId);
     this.ws.send(Payload({t: "signal:invite", to: targetPeerId}))
   }
 
-  async send(targetPeerId: string, connectionData: ConnectionData) {
+  send(targetPeerId: string, connectionData: ConnectionData) {
     this.ws.send(Payload({t: "signal:sdp", to: targetPeerId, sdp: connectionData}))
-  }
-
-  onInvite(callback: (targetPeerId: string) => void) {
-    this.eventEmitter.on("onInvite", callback)
-  }
-
-  on(targetPeerId: string, callback: (connectionData: ConnectionData) => void) {
-    const onSDPChange = ({connectionData, from}: SDPChangeDataType) => {
-      if (targetPeerId === from) {
-        callback(connectionData)
-      }
-    }
-    this.eventEmitter.on("onSDPChange", onSDPChange)
-    this.sdpCallbacks[targetPeerId] = onSDPChange
-  }
-
-  off(targetPeerId: string) {
-    this.eventEmitter.off("onSDPChange", this.sdpCallbacks[targetPeerId])
-  }
-
-  cleanup(targetPeerId: string) {
-
   }
 }

@@ -64,7 +64,6 @@ export class PeerConnection {
   }
 
   private onFinalState = async (state: RTCPeerConnectionState | "timeout") => {
-    this.signaler.cleanup(this.targetPeerId)
     if (state === "connected") {
       this.connectionStage = "connected"
       if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
