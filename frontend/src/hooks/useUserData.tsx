@@ -10,8 +10,8 @@ const useUserData = () => {
     if (userData.nickname !== newUserData.nickname) {
       connector.actions.sendNickname(newUserData.nickname)
     }
-    if (userData.autoconnect !== newUserData.autoconnect) {
-      connector.setAutoconnect(newUserData.autoconnect)
+    if (userData.connectorConfig !== newUserData.connectorConfig) {
+      connector.updateConfig(newUserData.connectorConfig)
     }
     connector.actions.associatedNicknames = newUserData.associatedNicknames
     setUserData(newUserData)

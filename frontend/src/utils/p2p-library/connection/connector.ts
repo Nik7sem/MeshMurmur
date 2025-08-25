@@ -7,6 +7,12 @@ import {createSignaler} from "@/utils/p2p-library/signalers/createSignaler.ts";
 import {connectionStageType, signalerNameType} from "@/utils/p2p-library/types.ts";
 import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 
+export interface ConnectorConfig {
+  signaler: signalerNameType
+  autoconnect: boolean
+  autoreconnect: boolean
+}
+
 export class Connector {
   private readonly signaler: Signaler;
   public connections: { [peerId: string]: PeerConnection } = {}
@@ -17,28 +23,36 @@ export class Connector {
 
   constructor(
     public peerId: string,
-    signaler: signalerNameType,
-    private autoconnect: boolean,
+    private __config: ConnectorConfig,
     private logger: Logger,
   ) {
     this.actions = new ActionManager(this, logger);
-    this.signaler = createSignaler(signaler, this.peerId, this.logger);
+    this.signaler = createSignaler(this.config.signaler, this.peerId, this.logger);
   }
 
   async init() {
-    // TODO: Add peer reconnecting
-
     const disconnect = async (removedPeerId: string) => {
       if (removedPeerId in this.connections) {
-        if (await this.connections[removedPeerId].disconnect()) {
-          this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit`);
+        const pc = this.connections[removedPeerId]
+        if (await pc.ping()) {
+          this.logger.info(`Still connected to ${removedPeerId}`)
+        } else {
+          const connectionState = pc.connectionStage
+          const nickname = this.actions.targetPeerNickname(removedPeerId)
+          pc.disconnect()
+          if (connectionState === 'reconnecting') {
+            this.logger.warn(`Reconnecting after reload to ${nickname}...`)
+            this.createConnection(removedPeerId)
+          } else {
+            this.logger.warn(`${nickname} disconnected by exit`);
+          }
         }
       }
       this.potentialPeers.delete(removedPeerId);
     }
 
     this.signaler.onInvite = (targetPeerId) => this.createConnection(targetPeerId, false);
-    this.signaler.onAddedPeer = this.createConnection
+    this.signaler.onAddedPeer = (targetPeerId) => this.createConnection(targetPeerId)
     this.signaler.onRemovedPeer = disconnect
     this.signaler.onPeerList = (peerIds) => {
       const peersSet = new Set(peerIds)
@@ -54,13 +68,18 @@ export class Connector {
       }
     }
 
-    this.signaler.registerPeer({ready: this.autoconnect})
+    this.signaler.registerPeer({ready: this.config.autoconnect});
     this.logger.info(`Registered peer [${this.signaler.info()}]:`, this.peerId);
   }
 
-  public setAutoconnect(autoconnect: boolean) {
-    this.autoconnect = autoconnect;
-    this.signaler.setPeerData({ready: this.autoconnect});
+  get config() {
+    return this.__config
+  }
+
+  public updateConfig(newConfig: ConnectorConfig) {
+    if (newConfig.signaler !== this.__config.signaler) return // not be able to change signaler while running
+    this.__config = newConfig;
+    this.signaler.setPeerData({ready: this.config.autoconnect});
   }
 
   public async createConnection(targetPeerId: string, outgoing = true, manual = false) {
@@ -72,15 +91,13 @@ export class Connector {
       if (!outgoing && this.connections[targetPeerId].connectionStage === 'pinging') {
         this.connections[targetPeerId].connectionStage = 'reconnecting'
         this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
-        await this.connections[targetPeerId].disconnect(false, true)
-      } else {
-        return
       }
+      return
     }
 
     if (!manual) {
       if (this.blackList.has(targetPeerId)) return
-      if (!this.autoconnect) return
+      if (!this.config.autoconnect) return
       if (this.peers.length >= AppConfig.maxNumberOfPeers) return
       if (outgoing && this.peers.length >= AppConfig.maxNumberOfOutgoingConnections) return
     }
@@ -95,11 +112,16 @@ export class Connector {
   }
 
   private createOnPeerConnectionChanged(targetPeerId: string) {
-    return (status: connectionStageType, block: boolean) => {
+    return (status: connectionStageType, block: boolean, webrtcError: boolean) => {
       if (status === "disconnected") {
         delete this.connections[targetPeerId]
         if (block) {
           this.blackList.add(targetPeerId)
+        } else {
+          if (webrtcError && this.config.autoreconnect) {
+            this.logger.warn(`Reconnecting after error to ${this.actions.targetPeerNickname(targetPeerId)}`)
+            this.createConnection(targetPeerId)
+          }
         }
       } else if (status === "connected") {
         // TODO: Remove this, and make proper solution with callback when all middlewares fully initialized

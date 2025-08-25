@@ -53,6 +53,9 @@ export abstract class Signaler extends BasicSignaler {
     if (from in this.sdpCallbacks) {
       this.sdpCallbacks[from](sdp)
     } else {
+      if (!(from in this.sdpCallbacks)) {
+        this.sdpCache[from] = []
+      }
       this.sdpCache[from].push(sdp)
     }
   }

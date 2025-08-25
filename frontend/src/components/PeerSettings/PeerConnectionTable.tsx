@@ -78,11 +78,11 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
   function onSelect(targetPeerId: string, value: string) {
     if (value === 'disconnect') {
       connector.actions.emitDisconnectEvent(targetPeerId)
-      connector.connections[targetPeerId].disconnect(false, true)
+      connector.connections[targetPeerId].disconnect()
     } else if (value === 'connect') {
       connector.createConnection(targetPeerId, true, true)
     } else if (value === 'ping') {
-      connector.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.sendPing().then(latency => {
+      connector.connections[targetPeerId].ping().then(latency => {
         if (latency) {
           logger.success(`Ping latency: ${latency} ms`)
         } else {

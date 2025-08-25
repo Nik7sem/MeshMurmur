@@ -6,7 +6,7 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
-export const AppVersion = 'Alpha v4.25'
+export const AppVersion = 'Alpha v4.7'
 askNotificationPermission()
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
@@ -36,7 +36,7 @@ const defaultUserData = await getDefaultUserData()
 
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new MainLogger();
-export const connector = new Connector(peerId, defaultUserData.signaler, defaultUserData.autoconnect, logger)
+export const connector = new Connector(peerId, defaultUserData.connectorConfig, logger)
 
 connector.actions.sendNickname(defaultUserData.nickname)
 connector.actions.associatedNicknames = defaultUserData.associatedNicknames

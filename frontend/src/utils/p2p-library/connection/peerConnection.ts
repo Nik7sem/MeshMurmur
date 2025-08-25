@@ -26,7 +26,7 @@ export class PeerConnection {
     public readonly targetPeerId: string,
     private logger: Logger,
     private signaler: Signaler,
-    private onPeerConnectionChanged: (status: connectionStageType, block: boolean) => void,
+    private onPeerConnectionChanged: (status: connectionStageType, block: boolean, webrtcError: boolean) => void,
   ) {
     this.managerMiddleware = new ManagerMiddleware(this, this.logger)
     this.managerMiddleware.add(SignatureMiddleware, 1)
@@ -74,7 +74,7 @@ export class PeerConnection {
         this.logger.info(`Connection is using ${info.type} server.`);
         this.connectionType = info.type
       }
-      this.onPeerConnectionChanged('connected', false);
+      this.onPeerConnectionChanged('connected', false, false);
       this.logger.info(`Connected to ${this.targetPeerId}`)
     } else {
       this.disconnect(false, true)
@@ -86,23 +86,22 @@ export class PeerConnection {
     return this.connection.channel
   }
 
-  async disconnect(block = false, force = false): Promise<boolean> {
-    if (!block && !force && this.connectionStage === "connected") {
+  async ping(): Promise<number> {
+    if (this.connectionStage === "connected") {
       this.connectionStage = "pinging"
-      if (await this.managerMiddleware.get(PingMiddleware)?.sendPing()) {
+      const latency = await this.managerMiddleware.get(PingMiddleware)?.sendPing()
+      if (latency) {
         this.connectionStage = "connected"
-        this.logger.info(`Still connected to ${this.targetPeerId}`)
-        return false
-      }
-      // avoiding typescript warning about types which have no overlap (false)
-      if (this.connectionStage as connectionStageType === 'reconnecting') {
-        return false
+        return latency
       }
     }
+    return 0
+  }
+
+  disconnect(block = false, webrtcError = false) {
     if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
     this.connection.cleanup()
     this.connectionStage = "disconnected"
-    this.onPeerConnectionChanged("disconnected", block)
-    return true
+    this.onPeerConnectionChanged("disconnected", block, webrtcError)
   }
 }

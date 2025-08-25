@@ -1,9 +1,12 @@
 import {UserData} from "../types/user.ts";
 import {storageManager} from "@/init.ts";
 
-const defaultUserData = {
-  autoconnect: true,
-  signaler: "FirebaseSignaler",
+const defaultUserData: UserData = {
+  connectorConfig: {
+    signaler: 'FirebaseSignaler',
+    autoconnect: true,
+    autoreconnect: true,
+  },
   nickname: "",
   associatedNicknames: {}
 };
@@ -15,8 +18,8 @@ export async function getDefaultUserData(): Promise<UserData> {
 
   const storedUserData = await storageManager.retrieveUserData();
   if (storedUserData) {
-    data = JSON.parse(storedUserData) as UserData;
-    return {...defaultUserData, ...data};
+    data = {...defaultUserData, ...(JSON.parse(storedUserData) as UserData)};
+    return data;
   } else {
     return defaultUserData
   }

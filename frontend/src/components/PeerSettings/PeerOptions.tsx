@@ -1,5 +1,5 @@
 import React, {FC, RefObject} from 'react';
-import {Box, Checkbox, createListCollection, ListCollection, Portal, Select} from "@chakra-ui/react";
+import {Box, Checkbox, createListCollection, Flex, ListCollection, Portal, Select} from "@chakra-ui/react";
 import useUserData from "@/hooks/useUserData.tsx";
 import {signalerNameType} from "@/utils/p2p-library/types.ts";
 
@@ -19,21 +19,36 @@ const PeerOptions: FC<Props> = ({contentRef}) => {
   const {userData, setUserData} = useUserData()
 
   function onValue(selected: signalerNameType) {
-    setUserData({...userData, signaler: selected})
+    setUserData({...userData, connectorConfig: {...userData.connectorConfig, signaler: selected}})
   }
 
   return (
-    <Box mt="10px">
+    <Flex mt="10px" direction='column'>
       <Checkbox.Root
         mt="10px"
-        checked={userData.autoconnect}
-        onCheckedChange={(e) => setUserData({...userData, autoconnect: !!e.checked})}
+        checked={userData.connectorConfig.autoconnect}
+        onCheckedChange={(e) => setUserData({
+          ...userData,
+          connectorConfig: {...userData.connectorConfig, autoconnect: !!e.checked}
+        })}
       >
         <Checkbox.HiddenInput/>
         <Checkbox.Control/>
         <Checkbox.Label>Autoconnect</Checkbox.Label>
       </Checkbox.Root>
-      <Select.Root mt="10px" collection={signalers} size="sm" width="320px" value={[userData.signaler]}
+      <Checkbox.Root
+        mt="10px"
+        checked={userData.connectorConfig.autoreconnect}
+        onCheckedChange={(e) => setUserData({
+          ...userData,
+          connectorConfig: {...userData.connectorConfig, autoreconnect: !!e.checked}
+        })}
+      >
+        <Checkbox.HiddenInput/>
+        <Checkbox.Control/>
+        <Checkbox.Label>Autoreconnect</Checkbox.Label>
+      </Checkbox.Root>
+      <Select.Root mt="10px" collection={signalers} size="sm" width="320px" value={[userData.connectorConfig.signaler]}
                    onValueChange={(e) => onValue((e.value as signalerNameType[])[0])}>
         <Select.HiddenSelect/>
         <Select.Label>Select signaler</Select.Label>
@@ -58,7 +73,7 @@ const PeerOptions: FC<Props> = ({contentRef}) => {
           </Select.Positioner>
         </Portal>
       </Select.Root>
-    </Box>
+    </Flex>
   );
 };
 
