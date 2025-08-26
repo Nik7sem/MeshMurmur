@@ -12,15 +12,12 @@ import {ED25519PublicKeyManager} from "@/utils/crypto/ed25519KeyManager.ts";
 export class SignatureMiddleware extends Middleware {
   private randomNonce = generateNonce()
   private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.conn.targetPeerId))
-  private timeout = 4000
-  private timeoutId = 0
   private resolveInit?: () => void
   private initPromise?: Promise<void>
   public verified = false
 
   async init(eventData: ChannelEventBase): Promise<void> {
     if (eventData.channelType === "reliable") {
-      this.timeoutId = Number(setTimeout(() => this.blockPeer(), this.timeout))
       const sigRequest = arrayBufferToBase64(this.randomNonce)
 
       this.logger.info("Signature request sent: ", sigRequest);
@@ -33,9 +30,12 @@ export class SignatureMiddleware extends Middleware {
     return this.initPromise
   }
 
+  protected requiresInit(): boolean {
+    return true
+  }
+
   blockPeer() {
     if (!this.verified) {
-      clearInterval(this.timeoutId);
       this.logger.warn("Signature verification failed!")
       this.conn.disconnect(true)
     }
@@ -62,6 +62,7 @@ export class SignatureMiddleware extends Middleware {
         } else {
           console.error('Signature verification succeeded before initialization!')
         }
+        this.onInitialize()
         this.logger.info("Signature verification succeeded!")
       } else {
         this.blockPeer()

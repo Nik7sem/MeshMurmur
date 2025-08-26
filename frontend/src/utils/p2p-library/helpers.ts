@@ -1,5 +1,3 @@
-// TODO: Move here all helper functions
-
 import {
   completeMessageType, completeTextType, completeFileType
 } from "@/utils/p2p-library/types.ts";

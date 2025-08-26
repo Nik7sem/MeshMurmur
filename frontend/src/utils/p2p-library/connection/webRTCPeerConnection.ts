@@ -44,7 +44,6 @@ export class WebRTCPeerConnection {
     this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
     // this.startDebugListeners()
 
-    // TODO: Leave only one: on final state or on data channel open
     this.pc.onconnectionstatechange = () => {
       if (this.pc.connectionState === "connecting" ||
         this.pc.connectionState === "new") return

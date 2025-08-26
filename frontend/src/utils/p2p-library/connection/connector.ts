@@ -124,11 +124,7 @@ export class Connector {
           }
         }
       } else if (status === "connected") {
-        // TODO: Remove this, and make proper solution with callback when all middlewares fully initialized
-        // Temporal solution
-        setTimeout(() => {
-          this.logger.success(`Connected to ${this.actions.targetPeerNickname(targetPeerId)}`);
-        }, 1000)
+        this.logger.success(`Connected to ${this.actions.targetPeerNickname(targetPeerId)}`);
       }
       this.onPeerConnectionChanged?.(targetPeerId, status)
     }

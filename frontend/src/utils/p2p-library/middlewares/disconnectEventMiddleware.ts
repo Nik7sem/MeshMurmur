@@ -1,14 +1,8 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {eventDataType} from "@/utils/p2p-library/types.ts";
-import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
-import {Logger} from "@/utils/logger.ts";
 
 export class DisconnectEventMiddleware extends Middleware {
   public onDisconnect?: () => void
-
-  constructor(conn: PeerConnection, logger: Logger) {
-    super(conn, logger);
-  }
 
   call(eventData: eventDataType) {
     if (eventData.datatype !== 'json' || eventData.channelType !== 'unreliable') return true

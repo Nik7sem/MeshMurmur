@@ -7,7 +7,7 @@ export class ManagerMiddleware extends Middleware {
 
   add<T extends Middleware>(middlewareClass: new (...args: any[]) => T, priority: number): T {
     const key = middlewareClass.name;
-    const instance = new middlewareClass(this.conn, this.logger);
+    const instance = new middlewareClass(this.conn, this.logger.createChild(key));
     this.middlewares[key] = {middleware: instance, priority};
     this.updateList()
     return instance;
@@ -21,6 +21,13 @@ export class ManagerMiddleware extends Middleware {
     for (const middleware of this.prioritizedList) {
       await middleware.init(eventData);
     }
+  }
+
+  async waitForAllInitialized(): Promise<void> {
+    const initializationPromises = Array.from(Object.values(this.middlewares))
+      .map(mw => mw.middleware.initialization);
+
+    await Promise.all(initializationPromises);
   }
 
   call(data: eventDataType) {

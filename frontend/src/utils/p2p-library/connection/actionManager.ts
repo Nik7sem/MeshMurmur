@@ -49,9 +49,7 @@ export class ActionManager {
       typingMiddleware.onTyping = (data) => this.onTyping?.(data)
     }
     if (nicknameMiddleware) {
-      if (this.nickname) {
-        nicknameMiddleware.setNickname(this.nickname)
-      }
+      nicknameMiddleware.setNickname(this.nickname)
     }
     if (disconnectMiddleware) {
       disconnectMiddleware.onDisconnect = () => {

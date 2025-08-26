@@ -62,10 +62,44 @@ export abstract class Signaler extends BasicSignaler {
 }
 
 export abstract class Middleware {
+  private _isInitialized: boolean = false
+  private _initPromise?: Promise<void>
+  private _initResolve?: (() => void)
+
   constructor(
     protected conn: PeerConnection,
-    protected logger: Logger
+    protected logger: Logger,
   ) {
+    if (!this.requiresInit()) {
+      this._isInitialized = true
+      this._initPromise = Promise.resolve()
+    } else {
+      this._initPromise = new Promise((resolve) => {
+        this._initResolve = resolve
+      })
+    }
+  }
+
+  protected requiresInit(): boolean {
+    return false
+  }
+
+  protected onInitialize(): void {
+    if (this._isInitialized) return
+
+    this._isInitialized = true
+    if (this._initResolve) {
+      this._initResolve()
+    }
+    this.logger.info("Initialized!")
+  }
+
+  get isInitialized(): boolean {
+    return this._isInitialized;
+  }
+
+  get initialization(): Promise<void> {
+    return this._initPromise || Promise.resolve();
   }
 
   // on datachannel open

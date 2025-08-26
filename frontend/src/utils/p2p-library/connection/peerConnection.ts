@@ -65,6 +65,7 @@ export class PeerConnection {
 
   private onFinalState = async (state: RTCPeerConnectionState | "timeout") => {
     if (state === "connected") {
+      await this.managerMiddleware.waitForAllInitialized()
       this.connectionStage = "connected"
       if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
       const stats = await this.connection.getStats()
