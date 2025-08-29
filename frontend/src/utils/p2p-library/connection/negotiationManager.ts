@@ -1,7 +1,9 @@
 import {Logger} from "@/utils/logger.ts";
+import {AppVersion} from "@/init.ts";
 
 interface NegotiationDescription {
   sessionId: string
+  appVersion: string
 }
 
 export type NegotiationPackageType =
@@ -41,17 +43,30 @@ export class NegotiationManager {
   }
 
   createOffer() {
-    this.description = {sessionId: window.crypto.randomUUID()}
+    this.description = {sessionId: window.crypto.randomUUID(), appVersion: AppVersion}
     return this.description
+  }
+
+  isRemoteDescriptionFine(description: NegotiationDescription): boolean {
+    if (description.appVersion !== AppVersion) {
+      this.logger.info('The version is not supported.')
+      return false
+    }
+    return true
   }
 
   handleOffer(description: NegotiationDescription) {
     if (this.polite || !this.description) {
       this.logger.info('Received offer.')
-      this.description = description
-      this.sendNegotiationPackage({t: 'answer', confirmed: true})
-      this.logger.info('Sent answer.')
-      this.onInitialize(this.description)
+      if (this.isRemoteDescriptionFine(description)) {
+        this.description = description
+        this.sendNegotiationPackage({t: 'answer', confirmed: true})
+        this.logger.info('Sent answer.')
+        this.onInitialize(this.description)
+      } else {
+        this.sendNegotiationPackage({t: 'answer', confirmed: false})
+        this.onInitialize()
+      }
     } else {
       this.logger.info('Reject offer.')
     }
@@ -85,7 +100,7 @@ export class NegotiationManager {
       this.logger.info(description)
       this.logger.info("Peer connection has been confirmed.")
     } else {
-      this.logger.info("Peer connection has been rejected.")
+      this.logger.warn("Peer connection has been rejected.")
     }
   }
 }
