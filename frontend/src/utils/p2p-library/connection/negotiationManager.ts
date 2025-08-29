@@ -13,11 +13,12 @@ export class NegotiationManager {
   private description?: NegotiationDescription;
   private readonly _negotiationPromise: Promise<NegotiationDescription | undefined>
   private _negotiationResolve?: ((description?: NegotiationDescription) => void)
+  public reconnect?: (np: NegotiationPackageType) => void
 
   constructor(
     private readonly polite: boolean,
     private readonly logger: Logger,
-    private readonly sendNegotiationPackage: (negotiationPackage: NegotiationPackageType) => void,
+    private readonly sendNegotiationPackage: (np: NegotiationPackageType) => void,
   ) {
     this._negotiationPromise = new Promise((resolve) => {
       this._negotiationResolve = resolve
@@ -32,9 +33,6 @@ export class NegotiationManager {
     if (np) {
       if (np.t === 'offer') {
         this.handleOffer(np.description)
-      } else if (np.t === 'answer') {
-        NegotiationManager.reject(this.sendNegotiationPackage)
-        this.onInitialize()
       }
     } else {
       this.sendNegotiationPackage({t: 'offer', description: this.createOffer()})
@@ -60,10 +58,7 @@ export class NegotiationManager {
   }
 
   onNegotiationPackage(np: NegotiationPackageType) {
-    if (this._isNegotiated) {
-      this.logger.warn('RECONNECTION')
-      return
-    }
+    if (this._isNegotiated) return this.reconnect?.(np)
 
     if (np.t === 'offer') {
       this.handleOffer(np.description)

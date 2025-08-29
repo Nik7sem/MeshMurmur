@@ -10,6 +10,7 @@ import {edKeyManager} from "@/init.ts";
 import {ED25519PublicKeyManager} from "@/utils/crypto/ed25519KeyManager.ts";
 
 export class SignatureMiddleware extends Middleware {
+  static name = "SignatureMiddleware"
   private randomNonce = generateNonce()
   private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.targetPeerId))
   private resolveInit?: () => void

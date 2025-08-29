@@ -8,6 +8,7 @@ type GossipMessage = {
 }
 
 export class DiscoveryMiddleware extends Middleware {
+  static name = "DiscoveryMiddleware"
   public onGossipMessage?: (data: GossipMessage) => void;
 
   call(eventData: eventDataType): boolean {

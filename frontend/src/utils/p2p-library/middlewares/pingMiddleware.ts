@@ -3,6 +3,7 @@ import {eventDataType} from "@/utils/p2p-library/types.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 
 export class PingMiddleware extends Middleware {
+  static name = "PingMiddleware"
   private resolve?: (value: number) => void
   private timeoutId?: NodeJS.Timeout
   private startPingTime: number = 0

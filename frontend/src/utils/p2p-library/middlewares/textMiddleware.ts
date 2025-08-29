@@ -2,6 +2,7 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {processedTextType, eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class TextMiddleware extends Middleware {
+  static name = "TextMiddleware"
   public onText?: (data: processedTextType) => void
 
   call(eventData: eventDataType) {

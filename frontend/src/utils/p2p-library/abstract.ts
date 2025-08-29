@@ -63,6 +63,7 @@ export abstract class Signaler extends BasicSignaler {
 }
 
 export abstract class Middleware {
+  static name: string
   private _isInitialized: boolean = false
   private readonly _initPromise: Promise<void>
   private _initResolve?: (() => void)

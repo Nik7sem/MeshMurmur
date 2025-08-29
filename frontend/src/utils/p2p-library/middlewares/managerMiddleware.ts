@@ -2,11 +2,11 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {ChannelEventBase, eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class ManagerMiddleware extends Middleware {
+  static name = "ManagerMiddleware"
   private middlewares: { [key: string]: { middleware: Middleware, priority: number } } = {};
   private prioritizedList: Middleware[] = []
 
   add<T extends Middleware>(middlewareClass: new (...args: any[]) => T, priority: number): T {
-    // TODO: get rid of keys as class names
     const key = middlewareClass.name;
     const instance = new middlewareClass(this.peerId, this.targetPeerId, this.channel, this.logger.createChild(key));
     this.middlewares[key] = {middleware: instance, priority};

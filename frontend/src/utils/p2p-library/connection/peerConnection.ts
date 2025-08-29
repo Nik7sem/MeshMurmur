@@ -29,7 +29,7 @@ export class PeerConnection {
     public readonly targetPeerId: string,
     private readonly logger: Logger,
     private readonly signaler: Signaler,
-    private onPeerConnectionChanged: (status: connectionStageType, block?: boolean, webrtcError?: boolean) => void,
+    private onPeerConnectionChanged: (status: connectionStageType, block?: boolean, error?: boolean) => void,
   ) {
     this.negotiationManager = new NegotiationManager(
       isPolite(peerId, targetPeerId),
@@ -43,6 +43,13 @@ export class PeerConnection {
   }
 
   async connect(np?: NegotiationPackageType): Promise<ManagerMiddleware | undefined> {
+    this.connectTimeoutId = setTimeout(() => {
+      if (!this.is_connected()) {
+        this.disconnect(false, true)
+        this.logger.error("Error in connection to peer: timeout!")
+      }
+    }, AppConfig.connectingTimeout)
+
     this.negotiationManager.startNegotiation(np);
     if (!await this.negotiationManager.negotiation) {
       return undefined
@@ -85,12 +92,6 @@ export class PeerConnection {
       }
     }
 
-    this.connectTimeoutId = setTimeout(() => {
-      if (!this.is_connected()) {
-        onFinalState("timeout")
-      }
-    }, AppConfig.connectingTimeout)
-
     this.connection.connect({
       ondata: (data) => {
         if (!managerMiddleware.call(data)) return
@@ -121,12 +122,12 @@ export class PeerConnection {
     return 0
   }
 
-  disconnect(block = false, webrtcError = false) {
+  disconnect(block = false, error = false) {
     this.managerMiddleware?.get(PingMiddleware)?.resolvePing(false)
     if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
     this.connection?.cleanup()
     this.connectionStage = "disconnected"
-    this.onPeerConnectionChanged("disconnected", block, webrtcError)
+    this.onPeerConnectionChanged("disconnected", block, error)
     this.logger.info(`Disconnected from ${this.targetPeerId}`)
   }
 }

@@ -25,6 +25,7 @@ interface ChunkData {
 }
 
 export class FileTransferMiddleware extends Middleware {
+  static name = "FileTransferMiddleware"
   private chunkSize = 0
   private state: "idle" | "receiving" = "idle";
   private received: {

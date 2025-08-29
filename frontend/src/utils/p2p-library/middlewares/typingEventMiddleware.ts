@@ -2,6 +2,7 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class TypingEventMiddleware extends Middleware {
+  static name = "TypingEventMiddleware"
   private lastTypingEventSent: number = 0;
   private readonly typingDebounceDelay: number = 300; // ms
   private readonly typingTimeout: number = 2000; // ms

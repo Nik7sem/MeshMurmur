@@ -2,6 +2,7 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {ChannelEventBase, eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class NicknameMiddleware extends Middleware {
+  static name = "NicknameMiddleware"
   public targetPeerNickname = ''
   private ready = false
   private onready?: () => void

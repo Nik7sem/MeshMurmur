@@ -2,6 +2,7 @@ import {Middleware} from "@/utils/p2p-library/abstract.ts";
 import {eventDataType} from "@/utils/p2p-library/types.ts";
 
 export class DisconnectEventMiddleware extends Middleware {
+  static name = "DisconnectEventMiddleware"
   public onDisconnect?: () => void
 
   call(eventData: eventDataType) {
