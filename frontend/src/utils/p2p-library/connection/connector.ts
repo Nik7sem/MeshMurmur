@@ -1,11 +1,11 @@
 import {Logger} from '../../logger.ts'
 import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
-import {AppConfig} from "@/utils/p2p-library/conf.ts";
 import {ActionManager} from "@/utils/p2p-library/connection/actionManager.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {createSignaler} from "@/utils/p2p-library/signalers/createSignaler.ts";
 import {connectionStageType, signalerNameType} from "@/utils/p2p-library/types.ts";
-import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
+import {NegotiationManager, NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
+import {AppConfig} from "@/utils/p2p-library/conf.ts";
 
 export interface ConnectorConfig {
   signaler: signalerNameType
@@ -51,7 +51,13 @@ export class Connector {
       this.potentialPeers.delete(removedPeerId);
     }
 
-    this.signaler.onInvite = (targetPeerId) => this.createConnection(targetPeerId, false);
+    this.signaler.onNegotiationPackage = (targetPeerId, np) => {
+      if (targetPeerId in this.connections) {
+        this.connections[targetPeerId].negotiationManager.onNegotiationPackage(np)
+      } else {
+        this.createConnection(targetPeerId, false, np)
+      }
+    };
     this.signaler.onAddedPeer = (targetPeerId) => this.createConnection(targetPeerId)
     this.signaler.onRemovedPeer = disconnect
     this.signaler.onPeerList = (peerIds) => {
@@ -82,37 +88,41 @@ export class Connector {
     this.signaler.setPeerData({ready: this.config.autoconnect});
   }
 
-  public async createConnection(targetPeerId: string, outgoing = true, manual = false) {
+  public async createConnection(targetPeerId: string, manual = false, np?: NegotiationPackageType) {
     if (targetPeerId === this.peerId) return
-
     this.potentialPeers.add(targetPeerId);
+    if (targetPeerId in this.connections) return
 
-    if (targetPeerId in this.connections) {
-      if (!outgoing && this.connections[targetPeerId].connectionStage === 'pinging') {
-        this.connections[targetPeerId].connectionStage = 'reconnecting'
-        this.connections[targetPeerId].managerMiddleware.get(PingMiddleware)?.resolvePing(false)
+    const allowed = this.isPeerAllowedToConnect(targetPeerId, manual, !!np)
+    if (!allowed) {
+      if (np) {
+        NegotiationManager.reject((_np) => this.signaler.sendNegotiationPackage(targetPeerId, _np))
       }
       return
     }
 
-    if (!manual) {
-      if (this.blackList.has(targetPeerId)) return
-      if (!this.config.autoconnect) return
-      if (this.peers.length >= AppConfig.maxNumberOfPeers) return
-      if (outgoing && this.peers.length >= AppConfig.maxNumberOfOutgoingConnections) return
-    }
-
-    if (outgoing) {
-      this.signaler.sendInvite(targetPeerId)
-    }
-
     this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.createOnPeerConnectionChanged(targetPeerId));
-    this.actions.registerCallbacksAndData(targetPeerId)
-    this.onPeerConnectionChanged?.(targetPeerId, 'connecting')
+    this.onPeerConnectionChanged?.(targetPeerId, 'negotiating')
+    const managerMiddleware = await this.connections[targetPeerId].connect(np)
+
+    if (managerMiddleware) {
+      this.actions.registerCallbacksAndData(managerMiddleware, targetPeerId)
+    } else {
+      delete this.connections[targetPeerId]
+      this.onPeerConnectionChanged?.(targetPeerId, 'disconnected')
+    }
+  }
+
+  private isPeerAllowedToConnect(targetPeerId: string, manual: boolean, incoming: boolean): boolean {
+    if (manual) return true
+    return !this.blackList.has(targetPeerId) &&
+      this.config.autoconnect &&
+      this.peers.length < AppConfig.maxNumberOfPeers &&
+      (incoming || this.peers.length < AppConfig.maxNumberOfOutgoingConnections)
   }
 
   private createOnPeerConnectionChanged(targetPeerId: string) {
-    return (status: connectionStageType, block: boolean, webrtcError: boolean) => {
+    return (status: connectionStageType, block?: boolean, webrtcError?: boolean) => {
       if (status === "disconnected") {
         delete this.connections[targetPeerId]
         if (block) {

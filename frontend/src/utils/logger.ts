@@ -1,5 +1,7 @@
 import {logType} from "@/utils/p2p-library/types.ts";
 import {formatConsoleLog} from "@/utils/formatConsoleLog.ts";
+import logs from "@/components/Logs.tsx";
+import {getFormattedTime} from "@/utils/formatDate.ts";
 
 export abstract class Logger {
   abstract success(...args: any[]): void
@@ -18,22 +20,23 @@ export class MainLogger extends Logger {
   private onLog?: (log: logType) => void
 
   success(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "success"})
-    this.onLog?.(this.logs[this.logs.length - 1]);
+    this.addLog(args, "success");
   }
 
   info(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "info"})
-    this.onLog?.(this.logs[this.logs.length - 1]);
+    this.addLog(args, "info")
   }
 
   warn(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "warn"})
-    this.onLog?.(this.logs[this.logs.length - 1]);
+    this.addLog(args, "warn")
   }
 
   error(...args: any[]) {
-    this.logs.push({text: formatConsoleLog(...args), type: "error"})
+    this.addLog(args, "error")
+  }
+
+  addLog(args: any[], type: logType['type']) {
+    this.logs.push({text: `[${getFormattedTime()}] ${formatConsoleLog(...args)}`, type})
     this.onLog?.(this.logs[this.logs.length - 1]);
   }
 

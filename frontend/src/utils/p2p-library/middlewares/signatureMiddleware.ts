@@ -11,9 +11,11 @@ import {ED25519PublicKeyManager} from "@/utils/crypto/ed25519KeyManager.ts";
 
 export class SignatureMiddleware extends Middleware {
   private randomNonce = generateNonce()
-  private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.conn.targetPeerId))
+  private publicKeyManager = new ED25519PublicKeyManager(customEncodingToArrayBuffer(this.targetPeerId))
   private resolveInit?: () => void
   private initPromise?: Promise<void>
+  private disconnect?: () => void
+  private blocked = false
   public verified = false
 
   async init(eventData: ChannelEventBase): Promise<void> {
@@ -21,7 +23,7 @@ export class SignatureMiddleware extends Middleware {
       const sigRequest = arrayBufferToBase64(this.randomNonce)
 
       this.logger.info("Signature request sent: ", sigRequest);
-      this.conn.channel.reliable.send({data: sigRequest, type: 'signature-request'});
+      this.channel.reliable.send({data: sigRequest, type: 'signature-request'});
     }
     if (!this.initPromise) {
       this.initPromise = new Promise(resolve => this.resolveInit = resolve)
@@ -34,10 +36,19 @@ export class SignatureMiddleware extends Middleware {
     return true
   }
 
+  setDisconnect(disconnect: () => void): void {
+    if (this.disconnect) return
+    this.disconnect = disconnect
+    if (this.blocked) {
+      this.disconnect()
+    }
+  }
+
   blockPeer() {
     if (!this.verified) {
       this.logger.warn("Signature verification failed!")
-      this.conn.disconnect(true)
+      this.disconnect?.()
+      this.blocked = true
     }
   }
 
@@ -51,7 +62,7 @@ export class SignatureMiddleware extends Middleware {
       const sigResponse = arrayBufferToBase64(edKeyManager.sign(base64ToArrayBuffer(eventData.data as string)))
 
       this.logger.info("Signature response sent: ", sigResponse);
-      this.conn.channel.reliable.send({data: sigResponse, type: 'signature-response'});
+      this.channel.reliable.send({data: sigResponse, type: 'signature-response'});
     } else if (eventData.type === "signature-response") {
       this.logger.info("Signature response received: ", eventData.data);
 

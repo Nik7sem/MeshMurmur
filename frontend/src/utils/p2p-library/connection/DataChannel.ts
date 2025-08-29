@@ -15,7 +15,6 @@ abstract class DataChannel<T extends (jsonDataType | byteDataType)> {
   constructor(
     pc: RTCPeerConnection,
     public readonly channelType: dataChannelTransferType,
-    handlers: ChannelEventHandlers
   ) {
     if (channelType === "reliable") {
       this.channel = this.createReliable(pc)
@@ -26,11 +25,13 @@ abstract class DataChannel<T extends (jsonDataType | byteDataType)> {
     } else {
       throw new Error(`Impossible channel type: ${channelType}`)
     }
+  }
 
-    this.channel.onopen = () => handlers.onopen({channelType});
+  registerEvents(handlers: ChannelEventHandlers) {
+    this.channel.onopen = () => handlers.onopen({channelType: this.channelType});
     this.channel.onmessage = (event) => handlers.ondata(this.processMessage(event.data))
-    this.channel.onclose = () => handlers.onclose({channelType});
-    this.channel.onerror = (error) => handlers.onerror({channelType, error: error});
+    this.channel.onclose = () => handlers.onclose({channelType: this.channelType});
+    this.channel.onerror = (error) => handlers.onerror({channelType: this.channelType, error: error});
   }
 
   send(data: T) {
@@ -128,12 +129,15 @@ export class DataChannels {
   public readonly unordered: BinaryChannel;
   public readonly unreliable: JsonChannel;
 
-  constructor(
-    pc: RTCPeerConnection,
-    handlers: ChannelEventHandlers,
-  ) {
-    this.reliable = new JsonChannel(pc, 'reliable', handlers);
-    this.unordered = new BinaryChannel(pc, 'unordered', handlers);
-    this.unreliable = new JsonChannel(pc, 'unreliable', handlers);
+  constructor(pc: RTCPeerConnection) {
+    this.reliable = new JsonChannel(pc, 'reliable');
+    this.unordered = new BinaryChannel(pc, 'unordered');
+    this.unreliable = new JsonChannel(pc, 'unreliable');
+  }
+
+  registerEvents(handlers: ChannelEventHandlers) {
+    this.reliable.registerEvents(handlers);
+    this.unordered.registerEvents(handlers);
+    this.unreliable.registerEvents(handlers);
   }
 }

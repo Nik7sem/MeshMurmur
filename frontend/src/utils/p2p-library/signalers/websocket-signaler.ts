@@ -1,12 +1,13 @@
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
+import {NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
 
 type ClientMsg =
   | { t: "auth:init"; peerId: string }
   | { t: "auth:prove"; peerId: string; sig: string; challenge: string }
   | { t: "signal:sdp"; to: string; sdp: any }
-  | { t: "signal:invite"; to: string }
+  | { t: "signal:negotiation"; to: string; np: any }
   | { t: "signal:peer-list" };
 
 type ServerMsg =
@@ -14,7 +15,7 @@ type ServerMsg =
   | { t: "auth:ok"; peerId: string }
   | { t: "auth:error"; reason: string }
   | { t: "signal:sdp"; from: string; sdp: any }
-  | { t: "signal:invite"; from: string }
+  | { t: "signal:negotiation"; from: string; np: any }
   | { t: "signal:peer-change"; peer: { status: "connected" | "disconnected", peerId: string } }
   | { t: "signal:peer-list"; peers: string[] }
   | { t: "error"; reason: string }
@@ -85,9 +86,8 @@ export class WebsocketSignaler extends Signaler {
           this.logger.info(`Removed peer: ${msg.peer.peerId}`);
           this.onRemovedPeer?.(msg.peer.peerId)
         }
-      } else if (msg.t === "signal:invite") {
-        this.logger.info(`Received invite from: ${msg.from}`);
-        this.onInvite?.(msg.from)
+      } else if (msg.t === "signal:negotiation") {
+        this.onNegotiationPackage?.(msg.from, msg.np)
       } else if (msg.t === "signal:sdp") {
         this.onSDP(msg.sdp, msg.from)
       }
@@ -111,9 +111,8 @@ export class WebsocketSignaler extends Signaler {
 
   }
 
-  sendInvite(targetPeerId: string) {
-    this.logger.info("Sent invite to:", targetPeerId);
-    this.ws.send(Payload({t: "signal:invite", to: targetPeerId}))
+  sendNegotiationPackage(targetPeerId: string, np: NegotiationPackageType) {
+    this.ws.send(Payload({t: "signal:negotiation", to: targetPeerId, np}))
   }
 
   send(targetPeerId: string, connectionData: ConnectionData) {

@@ -2,7 +2,13 @@ import {signalers} from "@/utils/p2p-library/conf.ts";
 
 export type PeerDataType = { ready: boolean };
 
-export type connectionStageType = "connected" | "connecting" | "pinging" | "reconnecting" | "disconnected";
+export type connectionStageType =
+  | "connected"
+  | "negotiating"
+  | "connecting"
+  | "pinging"
+  | "reconnecting"
+  | "disconnected"
 
 export type logType = { text: string, type: "success" | "info" | "warn" | "error" }
 

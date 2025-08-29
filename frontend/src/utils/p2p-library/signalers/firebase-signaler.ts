@@ -16,8 +16,9 @@ import {ConnectionData, PeerDataType} from "@/utils/p2p-library/types.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {FirebaseOptions, initializeApp} from "firebase/app";
 import {Logger} from "@/utils/logger.ts";
+import {NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
 
-type ServerMsg = { t: "invite", from: string } | { t: "sdp", from: string, sdp: any }
+type ServerMsg = { t: "negotiation"; from: string; np: any } | { t: "sdp", from: string, sdp: any }
 
 interface FirebaseConfig {
   options: FirebaseOptions;
@@ -67,9 +68,8 @@ export class FirebaseSignaler extends Signaler {
     onChildAdded(messagesRef, (snapshot: DataSnapshot) => {
       const msg = snapshot.val() as ServerMsg;
       if (msg && 't' in msg) {
-        if (msg.t === "invite" && 'from' in msg) {
-          this.logger.info(`Received invite from: ${msg.from}`);
-          this.onInvite?.(msg.from)
+        if (msg.t === "negotiation" && 'from' in msg && 'np' in msg) {
+          this.onNegotiationPackage?.(msg.from, msg.np)
         } else if (msg.t === "sdp" && 'from' in msg && 'sdp' in msg) {
           this.onSDP(msg.sdp, msg.from)
         }
@@ -108,9 +108,8 @@ export class FirebaseSignaler extends Signaler {
     await push(messagesRef, data);
   }
 
-  async sendInvite(targetPeerId: string) {
-    this.logger.info("Sent invite to:", targetPeerId);
-    const data: ServerMsg = {t: "invite", from: this.peerId};
+  async sendNegotiationPackage(targetPeerId: string, np: NegotiationPackageType) {
+    const data: ServerMsg = {t: "negotiation", from: this.peerId, np};
     await this.__send(targetPeerId, data);
   }
 

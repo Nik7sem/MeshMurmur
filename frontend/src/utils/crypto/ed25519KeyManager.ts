@@ -38,10 +38,14 @@ export class ED25519PublicKeyManager extends KeyManager {
   }
 
   verify(sig: dataType, msg: dataType) {
-    return ed25519.verify(
-      (typeof sig === "string") ? base64ToArrayBuffer(sig) : sig,
-      (typeof msg === "string") ? new TextEncoder().encode(msg) : msg,
-      this.key)
+    try {
+      return ed25519.verify(
+        (typeof sig === "string") ? base64ToArrayBuffer(sig) : sig,
+        (typeof msg === "string") ? new TextEncoder().encode(msg) : msg,
+        this.key)
+    } catch (e) {
+      return false
+    }
   }
 }
 

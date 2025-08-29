@@ -30,7 +30,7 @@ export class PeerDiscoveryCoordinator {
       this.updateSelfConnections()
       const knownPeers = Object.values(this.peerMap)
       getRandomSample(this.connector.connectedPeers, this.sampleSize).forEach((peer) => {
-        peer.managerMiddleware.get(DiscoveryMiddleware)?.sendGossipMessage(knownPeers)
+        peer.managerMiddleware?.get(DiscoveryMiddleware)?.sendGossipMessage(knownPeers)
       })
     }, this.GossipInterval)
   }

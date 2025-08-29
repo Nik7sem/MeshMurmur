@@ -10,6 +10,8 @@ import {PeerDiscoveryCoordinator} from "@/utils/p2p-library/coordinators/PeerDis
 import {DiscoveryMiddleware} from "@/utils/p2p-library/middlewares/discoveryMiddleware.ts";
 import {DisconnectEventMiddleware} from "@/utils/p2p-library/middlewares/disconnectEventMiddleware.ts";
 import {Logger} from "@/utils/logger.ts";
+import {SignatureMiddleware} from "@/utils/p2p-library/middlewares/signatureMiddleware.ts";
+import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddleware.ts";
 
 export class ActionManager {
   public onCompleteData?: (data: completeMessageType) => void
@@ -26,13 +28,14 @@ export class ActionManager {
     this.peerDiscoveryCoordinator = new PeerDiscoveryCoordinator(connector);
   }
 
-  registerCallbacksAndData(targetPeerId: string) {
-    const textMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(TextMiddleware)
-    const fileMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(FileTransferMiddleware)
-    const typingMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(TypingEventMiddleware)
-    const nicknameMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)
-    const discoveryMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(DiscoveryMiddleware)
-    const disconnectMiddleware = this.connector.connections[targetPeerId].managerMiddleware.get(DisconnectEventMiddleware)
+  registerCallbacksAndData(managerMiddleware: ManagerMiddleware, targetPeerId: string) {
+    const textMiddleware = managerMiddleware.get(TextMiddleware)
+    const fileMiddleware = managerMiddleware.get(FileTransferMiddleware)
+    const typingMiddleware = managerMiddleware.get(TypingEventMiddleware)
+    const nicknameMiddleware = managerMiddleware.get(NicknameMiddleware)
+    const discoveryMiddleware = managerMiddleware.get(DiscoveryMiddleware)
+    const signatureMiddleware = managerMiddleware.get(SignatureMiddleware)
+    const disconnectMiddleware = managerMiddleware.get(DisconnectEventMiddleware)
 
     if (textMiddleware) {
       textMiddleware.onText = (data) => {
@@ -57,6 +60,11 @@ export class ActionManager {
         this.connector.connections[targetPeerId].disconnect();
       }
     }
+    if (signatureMiddleware) {
+      signatureMiddleware.setDisconnect(() => {
+        this.connector.connections[targetPeerId].disconnect(true);
+      })
+    }
     if (discoveryMiddleware) {
       discoveryMiddleware.onGossipMessage = (data) => this.peerDiscoveryCoordinator.mergeGossip(data.knownPeers)
     }
@@ -64,36 +72,36 @@ export class ActionManager {
 
   sendText(data: string) {
     for (const conn of this.connector.connectedPeers) {
-      conn.managerMiddleware.get(TextMiddleware)?.sendText(data)
+      conn.managerMiddleware?.get(TextMiddleware)?.sendText(data)
     }
   }
 
   sendFile(file: File) {
     return Promise.all(this.connector.connectedPeers.map(async conn =>
-      conn.managerMiddleware.get(FileTransferMiddleware)?.sendFile(file)
+      conn.managerMiddleware?.get(FileTransferMiddleware)?.sendFile(file)
     ))
   }
 
   emitTypingEvent() {
     for (const conn of this.connector.connectedPeers) {
-      conn.managerMiddleware.get(TypingEventMiddleware)?.emitTypingEvent()
+      conn.managerMiddleware?.get(TypingEventMiddleware)?.emitTypingEvent()
     }
   }
 
   emitDisconnectEvent(targetPeerId?: string) {
     if (targetPeerId) {
-      this.connector.connections[targetPeerId].managerMiddleware.get(DisconnectEventMiddleware)?.emitDisconnect()
+      this.connector.connections[targetPeerId].managerMiddleware?.get(DisconnectEventMiddleware)?.emitDisconnect()
       return
     }
     for (const conn of this.connector.connectedPeers) {
-      conn.managerMiddleware.get(DisconnectEventMiddleware)?.emitDisconnect()
+      conn.managerMiddleware?.get(DisconnectEventMiddleware)?.emitDisconnect()
     }
   }
 
   sendNickname(nickname: string) {
     this.nickname = nickname;
     for (const conn of this.connector.peers) {
-      conn.managerMiddleware.get(NicknameMiddleware)?.setNickname(this.nickname)
+      conn.managerMiddleware?.get(NicknameMiddleware)?.setNickname(this.nickname)
     }
   }
 
@@ -101,7 +109,7 @@ export class ActionManager {
     if (!(targetPeerId in this.connector.connections)) {
       return getShort(targetPeerId)
     }
-    const nickname = this.connector.connections[targetPeerId].managerMiddleware.get(NicknameMiddleware)?.targetPeerNickname
+    const nickname = this.connector.connections[targetPeerId].managerMiddleware?.get(NicknameMiddleware)?.targetPeerNickname
     const associated = this.associatedNicknames[targetPeerId]
     if (nickname && associated) return `${nickname}#${associated}`
     if (nickname) return `${nickname}`

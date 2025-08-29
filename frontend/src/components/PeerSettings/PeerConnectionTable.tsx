@@ -1,7 +1,6 @@
 import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
 import {Button, Menu, Portal, Show, Table, Text} from "@chakra-ui/react";
 import {connector, logger} from "@/init.ts";
-import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 import {connectionStageType} from "@/utils/p2p-library/types.ts";
 
 
@@ -11,9 +10,10 @@ interface Props {
 
 type StateType = connectionStageType | 'discovered' | 'signaler'
 type PeerInfoType = { id: string, connections: string, nickname: string, state: StateType }
-const stateValues = {
+const stateValues: Record<StateType, number> = {
   'pinging': 1,
   'connected': 1,
+  'negotiating': 2,
   'connecting': 2,
   'reconnecting': 2,
   'disconnected': 3,
@@ -80,7 +80,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
       connector.actions.emitDisconnectEvent(targetPeerId)
       connector.connections[targetPeerId].disconnect()
     } else if (value === 'connect') {
-      connector.createConnection(targetPeerId, true, true)
+      connector.createConnection(targetPeerId, true).then()
     } else if (value === 'ping') {
       connector.connections[targetPeerId].ping().then(latency => {
         if (latency) {
@@ -122,7 +122,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
                     <Menu.Positioner>
                       <Menu.Content>
                         {
-                          ['connected', 'connecting'].includes(state) ?
+                          ['connected', 'connecting', 'negotiating'].includes(state) ?
                             <>
                               <Menu.Item
                                 value="disconnect"

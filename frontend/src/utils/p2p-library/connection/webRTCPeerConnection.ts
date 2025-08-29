@@ -3,10 +3,10 @@ import {rtcConfig} from "@/utils/p2p-library/conf.ts";
 import {Logger} from "../../logger.ts";
 import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
 import {ChannelEventHandlers} from "@/utils/p2p-library/types.ts";
+import {isPolite} from "@/utils/p2p-library/helpers.ts";
 
 export class WebRTCPeerConnection {
   private readonly pc: RTCPeerConnection;
-  private readonly polite: boolean = false;
   private makingOffer = false
   private ignoreOffer = false;
   private isSettingRemoteAnswerPending = false;
@@ -14,41 +14,31 @@ export class WebRTCPeerConnection {
   public readonly channel: DataChannels;
 
   constructor(
-    peerId: string,
+    private readonly peerId: string,
     private readonly targetPeerId: string,
     private readonly signaler: BasicSignaler,
     private readonly logger: Logger,
-    private readonly onFinalState: (state: RTCPeerConnectionState) => void,
-    onData: ChannelEventHandlers['ondata'],
-    onChannelOpen: ChannelEventHandlers['onopen']
   ) {
-    this.polite = peerId < this.targetPeerId
     this.pc = new RTCPeerConnection(rtcConfig);
-    this.channel = new DataChannels(this.pc,
-      {
-        ondata: onData,
-        onopen: (data) => {
-          // this.logger.info(`${data.channelType} data channel opened!`)
-          onChannelOpen(data)
-        },
-        onclose: ({channelType}) => null,
-        onerror: ({error}) => null,
-        // onclose: ({channelType}) => this.logger.info(`${channelType} channel closed`),
-        // onerror: ({error}) => this.logger.info(error)
-      }
-    )
-    this.connect()
+    this.channel = new DataChannels(this.pc)
   }
 
-  connect() {
-    this.logger.info(`START CONNECTION AS ${this.polite ? "POLITE" : "IMPOLITE"} PEER`)
+  connect(
+    handlers: ChannelEventHandlers,
+    onFinalState: (state: RTCPeerConnectionState) => void
+  ) {
+    this.channel.registerEvents(handlers)
+
+    const polite = isPolite(this.peerId, this.targetPeerId)
+
+    this.logger.info(`START CONNECTION AS ${polite ? "POLITE" : "IMPOLITE"} PEER`)
     // this.startDebugListeners()
 
     this.pc.onconnectionstatechange = () => {
       if (this.pc.connectionState === "connecting" ||
         this.pc.connectionState === "new") return
 
-      this.onFinalState(this.pc.connectionState);
+      onFinalState(this.pc.connectionState);
     }
 
     // Handle ICE candidates
@@ -59,7 +49,7 @@ export class WebRTCPeerConnection {
 
     // offer
     this.pc.onnegotiationneeded = async () => {
-      if (this.polite) return // Weird solution to all negotiation problems
+      if (polite) return // Weird solution to all negotiation problems
       try {
         this.makingOffer = true;
         await this.pc.setLocalDescription();
@@ -80,7 +70,7 @@ export class WebRTCPeerConnection {
             (this.pc.signalingState === "stable" || this.isSettingRemoteAnswerPending);
           const offerCollision = description.type === "offer" && !readyForOffer;
 
-          this.ignoreOffer = !this.polite && offerCollision;
+          this.ignoreOffer = !polite && offerCollision;
           if (this.ignoreOffer) {
             this.logger.info("Ignore offer: ", description);
             return;

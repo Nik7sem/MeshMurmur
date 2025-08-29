@@ -14,6 +14,6 @@ export class DisconnectEventMiddleware extends Middleware {
   }
 
   public emitDisconnect() {
-    this.conn.channel.unreliable.send({type: 'disconnect-event', data: null})
+    this.channel.unreliable.send({type: 'disconnect-event', data: null})
   }
 }

@@ -38,7 +38,7 @@ export class FileTransferMiddleware extends Middleware {
 
   async init(eventData: ChannelEventBase) {
     if (eventData.channelType === "reliable") {
-      this.chunkSize = this.conn.channel.unordered.CHUNK_SIZE - this.conn.channel.unordered.METADATA_SIZE
+      this.chunkSize = this.channel.unordered.CHUNK_SIZE - this.channel.unordered.METADATA_SIZE
     }
   }
 
@@ -60,7 +60,7 @@ export class FileTransferMiddleware extends Middleware {
     this.fileMetadata = message.data;
     this.received = {chunks: [], percent: 0, timestamp: (new Date()).getTime()};
     this.onFileProgress?.({
-      title: `Receiving from ${getShort(this.conn.targetPeerId)} (Chunking)`,
+      title: `Receiving from ${getShort(this.targetPeerId)} (Chunking)`,
       progress: 0,
       bitrate: 0
     })
@@ -72,7 +72,7 @@ export class FileTransferMiddleware extends Middleware {
     const percent = Math.round(chunkIdx / chunksLen * 100)
     if (percent > previousPercent) {
       this.onFileProgress?.({
-        title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.conn.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
+        title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
         progress: percent,
         bitrate: Math.round(chunkIdx * this.chunkSize / 1024 / 8 / (((new Date()).getTime() - timestamp) / 1000))
       })
@@ -149,18 +149,18 @@ export class FileTransferMiddleware extends Middleware {
       const timestamp = (new Date()).getTime();
       this.onFileProgress?.({title: 'Sending', progress: 0, bitrate: 0})
 
-      this.conn.channel.unordered.channel.onbufferedamountlow = () => sendNextChunk()
+      this.channel.unordered.channel.onbufferedamountlow = () => sendNextChunk()
 
       const sendNextChunk = () => {
         if (chunkIdx < chunks.length) {
-          this.conn.channel.unordered.send({data: chunks[chunkIdx], metadata: {chunkId: chunkIdx}} as ChunkData)
+          this.channel.unordered.send({data: chunks[chunkIdx], metadata: {chunkId: chunkIdx}} as ChunkData)
           ++chunkIdx
           previousPercent = this.showProgress(previousPercent, chunkIdx, chunks.length, timestamp, true)
-          if (this.conn.channel.unordered.channel.bufferedAmount <= this.conn.channel.unordered.channel.bufferedAmountLowThreshold) {
+          if (this.channel.unordered.channel.bufferedAmount <= this.channel.unordered.channel.bufferedAmountLowThreshold) {
             sendNextChunk()
           }
         } else {
-          this.conn.channel.unordered.channel.onbufferedamountlow = null
+          this.channel.unordered.channel.onbufferedamountlow = null
           resolve()
         }
       }
@@ -183,7 +183,7 @@ export class FileTransferMiddleware extends Middleware {
         chunks: Math.ceil(file.size / this.chunkSize),
       }
     };
-    this.conn.channel.reliable.send(metadata);
+    this.channel.reliable.send(metadata);
 
     await this.sendLargeData(await this.splitToChunks(file))
     this.logger.info("File transfer completed!")

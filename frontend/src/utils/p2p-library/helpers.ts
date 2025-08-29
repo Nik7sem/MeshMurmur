@@ -86,3 +86,7 @@ export function isCompleteFile(data: completeMessageType): data is completeFileT
 export function getShort(str: string, slice = AppConfig.maxNameLength) {
   return str.slice(0, slice)
 }
+
+export function isPolite(peerId: string, targetPeerId: string) {
+  return peerId < targetPeerId
+}

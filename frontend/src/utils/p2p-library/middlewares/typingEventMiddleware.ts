@@ -23,7 +23,7 @@ export class TypingEventMiddleware extends Middleware {
 
     if (!this.isTargetPeerTyping) {
       this.isTargetPeerTyping = true
-      this.onTyping?.({peerId: this.conn.targetPeerId, typing: this.isTargetPeerTyping})
+      this.onTyping?.({peerId: this.targetPeerId, typing: this.isTargetPeerTyping})
     }
   }
 
@@ -34,7 +34,7 @@ export class TypingEventMiddleware extends Middleware {
 
     this.typingTimeoutId = setTimeout(() => {
       this.isTargetPeerTyping = false
-      this.onTyping?.({peerId: this.conn.targetPeerId, typing: this.isTargetPeerTyping})
+      this.onTyping?.({peerId: this.targetPeerId, typing: this.isTargetPeerTyping})
     }, this.typingTimeout);
   }
 
@@ -49,6 +49,6 @@ export class TypingEventMiddleware extends Middleware {
   }
 
   private sendTypingNotification(): void {
-    this.conn.channel.unreliable.send({type: "typing-event", data: null})
+    this.channel.unreliable.send({type: "typing-event", data: null})
   }
 }

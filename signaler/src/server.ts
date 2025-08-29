@@ -77,9 +77,9 @@ const server = Bun.serve({
         }));
 
         Log(`Registered peer: ${ws.data.peerId}`);
-      } else if (msg.t === "signal:invite") {
-        Registry.get(msg.to)?.sendText(Payload({t: 'signal:invite', from: ws.data.peerId}));
-        Log(`Invite from ${ws.data.peerId} to ${msg.to}`);
+      } else if (msg.t === "signal:negotiation") {
+        Registry.get(msg.to)?.sendText(Payload({t: 'signal:negotiation', from: ws.data.peerId, np: msg.np}));
+        Log(`NP from ${ws.data.peerId} to ${msg.to}`);
       } else if (msg.t === "signal:sdp") {
         Registry.get(msg.to)?.sendText(Payload({t: 'signal:sdp', from: ws.data.peerId, sdp: msg.sdp}))
         Log(`SDP from ${ws.data.peerId} to ${msg.to}`);

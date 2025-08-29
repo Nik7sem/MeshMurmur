@@ -1,6 +1,7 @@
 import {ChannelEventBase, ConnectionData, eventDataType, PeerDataType} from "@/utils/p2p-library/types.ts";
-import {PeerConnection} from "@/utils/p2p-library/connection/peerConnection.ts";
 import {Logger} from "../logger.ts";
+import {NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
+import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
 
 export abstract class BasicSignaler {
   abstract send(targetPeerId: string, connectionData: ConnectionData): void
@@ -11,7 +12,7 @@ export abstract class BasicSignaler {
 }
 
 export abstract class Signaler extends BasicSignaler {
-  public onInvite?: (peerId: string) => void
+  public onNegotiationPackage?: (peerId: string, np: NegotiationPackageType) => void
   public onAddedPeer?: (peerId: string) => void
   public onRemovedPeer?: (peerId: string) => void
   public onPeerList?: (peerIds: string[]) => void
@@ -29,7 +30,7 @@ export abstract class Signaler extends BasicSignaler {
 
   abstract registerPeer(peerData: PeerDataType): void
 
-  abstract sendInvite(targetPeerId: string): void
+  abstract sendNegotiationPackage(targetPeerId: string, np: NegotiationPackageType): void
 
   abstract setPeerData(peerData: PeerDataType): void
 
@@ -63,11 +64,13 @@ export abstract class Signaler extends BasicSignaler {
 
 export abstract class Middleware {
   private _isInitialized: boolean = false
-  private _initPromise?: Promise<void>
+  private readonly _initPromise: Promise<void>
   private _initResolve?: (() => void)
 
   constructor(
-    protected conn: PeerConnection,
+    protected peerId: string,
+    protected targetPeerId: string,
+    protected channel: DataChannels,
     protected logger: Logger,
   ) {
     if (!this.requiresInit()) {
@@ -88,9 +91,7 @@ export abstract class Middleware {
     if (this._isInitialized) return
 
     this._isInitialized = true
-    if (this._initResolve) {
-      this._initResolve()
-    }
+    this._initResolve?.()
     this.logger.info("Initialized!")
   }
 
@@ -99,7 +100,7 @@ export abstract class Middleware {
   }
 
   get initialization(): Promise<void> {
-    return this._initPromise || Promise.resolve();
+    return this._initPromise
   }
 
   // on datachannel open

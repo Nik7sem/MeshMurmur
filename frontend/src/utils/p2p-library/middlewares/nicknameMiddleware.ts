@@ -18,7 +18,7 @@ export class NicknameMiddleware extends Middleware {
   }
 
   private sendNickname(nickname: string) {
-    this.conn.channel.reliable.send({type: 'nickname', data: nickname})
+    this.channel.reliable.send({type: 'nickname', data: nickname})
     this.logger.info('Sent nickname')
   }
 

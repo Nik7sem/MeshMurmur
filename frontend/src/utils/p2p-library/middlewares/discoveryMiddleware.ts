@@ -20,6 +20,6 @@ export class DiscoveryMiddleware extends Middleware {
   }
 
   sendGossipMessage(knownPeers: GossipMessage['knownPeers']) {
-    this.conn.channel.unreliable.send({data: {from: this.conn.peerId, knownPeers}, type: 'gossip'});
+    this.channel.unreliable.send({data: {from: this.peerId, knownPeers}, type: 'gossip'});
   }
 }

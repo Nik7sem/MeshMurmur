@@ -6,8 +6,9 @@ export class ManagerMiddleware extends Middleware {
   private prioritizedList: Middleware[] = []
 
   add<T extends Middleware>(middlewareClass: new (...args: any[]) => T, priority: number): T {
+    // TODO: get rid of keys as class names
     const key = middlewareClass.name;
-    const instance = new middlewareClass(this.conn, this.logger.createChild(key));
+    const instance = new middlewareClass(this.peerId, this.targetPeerId, this.channel, this.logger.createChild(key));
     this.middlewares[key] = {middleware: instance, priority};
     this.updateList()
     return instance;

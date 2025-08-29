@@ -14,6 +14,6 @@ export class TextMiddleware extends Middleware {
   }
 
   public sendText(data: string) {
-    this.conn.channel.reliable.send({data, type: 'text'})
+    this.channel.reliable.send({data, type: 'text'})
   }
 }
