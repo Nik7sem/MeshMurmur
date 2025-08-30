@@ -1,12 +1,19 @@
 import type {ClientMsg, ServerMsg} from "./types.ts";
 import monitor from "../public/monitor.html"
+import {v4 as uuid} from 'uuid';
 
 const PORT = parseInt(process.env.PORT || "8001", 10)
 const HOSTNAME = process.env.HOSTNAME || "127.0.0.1"
 const NODE_ENV = process.env.NODE_ENV || "development"
 
 interface PeerData {
-  peerId: string;
+  peerId: string
+  connectionId: string
+}
+
+interface PeerRegistryData {
+  ws: WebsocketType
+  connectionId: string
 }
 
 function Payload(msg: ServerMsg) {
@@ -19,7 +26,7 @@ function Log(line: string) {
 }
 
 type WebsocketType = Bun.ServerWebSocket<PeerData>
-const Registry = new Map<string, WebsocketType>()
+const Registry = new Map<string, PeerRegistryData>()
 
 const server = Bun.serve({
   port: PORT,
@@ -44,17 +51,21 @@ const server = Bun.serve({
       Log(`Open ${ws.remoteAddress}`);
       ws.subscribe("peer-change")
     },
-    async close(ws: WebsocketType, code, message) {
-      Log(`Close ${ws.remoteAddress}`);
-      ws.unsubscribe("peer-change");
-      if (ws.data && "peerId" in ws.data) {
-        Registry.delete(ws.data.peerId)
-        Log(`Exited peer: ${ws.data.peerId}`);
-        ws.publish("peer-change", Payload({
-          t: 'signal:peer-change',
-          peer: {status: "disconnected", peerId: ws.data.peerId}
-        }));
-      }
+    async close(ws: WebsocketType) {
+      setTimeout(() => {
+        Log(`Close ${ws.remoteAddress}`);
+        ws.unsubscribe("peer-change");
+
+        if (ws.data && "peerId" in ws.data && "connectionId" in ws.data && Registry.has(ws.data.peerId)) {
+          if (ws.data.connectionId !== Registry.get(ws.data.peerId)?.connectionId) return
+          Registry.delete(ws.data.peerId)
+          Log(`Exited peer: ${ws.data.peerId}`);
+          ws.publish("peer-change", Payload({
+            t: 'signal:peer-change',
+            peer: {status: "disconnected", peerId: ws.data.peerId}
+          }));
+        }
+      }, 300)
     },
     async message(ws: WebsocketType, message) {
       if (typeof message !== "string") return
@@ -68,20 +79,21 @@ const server = Bun.serve({
       }
 
       if (msg.t === "auth:init") {
-        ws.data = {peerId: msg.peerId};
-        Registry.set(ws.data.peerId, ws);
+        ws.data = {peerId: msg.peerId, connectionId: uuid()}
+        const alreadyAuthenticated = Registry.has(ws.data.peerId)
+        Registry.set(ws.data.peerId, {ws, connectionId: ws.data.connectionId})
+        if (alreadyAuthenticated) return
 
         ws.publish("peer-change", Payload({
           t: 'signal:peer-change',
           peer: {status: "connected", peerId: ws.data.peerId}
         }));
-
         Log(`Registered peer: ${ws.data.peerId}`);
       } else if (msg.t === "signal:negotiation") {
-        Registry.get(msg.to)?.sendText(Payload({t: 'signal:negotiation', from: ws.data.peerId, np: msg.np}));
+        Registry.get(msg.to)?.ws.sendText(Payload({t: 'signal:negotiation', from: ws.data.peerId, np: msg.np}));
         Log(`NP from ${ws.data.peerId} to ${msg.to}`);
       } else if (msg.t === "signal:sdp") {
-        Registry.get(msg.to)?.sendText(Payload({t: 'signal:sdp', from: ws.data.peerId, sdp: msg.sdp}))
+        Registry.get(msg.to)?.ws.sendText(Payload({t: 'signal:sdp', from: ws.data.peerId, sdp: msg.sdp}))
         Log(`SDP from ${ws.data.peerId} to ${msg.to}`);
       } else if (msg.t === "signal:peer-list") {
         ws.sendText(Payload({

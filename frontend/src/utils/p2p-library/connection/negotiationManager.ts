@@ -65,6 +65,7 @@ export class NegotiationManager {
         this.onInitialize(this.description)
       } else {
         this.sendNegotiationPackage({t: 'answer', confirmed: false})
+        this.logger.info('Sent answer.')
         this.onInitialize()
       }
     } else {

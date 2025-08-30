@@ -39,7 +39,6 @@ export class Connector {
           this.logger.info(`Still connected to ${removedPeerId}.`)
         } else {
           if (pc.connectionStage !== 'disconnected') {
-            console.log(pc.connectionStage)
             this.logger.warn(`${this.actions.targetPeerNickname(removedPeerId)} disconnected by exit.`);
             pc.disconnect()
           }

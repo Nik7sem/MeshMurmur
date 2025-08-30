@@ -95,15 +95,13 @@ export class WebsocketSignaler extends Signaler {
   }
 
   registerPeer(peerData: PeerDataType) {
-    const onOpen = () => {
+    this.onOpen = () => {
       this.ws.send(Payload({t: "auth:init", peerId: this.peerId}))
       this.ws.send(Payload({t: "signal:peer-list"}))
     }
 
     if (this.ws.readyState === WebSocket.OPEN) {
-      onOpen()
-    } else {
-      this.onOpen = onOpen
+      this.onOpen()
     }
   }
 

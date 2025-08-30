@@ -2,7 +2,8 @@
   "name": "signaler",
   "module": "index.ts",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/uuid": "^10.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -11,5 +12,8 @@
   "scripts": {
     "dev": "NODE_ENV=development bun --hot index.ts"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
 }
