@@ -44,7 +44,8 @@ const Logs: FC<Props> = ({logs}) => {
           <Drawer.Content ref={contentRef}>
             <Drawer.Header>
               <Drawer.Title>
-                <SegmentGroup.Root value={menuValue} onValueChange={({value}) => setMenuValue(value)}>
+                <SegmentGroup.Root value={menuValue}
+                                   onValueChange={({value}) => value ? setMenuValue(value) : undefined}>
                   <SegmentGroup.Indicator/>
                   <SegmentGroup.Items items={["Logs", "Settings", "Nickname", "Graph", "Experimental"]}/>
                 </SegmentGroup.Root>

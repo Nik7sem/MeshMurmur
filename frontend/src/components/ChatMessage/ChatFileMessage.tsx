@@ -1,6 +1,6 @@
 import React, {FC} from 'react';
 import {
-  Box,
+  Box, FormatByte,
   Image,
   Link,
   Text,
@@ -19,15 +19,6 @@ interface Props {
 
 const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
   const {url, fileName, fileSize, fileType} = data;
-
-  // Format file size
-  const formatFileSize = (size: number) => {
-    if (size < 1024) return size + ' B';
-    const kb = size / 1024;
-    if (kb < 1024) return kb.toFixed(1) + ' KB';
-    const mb = kb / 1024;
-    return mb.toFixed(1) + ' MB';
-  };
 
   const isImage = fileType.startsWith('image/');
   const isVideo = fileType.startsWith('video/');
@@ -107,16 +98,17 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
               Your browser does not support the audio element.
             </audio>
             <Text fontSize="xs" color="gray.500">
-              {fileName} · {formatFileSize(fileSize)}
+              {fileName} · <FormatByte value={fileSize}/>
             </Text>
           </Box>
         ) : (
           <Box>
-            <Link href={url} color="blue.500" fontWeight="bold">
+            <Link href={url} target="_blank" color="blue.500" fontWeight="bold">
               {fileName}
             </Link>
+
             <Text fontSize="xs" color="gray.500">
-              {formatFileSize(fileSize)}
+              <FormatByte value={fileSize}/>
             </Text>
           </Box>
         )}
