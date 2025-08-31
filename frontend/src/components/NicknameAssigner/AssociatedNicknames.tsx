@@ -75,6 +75,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
           <Table.Row>
             <Table.ColumnHeader>Peer Id</Table.ColumnHeader>
             <Table.ColumnHeader>Nickname</Table.ColumnHeader>
+            <Table.ColumnHeader></Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>

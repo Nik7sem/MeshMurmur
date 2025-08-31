@@ -1,5 +1,5 @@
-import React, {ChangeEvent, FC, KeyboardEvent, useState} from 'react';
-import {Button, FileUpload, Menu, Portal, Input, Center} from "@chakra-ui/react";
+import React, {ChangeEvent, FC, KeyboardEvent, useRef, useState} from 'react';
+import {Button, FileUpload, Menu, Portal, Center, Textarea} from "@chakra-ui/react";
 import {GrAttachment} from "react-icons/gr";
 import {LuSend} from "react-icons/lu";
 import {connector, peerId} from "@/init.ts";
@@ -13,23 +13,29 @@ interface Props {
 const SendOptions: FC<Props> = ({addMessage}) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [inputValue, setInputValue] = useState<string>('')
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  function onChangeInput(e: ChangeEvent<HTMLInputElement>) {
+  function onChangeInput(e: ChangeEvent<HTMLTextAreaElement>) {
     setInputValue(e.target.value)
+    e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
     connector.actions.emitTypingEvent()
   }
 
-  function keyDownHandler(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
+  function keyDownHandler(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       onClick()
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '40px'
+      }
     }
   }
 
   function onClick() {
-    if (inputValue.length > 0) {
-      connector.actions.sendText(inputValue)
-      addMessage({data: inputValue, peerId, nickname: ''})
+    const trimmed = inputValue.trim();
+    if (trimmed.length > 0) {
+      connector.actions.sendText(trimmed)
+      addMessage({data: trimmed, peerId, nickname: ''})
       setInputValue('')
     }
 
@@ -65,7 +71,19 @@ const SendOptions: FC<Props> = ({addMessage}) => {
           </Menu.Positioner>
         </Portal>
       </Menu.Root>
-      <Input onKeyDown={keyDownHandler} value={inputValue} onInput={onChangeInput}/>
+      <Textarea
+        ref={textareaRef}
+        onKeyDown={keyDownHandler}
+        value={inputValue}
+        onInput={onChangeInput}
+        placeholder="Message"
+        resize="none"
+        rows={1}
+        minH="40px"
+        maxH="100px"
+        overflowY="auto"
+        whiteSpace="pre-wrap"
+      />
       <Button marginLeft='5' onClick={onClick} aria-label="Send message">
         <LuSend/>
       </Button>

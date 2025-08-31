@@ -31,7 +31,7 @@ const ChatTextMessage: FC<Props> = ({username, peerId, message, me}) => {
             </Text>
           </TooltipPeerId> :
           <></>}
-        <Text>{message}</Text>
+        <Text whiteSpace="pre-wrap">{message}</Text>
       </Box>
     </Box>
   );
