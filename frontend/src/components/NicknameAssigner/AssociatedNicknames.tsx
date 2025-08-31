@@ -1,5 +1,15 @@
 import React, {ChangeEvent, FC, RefObject, useState} from 'react';
-import {Button, Center, Container, createListCollection, Input, Portal, Select, Table, Text} from "@chakra-ui/react";
+import {
+  Button,
+  Center, CloseButton,
+  Container,
+  createListCollection,
+  Input,
+  Portal,
+  Select,
+  Table,
+  Text
+} from "@chakra-ui/react";
 import useToast from "@/hooks/useToast.tsx";
 import useUserData from "@/hooks/useUserData.tsx";
 import {connector} from "@/init.ts";
@@ -30,6 +40,17 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
     setNickname(e.target.value);
+  }
+
+  function onRemove(peerId: string) {
+    const associatedNicknames = {...userData.associatedNicknames}
+    delete associatedNicknames[peerId]
+    setUserData({...userData, associatedNicknames})
+  }
+
+  function onClear() {
+    setSelectedPeerId([])
+    setNickname('')
   }
 
   function onClick() {
@@ -63,6 +84,9 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
                 <Table.Cell>{`${peerId.slice(0, 16)}…${peerId.slice(-16)}`}</Table.Cell>
               </TooltipPeerId>
               <Table.Cell>{nickname}</Table.Cell>
+              <Table.Cell>
+                <CloseButton onClick={() => onRemove(peerId)}/>
+              </Table.Cell>
             </Table.Row>
           ))}
           <Table.Row>
@@ -95,6 +119,9 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
             </Table.Cell>
             <Table.Cell>
               <Input placeholder="Empty nickname" value={nickname} onChange={onChange}/>
+            </Table.Cell>
+            <Table.Cell>
+              <CloseButton onClick={onClear}/>
             </Table.Cell>
           </Table.Row>
         </Table.Body>

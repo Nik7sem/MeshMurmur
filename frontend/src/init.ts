@@ -6,7 +6,7 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
-export const AppVersion = 'Alpha v5.61'
+export const AppVersion = 'Alpha v5.7'
 askNotificationPermission()
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
@@ -47,11 +47,13 @@ await connector.init()
 window.DOCUMENT_VISIBLE = true
 window.SCROLL_TO_BOTTOM = true
 
+// listeners
 document.addEventListener('visibilitychange', () => {
   window.DOCUMENT_VISIBLE = !document.hidden
 })
 
-window.addEventListener('beforeunload', () => {
-  connector.cleanup()
+window.addEventListener('beforeunload', (event) => {
+  if (location.hostname !== 'siegfriedschmidt.github.io') return
+  event.preventDefault()
+  // connector.cleanup()
 })
-
