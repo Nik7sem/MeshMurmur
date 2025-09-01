@@ -1,4 +1,4 @@
-import React, {ChangeEvent, FC, KeyboardEvent, useRef, useState} from 'react';
+import React, {ChangeEvent, ClipboardEvent, FC, KeyboardEvent, useRef, useState} from 'react';
 import {Button, FileUpload, Menu, Portal, Center, Textarea} from "@chakra-ui/react";
 import {GrAttachment} from "react-icons/gr";
 import {LuSend} from "react-icons/lu";
@@ -13,7 +13,8 @@ interface Props {
 const SendOptions: FC<Props> = ({addMessage}) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [inputValue, setInputValue] = useState<string>('')
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   function onChangeInput(e: ChangeEvent<HTMLTextAreaElement>) {
     setInputValue(e.target.value)
@@ -26,6 +27,22 @@ const SendOptions: FC<Props> = ({addMessage}) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       onClick()
+    }
+  }
+
+  function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const clipboardData = e.clipboardData
+
+    if (clipboardData.files.length > 0) {
+      e.preventDefault()
+
+      const pastedFiles = Array.from(clipboardData.files);
+      // const validFiles = pastedFiles.filter(file => file.type.startsWith('image/'))
+
+      if (pastedFiles.length > 0) {
+        setUploadedFiles(prev => [...prev, ...pastedFiles])
+        setMenuOpen(true)
+      }
     }
   }
 
@@ -53,7 +70,7 @@ const SendOptions: FC<Props> = ({addMessage}) => {
 
   return (
     <Center marginTop="1vh">
-      <Menu.Root>
+      <Menu.Root open={menuOpen} onOpenChange={e => setMenuOpen(e.open)}>
         <Menu.Trigger asChild>
           <Button color="white" bg="black" marginRight='5' aria-label="Send message">
             <GrAttachment/>
@@ -77,6 +94,7 @@ const SendOptions: FC<Props> = ({addMessage}) => {
         onKeyDown={keyDownHandler}
         value={inputValue}
         onInput={onChangeInput}
+        onPaste={handlePaste}
         placeholder="Message"
         resize="none"
         rows={1}
