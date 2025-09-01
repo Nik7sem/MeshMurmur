@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {darkTheme, GraphCanvas, GraphEdge, GraphNode} from "reagraph";
 import {connector, peerId} from "@/init.ts";
 import labelFont from "../assets/Alice-Regular.ttf"
+import {Container} from "@chakra-ui/react";
 
 const PeerGraph = () => {
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
@@ -59,10 +60,12 @@ const PeerGraph = () => {
   }, [updateGraph])
 
   return (
-    <GraphCanvas theme={darkTheme} edgeArrowPosition="end" edgeInterpolation="linear" edgeLabelPosition="inline"
-                 labelFontUrl={labelFont} labelType="all" nodes={graphNodes} edges={graphEdges}
-                 layoutOverrides={{linkDistance: 150, nodeStrength: -100}}/>
-  );
-};
+    <Container width='100%' height='calc(100% - 15px)'>
+      <GraphCanvas theme={darkTheme} edgeArrowPosition="end" edgeInterpolation="linear" edgeLabelPosition="inline"
+                   labelFontUrl={labelFont} labelType="all" nodes={graphNodes} edges={graphEdges}
+                   layoutOverrides={{linkDistance: 150, nodeStrength: -100}}/>
+    </Container>
+  )
+}
 
 export default PeerGraph;
