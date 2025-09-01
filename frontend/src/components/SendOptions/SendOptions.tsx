@@ -17,6 +17,7 @@ const SendOptions: FC<Props> = ({addMessage}) => {
 
   function onChangeInput(e: ChangeEvent<HTMLTextAreaElement>) {
     setInputValue(e.target.value)
+    e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
     connector.actions.emitTypingEvent()
   }
@@ -25,15 +26,15 @@ const SendOptions: FC<Props> = ({addMessage}) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       onClick()
-      if (textareaRef.current) {
-        textareaRef.current.style.height = '40px'
-      }
     }
   }
 
   function onClick() {
     const trimmed = inputValue.trim();
     if (trimmed.length > 0) {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '40px'
+      }
       connector.actions.sendText(trimmed)
       addMessage({data: trimmed, peerId, nickname: ''})
       setInputValue('')

@@ -1,5 +1,5 @@
 import {Box, Text} from "@chakra-ui/react";
-import {FC} from "react";
+import React, {FC} from "react";
 import TooltipPeerId from "@/components/TooltipPeerId.tsx";
 
 interface Props {

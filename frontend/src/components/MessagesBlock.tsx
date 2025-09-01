@@ -6,6 +6,9 @@ import {completeMessageType} from "@/utils/p2p-library/types.ts";
 import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
 import ChatFileMessage from "@/components/ChatMessage/ChatFileMessage.tsx";
 import {smoothScroll} from "@/utils/smoothScroll.ts";
+import ChatLinkMessage from "@/components/ChatMessage/ChatLinkMessage.tsx";
+
+const urlRegex = /^https:\/\/\S+$/i;
 
 interface Props {
   messages: completeMessageType[];
@@ -41,7 +44,13 @@ const MessagesBlock: FC<Props> = ({messages}) => {
       {messages.map((data, idx) => {
           const me = peerId === data.peerId
           if (isCompleteText(data)) {
-            return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
+            if (data.data.match(urlRegex)) {
+              return <ChatLinkMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}
+                                      key={idx}/>
+            } else {
+              return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}
+                                      key={idx}/>
+            }
           } else if (isCompleteFile(data)) {
             return <ChatFileMessage data={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
           }
