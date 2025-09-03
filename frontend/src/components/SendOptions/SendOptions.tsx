@@ -1,60 +1,27 @@
-import React, {ChangeEvent, ClipboardEvent, FC, KeyboardEvent, useRef, useState} from 'react';
-import {Button, FileUpload, Menu, Portal, Center, Textarea} from "@chakra-ui/react";
-import {GrAttachment} from "react-icons/gr";
-import {LuSend} from "react-icons/lu";
+import React, {FC} from 'react';
+import {Grid,} from "@chakra-ui/react";
 import {connector, peerId} from "@/init.ts";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
-import FileZone from "@/components/SendOptions/FileZone.tsx";
+import ReplyMessageRow from "@/components/SendOptions/ReplyMessageRow.tsx";
+import SendMessageRow from "@/components/SendOptions/SendMessageRow.tsx";
+import {getReplyText} from "@/utils/getReplyText.ts";
 
 interface Props {
-  addMessage: (data: completeMessageType) => void;
+  addMessage: (data: completeMessageType) => void
+  replyMessage: completeMessageType | null
+  resetReplyMessage: () => void
 }
 
-const SendOptions: FC<Props> = ({addMessage}) => {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [inputValue, setInputValue] = useState<string>('')
-  const [menuOpen, setMenuOpen] = useState<boolean>(false)
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-
-  function onChangeInput(e: ChangeEvent<HTMLTextAreaElement>) {
-    setInputValue(e.target.value)
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
-    connector.actions.emitTypingEvent()
-  }
-
-  function keyDownHandler(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      onClick()
-    }
-  }
-
-  function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
-    const clipboardData = e.clipboardData
-
-    if (clipboardData.files.length > 0) {
-      e.preventDefault()
-
-      const pastedFiles = Array.from(clipboardData.files);
-      // const validFiles = pastedFiles.filter(file => file.type.startsWith('image/'))
-
-      if (pastedFiles.length > 0) {
-        setUploadedFiles(prev => [...prev, ...pastedFiles])
-        setMenuOpen(true)
-      }
-    }
-  }
-
-  function onClick() {
-    const trimmed = inputValue.trim();
+const SendOptions: FC<Props> = ({addMessage, replyMessage, resetReplyMessage}) => {
+  function sendMessage(inputValue: string, uploadedFiles: File[]) {
+    let trimmed = inputValue.trim();
     if (trimmed.length > 0) {
-      if (textareaRef.current) {
-        textareaRef.current.style.height = '40px'
-      }
       connector.actions.sendText(trimmed)
+      if (replyMessage) {
+        trimmed = `Reply "${getReplyText(replyMessage)}": ${trimmed}`
+        resetReplyMessage()
+      }
       addMessage({data: trimmed, peerId, nickname: ''})
-      setInputValue('')
     }
 
     if (uploadedFiles.length > 0) {
@@ -64,49 +31,20 @@ const SendOptions: FC<Props> = ({addMessage}) => {
           addMessage({data: {url, fileName: file.name, fileSize: file.size, fileType: file.type}, peerId, nickname: ''})
         })
       }
-      setUploadedFiles([])
     }
   }
 
   return (
-    <Center marginTop="1vh">
-      <Menu.Root open={menuOpen} onOpenChange={e => setMenuOpen(e.open)}>
-        <Menu.Trigger asChild>
-          <Button color="white" bg="black" marginRight='5' aria-label="Send message">
-            <GrAttachment/>
-          </Button>
-        </Menu.Trigger>
-        <Portal>
-          <Menu.Positioner>
-            <Menu.Content>
-              <FileUpload.Root maxW="xl" alignItems="stretch" maxFiles={5}
-                               onFileAccept={(e) => setUploadedFiles(e.files)}>
-                <FileUpload.HiddenInput/>
-                <FileZone uploadedFiles={uploadedFiles}/>
-                <FileUpload.List showSize clearable/>
-              </FileUpload.Root>
-            </Menu.Content>
-          </Menu.Positioner>
-        </Portal>
-      </Menu.Root>
-      <Textarea
-        ref={textareaRef}
-        onKeyDown={keyDownHandler}
-        value={inputValue}
-        onInput={onChangeInput}
-        onPaste={handlePaste}
-        placeholder="Message"
-        resize="none"
-        rows={1}
-        minH="40px"
-        maxH="100px"
-        overflowY="auto"
-        whiteSpace="pre-wrap"
-      />
-      <Button marginLeft='5' onClick={onClick} aria-label="Send message">
-        <LuSend/>
-      </Button>
-    </Center>
+    <Grid
+      templateColumns="auto 1fr auto"
+      templateRows={replyMessage ? "auto auto" : "auto"}
+      gap={0}
+      width="min(100%, 700px)"
+      m='0 auto 0 auto'
+    >
+      <ReplyMessageRow replyMessage={replyMessage} resetReplyMessage={resetReplyMessage}/>
+      <SendMessageRow sendMessage={sendMessage}/>
+    </Grid>
   );
 };
 

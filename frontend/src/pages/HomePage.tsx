@@ -11,6 +11,7 @@ import {getShort} from "@/utils/p2p-library/helpers.ts";
 
 const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
+  const [replyMessage, setReplyMessage] = useState<completeMessageType | null>(null)
   const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
   const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
 
@@ -63,8 +64,8 @@ const HomePage = () => {
 
   return (
     <Container width="100%">
-      <MessagesBlock messages={messages}/>
-      <SendOptions addMessage={addMessage}/>
+      <MessagesBlock messages={messages} setReplyMessage={setReplyMessage}/>
+      <SendOptions addMessage={addMessage} replyMessage={replyMessage} resetReplyMessage={() => setReplyMessage(null)}/>
       <Center>
         <FileProgressBar data={fileProgressData}/>
       </Center>

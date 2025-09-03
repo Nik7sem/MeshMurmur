@@ -32,7 +32,7 @@ export class WebRTCPeerConnection {
     const polite = isPolite(this.peerId, this.targetPeerId)
 
     this.logger.info(`START CONNECTION AS ${polite ? "POLITE" : "IMPOLITE"} PEER`)
-    // this.startDebugListeners()
+    // this.startDebugListeners() TODO: add debug switch
 
     this.pc.onconnectionstatechange = () => {
       if (this.pc.connectionState === "connecting" ||

@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef} from 'react';
 import ChatTextMessage from "@/components/ChatMessage/ChatTextMessage.tsx";
-import {peerId} from "@/init.ts";
+import {peerId, urlRegex} from "@/init.ts";
 import {Container} from "@chakra-ui/react";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
 import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
@@ -8,13 +8,25 @@ import ChatFileMessage from "@/components/ChatMessage/ChatFileMessage.tsx";
 import {smoothScroll} from "@/utils/smoothScroll.ts";
 import ChatLinkMessage from "@/components/ChatMessage/ChatLinkMessage.tsx";
 
-const urlRegex = /^https:\/\/\S+$/i;
-
 interface Props {
   messages: completeMessageType[];
+  setReplyMessage: (message: completeMessageType) => void;
 }
 
-const MessagesBlock: FC<Props> = ({messages}) => {
+function getMessageComponent(data: completeMessageType) {
+  const me = peerId === data.peerId
+  if (isCompleteText(data)) {
+    if (data.data.match(urlRegex)) {
+      return <ChatLinkMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}/>
+    } else {
+      return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}/>
+    }
+  } else if (isCompleteFile(data)) {
+    return <ChatFileMessage data={data.data} peerId={data.peerId} username={data.nickname} me={me}/>
+  }
+}
+
+const MessagesBlock: FC<Props> = ({messages, setReplyMessage}) => {
   const messagesBlockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,7 +35,7 @@ const MessagesBlock: FC<Props> = ({messages}) => {
     }
   }, [messages]);
 
-  const onScroll = () => {
+  function onScroll() {
     if (!messagesBlockRef.current) return;
 
     const {scrollHeight, scrollTop, clientHeight} = messagesBlockRef.current;
@@ -41,20 +53,10 @@ const MessagesBlock: FC<Props> = ({messages}) => {
   return (
     <Container ref={messagesBlockRef} onScroll={onScroll} margin="15px" padding={5} height="75vh" maxHeight="80vh"
                overflowY="auto">
-      {messages.map((data, idx) => {
-          const me = peerId === data.peerId
-          if (isCompleteText(data)) {
-            if (data.data.match(urlRegex)) {
-              return <ChatLinkMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}
-                                      key={idx}/>
-            } else {
-              return <ChatTextMessage message={data.data} peerId={data.peerId} username={data.nickname} me={me}
-                                      key={idx}/>
-            }
-          } else if (isCompleteFile(data)) {
-            return <ChatFileMessage data={data.data} peerId={data.peerId} username={data.nickname} me={me} key={idx}/>
-          }
-        }
+      {messages.map((data, idx) =>
+        <Container onDoubleClick={e => setReplyMessage(data)} p='0' m='0' key={idx}>
+          {getMessageComponent(data)}
+        </Container>
       )}
     </Container>
   );
