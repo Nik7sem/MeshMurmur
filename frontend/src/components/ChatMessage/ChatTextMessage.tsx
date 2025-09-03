@@ -12,7 +12,7 @@ interface Props {
 const ChatTextMessage: FC<Props> = ({username, peerId, message, me}) => {
   return (
     <ChatMessage username={username} peerId={peerId} me={me}>
-      <Text color={me ? "white" : "black"} whiteSpace="pre-wrap" wordBreak='break-all'>{message}</Text>
+      <Text color={me ? "white" : "black"} whiteSpace="pre-wrap" wordBreak='break-all' px='4px'>{message}</Text>
     </ChatMessage>
   );
 };

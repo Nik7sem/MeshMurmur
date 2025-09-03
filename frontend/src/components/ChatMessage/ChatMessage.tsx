@@ -14,14 +14,12 @@ const ChatMessage: FC<Props> = ({username, peerId, me, children}) => {
     <Flex justifyContent={me ? "flex-end" : "flex-start"}>
       <Box
         bg={me ? "blue.500" : "gray.200"}
-        px='6px'
-        py='2px'
         mb='4px'
         borderRadius="lg"
       >
         {!me ?
           <TooltipPeerId peerId={peerId}>
-            <Text color={me ? "white" : "black"} fontSize="sm" fontWeight="bold" mb='4px'>
+            <Text color={me ? "white" : "black"} fontSize="sm" fontWeight="bold" px='4px'>
               {username}
             </Text>
           </TooltipPeerId> :

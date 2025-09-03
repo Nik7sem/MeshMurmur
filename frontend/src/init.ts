@@ -6,7 +6,7 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
-export const AppVersion = 'Alpha v6.2'
+export const AppVersion = 'Alpha v6.5'
 askNotificationPermission()
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");

@@ -1,11 +1,7 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
-import {
-  ChannelEventBase,
-  processedFileType, eventDataType,
-  fileProgressType,
-} from "@/utils/p2p-library/types.ts";
-
+import {processedFileType, eventDataType, fileProgressType,} from "@/utils/p2p-library/types.ts";
 import {getShort} from "@/utils/p2p-library/helpers.ts";
+import {FILE_CHUCK_WHOLE_SIZE, FILE_CHUNK_DATA_SIZE} from "@/utils/p2p-library/connection/DataChannel.ts";
 
 interface FileMetadataMessage {
   type: "file-metadata";
@@ -13,6 +9,7 @@ interface FileMetadataMessage {
     fileName: string;
     fileSize: number;
     fileType: string;
+    fileId: string
     chunks: number
   };
 }
@@ -20,28 +17,23 @@ interface FileMetadataMessage {
 interface ChunkData {
   data: ArrayBuffer;
   metadata: {
-    chunkId: number;
+    fileId: string
+    chunkId: number
   }
 }
 
 export class FileTransferMiddleware extends Middleware {
   static name = "FileTransferMiddleware"
-  private chunkSize = 0
-  private state: "idle" | "receiving" = "idle";
-  private received: {
-    chunks: ChunkData[],
-    percent: number,
-    timestamp: number,
-  } = {chunks: [], percent: 0, timestamp: 0};
-  private fileMetadata?: FileMetadataMessage["data"];
+  private files = new Map<string, {
+    received: {
+      chunks: ChunkData[],
+      percent: number,
+      timestamp: number,
+    }
+    fileMetadata: FileMetadataMessage["data"]
+  }>()
   public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
-
-  async init(eventData: ChannelEventBase) {
-    if (eventData.channelType === "reliable") {
-      this.chunkSize = this.channel.unordered.CHUNK_SIZE - this.channel.unordered.METADATA_SIZE
-    }
-  }
 
   call(eventData: eventDataType): boolean {
     if (eventData.datatype === 'json' && eventData.channelType === "reliable") {
@@ -57,15 +49,11 @@ export class FileTransferMiddleware extends Middleware {
   }
 
   private handleFileMetadata(message: FileMetadataMessage) {
-    if (this.state !== "idle") return;
-    this.fileMetadata = message.data;
-    this.received = {chunks: [], percent: 0, timestamp: (new Date()).getTime()};
-    this.onFileProgress?.({
-      title: `Receiving from ${getShort(this.targetPeerId)} (Chunking)`,
-      progress: 0,
-      bitrate: 0
+    if (this.files.has(message.data.fileId)) return;
+    this.files.set(message.data.fileId, {
+      fileMetadata: message.data,
+      received: {chunks: [], percent: 0, timestamp: (new Date()).getTime()}
     })
-    this.state = "receiving";
     this.logger.info(`Receiving file: ${message.data.fileName}`);
   }
 
@@ -75,103 +63,80 @@ export class FileTransferMiddleware extends Middleware {
       this.onFileProgress?.({
         title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
         progress: percent,
-        bitrate: Math.round(chunkIdx * this.chunkSize / 1024 / 8 / (((new Date()).getTime() - timestamp) / 1000))
+        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / 1024 / 8 / (((new Date()).getTime() - timestamp) / 1000))
       })
     }
     return percent
   }
 
-  private addChunk(chunk: ChunkData) {
-    if (!this.fileMetadata) return;
-
-    this.received.chunks.push(chunk)
-    this.received.percent = this.showProgress(this.received.percent, this.received.chunks.length, this.fileMetadata.chunks, this.received.timestamp, false)
-  }
-
   private handleFileChunk(chunk: ChunkData) {
-    if (this.state !== "receiving" || !this.fileMetadata) return;
-    this.addChunk(chunk);
+    const file = this.files.get(chunk.metadata.fileId)
+    if (!file) return
+
+    file.received.chunks.push(chunk)
+    file.received.percent = this.showProgress(file.received.percent, file.received.chunks.length, file.fileMetadata.chunks, file.received.timestamp, false)
 
     // Check if file is complete
-    if (this.received.chunks.length === this.fileMetadata.chunks) {
-      this.assembleFile();
+    if (file.received.chunks.length === file.fileMetadata.chunks) {
+      this.assembleFile(chunk.metadata.fileId);
     }
   }
 
-  private assembleFile() {
-    if (!this.fileMetadata) return;
-    this.received.chunks.sort((lhs, rhs) => lhs.metadata.chunkId - rhs.metadata.chunkId)
-    const blob = new Blob(this.received.chunks.map((data) => data.data), {type: this.fileMetadata.fileType});
+  private assembleFile(fileId: string) {
+    const file = this.files.get(fileId)
+    if (!file) return
+
+    file.received.chunks.sort((lhs, rhs) => lhs.metadata.chunkId - rhs.metadata.chunkId)
+    const blob = new Blob(file.received.chunks.map((data) => data.data), {type: file.fileMetadata.fileType});
     const url = URL.createObjectURL(blob);
-    this.onFileComplete?.({data: {...this.fileMetadata, url}})
-    this.state = 'idle'
-    this.logger.info(`File ${this.fileMetadata.fileName} received`);
+    this.onFileComplete?.({data: {...file.fileMetadata, url}})
+
+    this.files.delete(fileId)
+    this.logger.info(`File ${file.fileMetadata.fileName} received`);
   }
 
-  // TODO: Remove this function (inefficient for large files) create chunks while sending
-  private splitToChunks(file: File): Promise<ArrayBuffer[]> {
-    return new Promise((resolve, reject) => {
+  private __sendFile(metadata: FileMetadataMessage, file: File): Promise<void> {
+    return new Promise((resolve) => {
       let previousPercent = 0
-      const timestamp = (new Date()).getTime();
-      this.onFileProgress?.({title: 'Chunking', progress: 0, bitrate: 0})
-
+      let chunkIdx = 0
       let offset = 0;
-      const chunks: ArrayBuffer[] = [];
-      const chunksLen = Math.ceil(file.size / this.chunkSize);
+      const timestamp = (new Date()).getTime();
       const reader = new FileReader();
+
+      this.onFileProgress?.({title: 'Sending', progress: 0, bitrate: 0})
+
       reader.onload = (e) => {
         if (e.target?.result instanceof ArrayBuffer) {
-          chunks.push(e.target.result);
           offset += e.target.result.byteLength;
 
-          previousPercent = this.showProgress(previousPercent, chunks.length, chunksLen, timestamp, true, true)
-
-          if (offset < file.size) {
-            readNextChunk();
+          if (chunkIdx < metadata.data.chunks) {
+            this.channel.unordered.send({
+              data: e.target.result,
+              metadata: {chunkId: chunkIdx, fileId: metadata.data.fileId}
+            } as ChunkData)
+            ++chunkIdx
+            previousPercent = this.showProgress(previousPercent, chunkIdx, metadata.data.chunks, timestamp, true)
+            if (this.channel.unordered.channel.bufferedAmount <= this.channel.unordered.channel.bufferedAmountLowThreshold) {
+              readNextChunk()
+            }
           } else {
-            resolve(chunks);
+            this.channel.unordered.channel.onbufferedamountlow = null
+            resolve();
           }
         }
       };
 
       const readNextChunk = () => {
-        const slice = file.slice(offset, offset + this.chunkSize);
+        const slice = file.slice(offset, offset + FILE_CHUNK_DATA_SIZE);
         reader.readAsArrayBuffer(slice);
       };
 
+      this.channel.unordered.channel.onbufferedamountlow = () => readNextChunk();
       readNextChunk();
     })
   }
 
-  private sendLargeData(chunks: ArrayBuffer[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      let chunkIdx = 0
-      let previousPercent = 0
-      const timestamp = (new Date()).getTime();
-      this.onFileProgress?.({title: 'Sending', progress: 0, bitrate: 0})
-
-      this.channel.unordered.channel.onbufferedamountlow = () => sendNextChunk()
-
-      const sendNextChunk = () => {
-        if (chunkIdx < chunks.length) {
-          this.channel.unordered.send({data: chunks[chunkIdx], metadata: {chunkId: chunkIdx}} as ChunkData)
-          ++chunkIdx
-          previousPercent = this.showProgress(previousPercent, chunkIdx, chunks.length, timestamp, true)
-          if (this.channel.unordered.channel.bufferedAmount <= this.channel.unordered.channel.bufferedAmountLowThreshold) {
-            sendNextChunk()
-          }
-        } else {
-          this.channel.unordered.channel.onbufferedamountlow = null
-          resolve()
-        }
-      }
-
-      sendNextChunk()
-    })
-  }
-
   public async sendFile(file: File) {
-    if (this.state !== "idle") return this.logger.warn("Cannot send file while receiving!");
     this.logger.info(`Sending file: ${file.name}, Size: ${file.size} bytes`);
 
     // Send metadata
@@ -181,12 +146,13 @@ export class FileTransferMiddleware extends Middleware {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        chunks: Math.ceil(file.size / this.chunkSize),
+        fileId: window.crypto.randomUUID(),
+        chunks: Math.ceil(file.size / FILE_CHUNK_DATA_SIZE),
       }
     };
     this.channel.reliable.send(metadata);
 
-    await this.sendLargeData(await this.splitToChunks(file))
+    await this.__sendFile(metadata, file)
     this.logger.info("File transfer completed!")
   }
 }

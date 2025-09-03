@@ -6,6 +6,10 @@ import {
 } from "@/utils/p2p-library/types.ts";
 import {createChunk, parseChunk} from "@/utils/p2p-library/helpers.ts";
 
+export const FILE_CHUCK_WHOLE_SIZE = 16 * 1024; // 16KB
+export const FILE_CHUCK_METADATA_SIZE = 100; // First 100 bytes for metadata
+export const FILE_CHUNK_DATA_SIZE = FILE_CHUCK_WHOLE_SIZE - FILE_CHUCK_METADATA_SIZE;
+
 type rawJsonType = string
 type rawByteType = ArrayBuffer
 
@@ -106,15 +110,12 @@ class JsonChannel extends DataChannel<jsonDataType> {
 }
 
 class BinaryChannel extends DataChannel<byteDataType> {
-  public readonly CHUNK_SIZE = 16 * 1024; // 16KB
-  public readonly METADATA_SIZE = 100; // First 100 bytes for metadata
-
   __send(data: byteDataType) {
-    this.channel.send(createChunk(data.data, data.metadata, this.CHUNK_SIZE, this.METADATA_SIZE));
+    this.channel.send(createChunk(data.data, data.metadata, FILE_CHUNK_DATA_SIZE, FILE_CHUCK_METADATA_SIZE));
   }
 
   processMessage(data: rawByteType): eventDataType {
-    const parsed = parseChunk(data, this.CHUNK_SIZE, this.METADATA_SIZE)
+    const parsed = parseChunk(data, FILE_CHUCK_WHOLE_SIZE, FILE_CHUCK_METADATA_SIZE)
     return {
       channelType: this.channelType,
       datatype: 'byte',

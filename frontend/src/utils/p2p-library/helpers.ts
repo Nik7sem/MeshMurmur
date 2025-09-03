@@ -7,14 +7,14 @@ import {AppConfig} from "@/utils/p2p-library/conf.ts";
  * Creates a chunk with metadata header and payload
  * @param payload ArrayBuffer of size chunk_size - metadata_size (or less)
  * @param metadata Object to store in the header (must serialize to ≤ metadata_size bytes)
- * @param chunk_size
- * @param metadata_size
+ * @param chunkDataSize
+ * @param chunkMetadataSize
  * @returns ArrayBuffer of size chunk_size
  */
-export function createChunk(payload: ArrayBuffer, metadata: unknown, chunk_size: number, metadata_size: number): ArrayBuffer {
+export function createChunk(payload: ArrayBuffer, metadata: unknown, chunkDataSize: number, chunkMetadataSize: number): ArrayBuffer {
   // Validate payload size
-  if (payload.byteLength > chunk_size - metadata_size) {
-    throw new Error(`Payload must be less or equal ${chunk_size - metadata_size} bytes`);
+  if (payload.byteLength > chunkDataSize) {
+    throw new Error(`Payload must be less or equal ${chunkDataSize} bytes`);
   }
 
   // Serialize metadata
@@ -23,45 +23,44 @@ export function createChunk(payload: ArrayBuffer, metadata: unknown, chunk_size:
   const metadataBinary = encoder.encode(metadataJson);
 
   // Validate metadata size
-  if (metadataBinary.byteLength > metadata_size) {
-    throw new Error(`Metadata (${metadataBinary.byteLength} bytes) exceeds ${metadata_size} byte limit`);
+  if (metadataBinary.byteLength > chunkMetadataSize) {
+    throw new Error(`Metadata (${metadataBinary.byteLength} bytes) exceeds ${chunkMetadataSize} byte limit`);
   }
 
   // Create chunk with metadata + payload
-  const chunk = new ArrayBuffer(Math.min(chunk_size, payload.byteLength) + metadata_size);
+  const chunk = new ArrayBuffer(Math.min(chunkDataSize, payload.byteLength) + chunkMetadataSize);
   const chunkView = new Uint8Array(chunk);
 
   // Copy metadata (leaving remaining bytes as zeros if metadata is smaller than metadata_size)
   chunkView.set(metadataBinary, 0);
 
   // Copy payload
-  chunkView.set(new Uint8Array(payload), metadata_size);
-
+  chunkView.set(new Uint8Array(payload), chunkMetadataSize);
   return chunk;
 }
 
 /**
  * Parses a chunk into its metadata and payload components
  * @param chunk ArrayBuffer of size chunk_size
- * @param chunk_size
- * @param metadata_size
+ * @param chunkWholeSize
+ * @param chunkMetadataSize
  * @returns { metadata: object, payload: ArrayBuffer }
  */
-export function parseChunk(chunk: ArrayBuffer, chunk_size: number, metadata_size: number): {
+export function parseChunk(chunk: ArrayBuffer, chunkWholeSize: number, chunkMetadataSize: number): {
   metadata: object,
   payload: ArrayBuffer
 } {
 
-  if (chunk.byteLength > chunk_size - metadata_size) {
-    throw new Error(`Chunk must be less or equal ${chunk_size - metadata_size} bytes`);
+  if (chunk.byteLength > chunkWholeSize) {
+    throw new Error(`Chunk must be less or equal ${chunkWholeSize} bytes`);
   }
 
   // Extract metadata bytes
-  const metadataBytes = new Uint8Array(chunk, 0, metadata_size);
+  const metadataBytes = new Uint8Array(chunk, 0, chunkMetadataSize);
 
   // Find actual metadata length (until first null byte or end)
   let metadataLength = 0;
-  while (metadataLength < metadata_size && metadataBytes[metadataLength] !== 0) {
+  while (metadataLength < chunkMetadataSize && metadataBytes[metadataLength] !== 0) {
     metadataLength++;
   }
 
@@ -71,7 +70,7 @@ export function parseChunk(chunk: ArrayBuffer, chunk_size: number, metadata_size
   const metadata = JSON.parse(metadataJson);
 
   // Extract payload
-  const payload = chunk.slice(metadata_size);
+  const payload = chunk.slice(chunkMetadataSize);
 
   return {metadata, payload};
 }
