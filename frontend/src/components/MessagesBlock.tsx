@@ -7,6 +7,7 @@ import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
 import ChatFileMessage from "@/components/ChatMessage/ChatFileMessage.tsx";
 import {smoothScroll} from "@/utils/smoothScroll.ts";
 import ChatLinkMessage from "@/components/ChatMessage/ChatLinkMessage.tsx";
+import Swipeable from "@/components/Swipeable.tsx";
 
 interface Props {
   messages: completeMessageType[];
@@ -51,12 +52,13 @@ const MessagesBlock: FC<Props> = ({messages, setReplyMessage}) => {
   }
 
   return (
-    <Container ref={messagesBlockRef} onScroll={onScroll} margin="15px" padding={5} height="75vh" maxHeight="80vh"
+    <Container ref={messagesBlockRef} onScroll={onScroll} padding={1} height="72vh" maxHeight="72vh"
                overflowY="auto">
       {messages.map((data, idx) =>
-        <Container onDoubleClick={e => setReplyMessage(data)} p='0' m='0' key={idx}>
+        <Swipeable onSwipe={() => setReplyMessage(data)} direction={data.peerId === peerId ? 'left' : 'right'}
+                   key={idx}>
           {getMessageComponent(data)}
-        </Container>
+        </Swipeable>
       )}
     </Container>
   );

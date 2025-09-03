@@ -16,11 +16,11 @@ const SendOptions: FC<Props> = ({addMessage, replyMessage, resetReplyMessage}) =
   function sendMessage(inputValue: string, uploadedFiles: File[]) {
     let trimmed = inputValue.trim();
     if (trimmed.length > 0) {
-      connector.actions.sendText(trimmed)
       if (replyMessage) {
         trimmed = `Reply "${getReplyText(replyMessage)}": ${trimmed}`
         resetReplyMessage()
       }
+      connector.actions.sendText(trimmed)
       addMessage({data: trimmed, peerId, nickname: ''})
     }
 

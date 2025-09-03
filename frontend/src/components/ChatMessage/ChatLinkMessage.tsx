@@ -1,6 +1,7 @@
 import React, {FC} from 'react';
 import {AspectRatio, Box, Flex, Link, Text} from "@chakra-ui/react";
 import TooltipPeerId from "@/components/TooltipPeerId.tsx";
+import ChatMessage from "@/components/ChatMessage/ChatMessage.tsx";
 
 const youtubeVideoRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 const youtubeShortsRegex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/;
@@ -40,7 +41,7 @@ function renderMessageContent(link: string) {
   }
 
   return (
-    <Link href={link} target="_blank" color="blue.500" fontWeight="bold">{link}</Link>
+    <Link href={link} target="_blank" color="blue.700" fontWeight="bold">{link}</Link>
   )
 }
 
@@ -53,27 +54,9 @@ interface Props {
 
 const ChatLinkMessage: FC<Props> = ({username, peerId, message, me}) => {
   return (
-    <Flex
-      justifyContent={me ? "flex-end" : "flex-start"}
-      my={2}
-    >
-      <Box
-        bg={me ? "blue.800" : "gray.200"}
-        color={me ? "white" : "black"}
-        px={2}
-        py={2}
-        borderRadius="lg"
-      >
-        {!me ?
-          <TooltipPeerId peerId={peerId}>
-            <Text fontSize="sm" fontWeight="bold" mb={1}>
-              {username}
-            </Text>
-          </TooltipPeerId> :
-          <></>}
-        {renderMessageContent(message)}
-      </Box>
-    </Flex>
+    <ChatMessage username={username} peerId={peerId} me={me}>
+      {renderMessageContent(message)}
+    </ChatMessage>
   )
 }
 

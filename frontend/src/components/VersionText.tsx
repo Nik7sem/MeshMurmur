@@ -4,7 +4,7 @@ import {AppVersion} from "@/init.ts";
 
 const VersionText = () => {
   return (
-    <Box position="absolute" bottom="5px" left="10px">
+    <Box position="absolute" top="5px" left="10px">
       <Text fontSize={10} fontWeight="bold">{AppVersion}</Text>
     </Box>
   );

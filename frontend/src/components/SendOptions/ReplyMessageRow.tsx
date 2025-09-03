@@ -36,7 +36,7 @@ const ReplyMessageRow: FC<Props> = ({replyMessage, resetReplyMessage}) => {
             replyMessage ?
               <>
                 <Text>Reply to: {replyMessage.peerId === peerId ? 'me' : replyMessage.nickname}</Text>
-                <Text whiteSpace='nowrap' textOverflow='ellipsis' overflow='hidden'>{getReplyText(replyMessage)}</Text>
+                <Text whiteSpace='nowrap' textOverflow='ellipsis' overflow='hidden' maxWidth='60vw'>{getReplyText(replyMessage)}</Text>
               </> : <></>
           }
         </Flex>
