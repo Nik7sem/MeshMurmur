@@ -20,6 +20,10 @@ interface Props {
   contentRef: RefObject<HTMLElement | null>;
 }
 
+function getCompressedPeerId(peerId: string): string {
+  return `${peerId.slice(0, 10)}…${peerId.slice(-10)}`
+}
+
 const AssociatedNicknames: FC<Props> = ({contentRef}) => {
   const {successToast, errorToast} = useToast()
   const {userData, setUserData} = useUserData()
@@ -33,7 +37,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
 
   const peerCollection = createListCollection({
     items: peerIds.map(targetPeerId => ({
-      label: `${targetPeerId.slice(0, 16)}…${targetPeerId.slice(-16)}`,
+      label: getCompressedPeerId(targetPeerId),
       value: targetPeerId
     }))
   })
@@ -66,7 +70,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
   }
 
   return (
-    <Container>
+    <Container p='0' m='0'>
       <Center mt="5px">
         <Text textStyle="2xl">Associated nicknames</Text>
       </Center>
@@ -82,7 +86,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
           {Object.entries(userData.associatedNicknames).map(([peerId, nickname], idx) => (
             <Table.Row key={idx}>
               <TooltipPeerId peerId={peerId}>
-                <Table.Cell>{`${peerId.slice(0, 16)}…${peerId.slice(-16)}`}</Table.Cell>
+                <Table.Cell>{getCompressedPeerId(peerId)}</Table.Cell>
               </TooltipPeerId>
               <Table.Cell>{nickname}</Table.Cell>
               <Table.Cell>
@@ -92,7 +96,7 @@ const AssociatedNicknames: FC<Props> = ({contentRef}) => {
           ))}
           <Table.Row>
             <Table.Cell>
-              <Select.Root collection={peerCollection} size="sm" width="320px" value={selectedPeerId}
+              <Select.Root collection={peerCollection} size="sm" value={selectedPeerId}
                            onValueChange={(e) => setSelectedPeerId(e.value)}>
                 <Select.HiddenSelect/>
                 {/*<Select.Label>Select peer Id</Select.Label>*/}

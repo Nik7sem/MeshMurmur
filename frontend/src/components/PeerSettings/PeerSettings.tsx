@@ -13,7 +13,7 @@ interface Props {
 const PeerSettings: FC<Props> = ({contentRef}) => {
   return (
     <Container>
-      <Center><Text fontSize="2xl">Info</Text></Center>
+      <Center><Text fontSize="2xl" mb='4px'>Info</Text></Center>
       <PeerInfo/>
       <Separator margin="10px"/>
 

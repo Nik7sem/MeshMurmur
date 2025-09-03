@@ -23,7 +23,7 @@ const OwnNickname = () => {
   }
 
   return (
-    <Field.Root orientation="horizontal" invalid={invalid}>
+    <Field.Root pl='12px' orientation="horizontal" invalid={invalid}>
       <Field.Label>Nickname</Field.Label>
       <Input placeholder="Empty nickname" value={inputValue} onChange={onChange}/>
       <Button ml='5px' onClick={onSave} variant="outline" size="sm">

@@ -97,9 +97,8 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
       <Table.Root mt="10px" size="sm" striped>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>PeerId</Table.ColumnHeader>
             <Table.ColumnHeader>Nickname</Table.ColumnHeader>
-            <Table.ColumnHeader>Connections</Table.ColumnHeader>
+            <Table.ColumnHeader>Peers</Table.ColumnHeader>
             <Table.ColumnHeader>State</Table.ColumnHeader>
             <Table.ColumnHeader>Actions</Table.ColumnHeader>
           </Table.Row>
@@ -107,8 +106,7 @@ const PeerConnectionTable: FC<Props> = ({contentRef}) => {
         <Table.Body>
           {peers.map(({id, state, connections, nickname}) =>
             <Table.Row key={id}>
-              <Table.Cell>{id}</Table.Cell>
-              <Table.Cell>{nickname}</Table.Cell>
+              <Table.Cell wordBreak='break-all'>{nickname}</Table.Cell>
               <Table.Cell>{connections}</Table.Cell>
               <Table.Cell>{state}</Table.Cell>
               <Table.Cell>

@@ -9,7 +9,7 @@ interface Props {
 
 const NicknameAssigner: FC<Props> = ({contentRef}) => {
   return (
-    <Container>
+    <Container p='0' m='0'>
       <OwnNickname/>
       <AssociatedNicknames contentRef={contentRef}/>
     </Container>

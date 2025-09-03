@@ -4,7 +4,7 @@ import {AppVersion, peerId} from "@/init.ts";
 
 const PeerInfo = () => {
   return (
-    <DataList.Root marginLeft="20px" orientation="horizontal" maxW="15">
+    <DataList.Root orientation="vertical" maxW="200px">
       <DataList.Item>
         <DataList.ItemLabel>App version</DataList.ItemLabel>
         <DataList.ItemValue>{AppVersion}</DataList.ItemValue>
