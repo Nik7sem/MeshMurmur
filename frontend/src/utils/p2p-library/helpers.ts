@@ -28,7 +28,7 @@ export function createChunk(payload: ArrayBuffer, metadata: unknown, chunk_size:
   }
 
   // Create chunk with metadata + payload
-  const chunk = new ArrayBuffer(chunk_size);
+  const chunk = new ArrayBuffer(Math.min(chunk_size, payload.byteLength) + metadata_size);
   const chunkView = new Uint8Array(chunk);
 
   // Copy metadata (leaving remaining bytes as zeros if metadata is smaller than metadata_size)
@@ -51,8 +51,9 @@ export function parseChunk(chunk: ArrayBuffer, chunk_size: number, metadata_size
   metadata: object,
   payload: ArrayBuffer
 } {
-  if (chunk.byteLength !== chunk_size) {
-    throw new Error(`Chunk must be exactly ${chunk_size} bytes`);
+
+  if (chunk.byteLength > chunk_size - metadata_size) {
+    throw new Error(`Chunk must be less or equal ${chunk_size - metadata_size} bytes`);
   }
 
   // Extract metadata bytes

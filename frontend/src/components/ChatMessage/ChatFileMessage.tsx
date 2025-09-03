@@ -63,7 +63,7 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
         </Box>
       ) : (
         <Box>
-          <Link href={url} target="_blank" color="blue.700" fontWeight="bold">
+          <Link href={url} target="_blank" color="blue.700" fontWeight="bold" download={fileName}>
             {fileName}
           </Link>
 
