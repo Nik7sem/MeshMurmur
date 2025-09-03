@@ -6,7 +6,6 @@ import {createSignaler} from "@/utils/p2p-library/signalers/createSignaler.ts";
 import {connectionStageType, signalerNameType} from "@/utils/p2p-library/types.ts";
 import {NegotiationManager, NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
-import {PingMiddleware} from "@/utils/p2p-library/middlewares/pingMiddleware.ts";
 
 export interface ConnectorConfig {
   signaler: signalerNameType
@@ -108,7 +107,6 @@ export class Connector {
       pc.disconnect()
 
       if (connectionStage === 'pinging') {
-        pc.managerMiddleware?.get(PingMiddleware)?.resolvePing(false)
         this.logger.warn(`Reconnecting after reload to ${nickname}...`)
       } else {
         this.logger.warn(`Reconnecting after remote peer wish to ${nickname}...`)

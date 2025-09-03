@@ -12,6 +12,7 @@ export type NegotiationPackageType =
 
 export class NegotiationManager {
   private _isNegotiated: boolean = false
+  private _isOfferRejected: boolean = false
   private description?: NegotiationDescription;
   private readonly _negotiationPromise: Promise<NegotiationDescription | undefined>
   private _negotiationResolve?: ((description?: NegotiationDescription) => void)
@@ -69,7 +70,12 @@ export class NegotiationManager {
         this.onInitialize()
       }
     } else {
-      this.logger.info('Reject offer.')
+      if (this._isOfferRejected) {
+        this.reconnect?.({t: 'offer', description})
+      } else {
+        this.logger.info('Reject offer.')
+        this._isOfferRejected = true
+      }
     }
   }
 
