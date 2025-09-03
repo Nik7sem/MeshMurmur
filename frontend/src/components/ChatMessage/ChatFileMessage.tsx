@@ -55,7 +55,7 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
           </Text>
         </Box>
       ) : fileType.startsWith('audio/') ? (
-        <Box>
+        <Box p={me ? '4px' : '0'}>
           <audio controls style={{width: 'min(500px, 70vw)', height: '50px'}}>
             <source src={url} type={fileType}/>
             Your browser does not support the audio element.
@@ -66,11 +66,11 @@ const ChatFileMessage: FC<Props> = ({username, peerId, data, me}) => {
         </Box>
       ) : (
         <Box>
-          <Link href={url} target="_blank" color="blue.700" fontWeight="bold" download={fileName}>
+          <Link href={url} p={me ? '4px' : '0 4px 4px 4px'} target="_blank" color="blue.700" fontWeight="bold" download={fileName}>
             {fileName}
           </Link>
 
-          <Text fontSize="xs" color="gray.700">
+          <Text fontSize="xs" color="gray.700" ml='4px'>
             <FormatByte value={fileSize}/>
           </Text>
         </Box>

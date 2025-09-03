@@ -32,6 +32,7 @@ export class FileTransferMiddleware extends Middleware {
     }
     fileMetadata: FileMetadataMessage["data"]
   }>()
+  private pendingFiles: File[] = []
   public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 
@@ -54,7 +55,7 @@ export class FileTransferMiddleware extends Middleware {
       fileMetadata: message.data,
       received: {chunks: [], percent: 0, timestamp: (new Date()).getTime()}
     })
-    this.logger.info(`Receiving file: ${message.data.fileName}`);
+    this.logger.info('Receiving file: ', message.data);
   }
 
   private showProgress(previousPercent: number, chunkIdx: number, chunksLen: number, timestamp: number, sending: boolean, chunking = false): number {
@@ -63,7 +64,7 @@ export class FileTransferMiddleware extends Middleware {
       this.onFileProgress?.({
         title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
         progress: percent,
-        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / 1024 / 8 / (((new Date()).getTime() - timestamp) / 1000))
+        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / 1024 / (((new Date()).getTime() - timestamp) / 1000))
       })
     }
     return percent
@@ -95,13 +96,26 @@ export class FileTransferMiddleware extends Middleware {
     this.logger.info(`File ${file.fileMetadata.fileName} received`);
   }
 
-  private __sendFile(metadata: FileMetadataMessage, file: File): Promise<void> {
-    return new Promise((resolve) => {
+  private __sendFile(file: File): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const metadata: FileMetadataMessage = {
+        type: "file-metadata",
+        data: {
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileId: window.crypto.randomUUID(),
+          chunks: Math.ceil(file.size / FILE_CHUNK_DATA_SIZE),
+        }
+      }
+      this.logger.info('Sending file: ', metadata)
+      this.channel.reliable.send(metadata)
+
       let previousPercent = 0
       let chunkIdx = 0
       let offset = 0;
-      const timestamp = (new Date()).getTime();
-      const reader = new FileReader();
+      const timestamp = (new Date()).getTime()
+      const reader = new FileReader()
 
       this.onFileProgress?.({title: 'Sending', progress: 0, bitrate: 0})
 
@@ -121,38 +135,39 @@ export class FileTransferMiddleware extends Middleware {
             }
           } else {
             this.channel.unordered.channel.onbufferedamountlow = null
-            resolve();
+            resolve()
           }
         }
-      };
+      }
+
+      reader.onerror = (error) => {
+        reject(error)
+      }
 
       const readNextChunk = () => {
-        const slice = file.slice(offset, offset + FILE_CHUNK_DATA_SIZE);
-        reader.readAsArrayBuffer(slice);
-      };
+        const slice = file.slice(offset, offset + FILE_CHUNK_DATA_SIZE)
+        reader.readAsArrayBuffer(slice)
+      }
 
-      this.channel.unordered.channel.onbufferedamountlow = () => readNextChunk();
-      readNextChunk();
+      this.channel.unordered.channel.onbufferedamountlow = () => readNextChunk()
+      readNextChunk()
     })
   }
 
-  public async sendFile(file: File) {
-    this.logger.info(`Sending file: ${file.name}, Size: ${file.size} bytes`);
-
-    // Send metadata
-    const metadata: FileMetadataMessage = {
-      type: "file-metadata",
-      data: {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        fileId: window.crypto.randomUUID(),
-        chunks: Math.ceil(file.size / FILE_CHUNK_DATA_SIZE),
-      }
-    };
-    this.channel.reliable.send(metadata);
-
-    await this.__sendFile(metadata, file)
+  private onTransferCompleted() {
     this.logger.info("File transfer completed!")
+    const file = this.pendingFiles.shift()
+    if (file) {
+      this.__sendFile(file).then(() => this.onTransferCompleted())
+    }
+  }
+
+  public async sendFile(file: File) {
+    this.pendingFiles.push(file)
+    if (this.pendingFiles.length > 1) return
+
+    await this.__sendFile(file)
+    this.pendingFiles.shift()
+    this.onTransferCompleted()
   }
 }

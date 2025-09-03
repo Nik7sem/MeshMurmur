@@ -6,7 +6,8 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
-export const AppVersion = 'Alpha v6.5'
+export const AppVersion = 'Alpha v6.7'
+export const urlRegex = /^https:\/\/\S+$/i;
 askNotificationPermission()
 
 // const passphrase = prompt("Enter passphrase to encrypt your keys!");
@@ -44,8 +45,6 @@ connector.actions.associatedNicknames = defaultUserData.associatedNicknames
 await connector.init()
 
 // init globals
-export const urlRegex = /^https:\/\/\S+$/i;
-
 window.DOCUMENT_VISIBLE = true
 window.SCROLL_TO_BOTTOM = true
 

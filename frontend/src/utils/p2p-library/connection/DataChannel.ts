@@ -71,7 +71,7 @@ abstract class DataChannel<T extends (jsonDataType | byteDataType)> {
     });
 
     datachannel.binaryType = 'arraybuffer'
-    datachannel.bufferedAmountLowThreshold = 512 * 1024 * 8 // 512 Kb
+    datachannel.bufferedAmountLowThreshold = 64 * 1024 // 64 Kb
 
     return datachannel
   }
