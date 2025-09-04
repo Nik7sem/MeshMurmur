@@ -55,6 +55,6 @@ export type completeFileType = commonCompleteType & processedFileType
 
 export type completeMessageType = completeTextType | completeFileType
 
-export type fileProgressType = { title: string, progress: number, bitrate: number }
+export type fileProgressType = { title: string, progress: number, bitrate: number, fileId: string }
 export type onFileProgressType = (data: fileProgressType) => void
 

@@ -1,5 +1,5 @@
 import {Middleware} from "@/utils/p2p-library/abstract.ts";
-import {processedFileType, eventDataType, fileProgressType,} from "@/utils/p2p-library/types.ts";
+import {processedFileType, eventDataType, fileProgressType} from "@/utils/p2p-library/types.ts";
 import {getShort} from "@/utils/p2p-library/helpers.ts";
 import {FILE_CHUCK_WHOLE_SIZE, FILE_CHUNK_DATA_SIZE} from "@/utils/p2p-library/connection/DataChannel.ts";
 
@@ -27,7 +27,6 @@ export class FileTransferMiddleware extends Middleware {
   private files = new Map<string, {
     received: {
       chunks: ChunkData[],
-      percent: number,
       timestamp: number,
     }
     fileMetadata: FileMetadataMessage["data"]
@@ -38,6 +37,7 @@ export class FileTransferMiddleware extends Middleware {
     resolve: () => void,
     reject: (error: unknown) => void
   }> = [];
+  private showProgressLastUsed = 0
   public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 
@@ -58,21 +58,24 @@ export class FileTransferMiddleware extends Middleware {
     if (this.files.has(message.data.fileId)) return;
     this.files.set(message.data.fileId, {
       fileMetadata: message.data,
-      received: {chunks: [], percent: 0, timestamp: (new Date()).getTime()}
+      received: {chunks: [], timestamp: (new Date()).getTime()}
     })
     this.logger.info('Receiving file: ', message.data);
   }
 
-  private showProgress(previousPercent: number, chunkIdx: number, chunksLen: number, timestamp: number, sending: boolean, chunking = false): number {
-    const percent = Math.round(chunkIdx / chunksLen * 100)
-    if (percent > previousPercent) {
+  private showProgress(fileId: string, chunkIdx: number, chunksLen: number, timestamp: number, sending: boolean) {
+    const curTime = (new Date()).getTime()
+    if (curTime - this.showProgressLastUsed > 1000 || chunkIdx === chunksLen) {
+      this.showProgressLastUsed = curTime
+
+      const chunkNumber = chunkIdx.toString().padEnd(chunksLen.toString().length, ' ')
       this.onFileProgress?.({
-        title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
-        progress: percent,
-        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / (((new Date()).getTime() - timestamp) / 1000))
+        title: `${sending ? 'Sending' : 'Receiving'} ${getShort(this.targetPeerId)} ${chunkNumber}/${chunksLen}`,
+        progress: Math.round(chunkIdx / chunksLen * 100),
+        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / ((curTime - timestamp) / 1000)),
+        fileId
       })
     }
-    return percent
   }
 
   private handleFileChunk(chunk: ChunkData) {
@@ -80,7 +83,7 @@ export class FileTransferMiddleware extends Middleware {
     if (!file) return
 
     file.received.chunks.push(chunk)
-    file.received.percent = this.showProgress(file.received.percent, file.received.chunks.length, file.fileMetadata.chunks, file.received.timestamp, false)
+    this.showProgress(chunk.metadata.fileId, file.received.chunks.length, file.fileMetadata.chunks, file.received.timestamp, false)
 
     // Check if file is complete
     if (file.received.chunks.length === file.fileMetadata.chunks) {
@@ -119,13 +122,10 @@ export class FileTransferMiddleware extends Middleware {
       this.logger.info('Sending file: ', metadata)
       this.channel.reliable.send(metadata)
 
-      let previousPercent = 0
       let chunkIdx = 0
       let offset = 0;
       const timestamp = (new Date()).getTime()
       const reader = new FileReader()
-
-      this.onFileProgress?.({title: 'Sending', progress: 0, bitrate: 0})
 
       reader.onload = (e) => {
         if (e.target?.result instanceof ArrayBuffer) {
@@ -137,7 +137,7 @@ export class FileTransferMiddleware extends Middleware {
               metadata: {chunkId: chunkIdx, fileId: metadata.data.fileId}
             } as ChunkData)
             ++chunkIdx
-            previousPercent = this.showProgress(previousPercent, chunkIdx, metadata.data.chunks, timestamp, true)
+            this.showProgress(metadata.data.fileId, chunkIdx, metadata.data.chunks, timestamp, true)
             if (this.channel.unordered.channel.bufferedAmount <= this.channel.unordered.channel.bufferedAmountLowThreshold) {
               readNextChunk()
             }

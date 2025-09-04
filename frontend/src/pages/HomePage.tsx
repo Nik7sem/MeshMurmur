@@ -13,7 +13,7 @@ const HomePage = () => {
   const [messages, setMessages] = useState<completeMessageType[]>([])
   const [replyMessage, setReplyMessage] = useState<completeMessageType | null>(null)
   const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
-  const [fileProgressData, setFileProgressData] = useState<fileProgressType | null>(null)
+  const [fileProgressData, setFileProgressData] = useState<Map<string, fileProgressType>>(new Map())
 
   const addMessage = useCallback((data: completeMessageType) => {
     if (!window.DOCUMENT_VISIBLE) {
@@ -24,14 +24,18 @@ const HomePage = () => {
   }, []);
 
   const setNewFileProgress = useCallback((data: fileProgressType) => {
-    setFileProgressData(data)
+    setFileProgressData((fileProgressData) => {
+      const newMap = new Map(fileProgressData)
+      newMap.set(data.fileId, data)
+      return newMap
+    })
+
     if (data.progress === 100) {
       setTimeout(() => {
         setFileProgressData((fileProgressData) => {
-          if (fileProgressData?.progress === 100) {
-            return null
-          }
-          return fileProgressData
+          const newMap = new Map(fileProgressData)
+          newMap.delete(data.fileId)
+          return newMap
         })
       }, 1000)
     }
@@ -66,9 +70,7 @@ const HomePage = () => {
     <Container width="100%">
       <MessagesBlock messages={messages} setReplyMessage={setReplyMessage}/>
       <SendOptions addMessage={addMessage} replyMessage={replyMessage} resetReplyMessage={() => setReplyMessage(null)}/>
-      <Center>
-        <FileProgressBar data={fileProgressData}/>
-      </Center>
+      <FileProgressBar fileProgressData={fileProgressData}/>
       <TypingNotification typingPeers={typingPeers}/>
     </Container>
   );

@@ -1,23 +1,26 @@
-import {FormatByte, HStack, Progress} from '@chakra-ui/react';
+import {Flex, FormatByte, HStack, Progress} from '@chakra-ui/react';
 import React, {FC} from 'react';
 import {fileProgressType} from "@/utils/p2p-library/types.ts";
 
 interface Props {
-  data: fileProgressType | null
+  fileProgressData: Map<string, fileProgressType>
 }
 
-const FileProgressBar: FC<Props> = ({data}) => {
+const FileProgressBar: FC<Props> = ({fileProgressData}) => {
   return (
-    data ?
-      <Progress.Root value={data.progress} maxW="500px">
-        <Progress.Label>{data.title}: <FormatByte value={data.bitrate}/>/s</Progress.Label>
-        <HStack gap="5">
-          <Progress.Track flex="1">
-            <Progress.Range/>
-          </Progress.Track>
-          <Progress.ValueText>{data.progress}%</Progress.ValueText>
-        </HStack>
-      </Progress.Root> : <></>
+    <Flex width='100%' flexDirection='column' alignItems='flex-start'>
+      {Array.from(fileProgressData.entries()).map(([key, data]) =>
+        <Progress.Root key={key} value={data.progress} maxW="500px">
+          <Progress.Label fontFamily='monospace'>{data.title}: <FormatByte value={data.bitrate}/>/s</Progress.Label>
+          <HStack gap="5">
+            <Progress.Track flex="1">
+              <Progress.Range/>
+            </Progress.Track>
+            <Progress.ValueText>{data.progress}%</Progress.ValueText>
+          </HStack>
+        </Progress.Root>
+      )}
+    </Flex>
   );
 };
 
