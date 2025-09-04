@@ -15,6 +15,7 @@ const ChatMessage: FC<Props> = ({username, peerId, me, children}) => {
       <Box
         bg={me ? "blue.500" : "gray.200"}
         mb='4px'
+        maxWidth='70vw'
         borderRadius="lg"
       >
         {!me ?
