@@ -32,7 +32,12 @@ export class FileTransferMiddleware extends Middleware {
     }
     fileMetadata: FileMetadataMessage["data"]
   }>()
-  private pendingFiles: File[] = []
+  private pendingFiles: Array<{
+    file: File,
+    metadata: FileMetadataMessage,
+    resolve: () => void,
+    reject: (error: unknown) => void
+  }> = [];
   public onFileComplete?: (data: processedFileType) => void
   public onFileProgress?: (data: fileProgressType) => void
 
@@ -64,7 +69,7 @@ export class FileTransferMiddleware extends Middleware {
       this.onFileProgress?.({
         title: `${sending ? 'Sending to' : 'Receiving from'} ${getShort(this.targetPeerId)} ${chunkIdx}/${chunksLen} ${chunking ? '(Chunking)' : ''}`,
         progress: percent,
-        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / 1024 / (((new Date()).getTime() - timestamp) / 1000))
+        bitrate: Math.round(chunkIdx * FILE_CHUCK_WHOLE_SIZE / (((new Date()).getTime() - timestamp) / 1000))
       })
     }
     return percent
@@ -96,18 +101,21 @@ export class FileTransferMiddleware extends Middleware {
     this.logger.info(`File ${file.fileMetadata.fileName} received`);
   }
 
-  private __sendFile(file: File): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const metadata: FileMetadataMessage = {
-        type: "file-metadata",
-        data: {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          fileId: window.crypto.randomUUID(),
-          chunks: Math.ceil(file.size / FILE_CHUNK_DATA_SIZE),
-        }
+  private __createMetadata(file: File): FileMetadataMessage {
+    return {
+      type: "file-metadata",
+      data: {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileId: window.crypto.randomUUID(),
+        chunks: Math.ceil(file.size / FILE_CHUNK_DATA_SIZE),
       }
+    }
+  }
+
+  private __sendFile(file: File, metadata: FileMetadataMessage): Promise<void> {
+    return new Promise((resolve, reject) => {
       this.logger.info('Sending file: ', metadata)
       this.channel.reliable.send(metadata)
 
@@ -141,6 +149,7 @@ export class FileTransferMiddleware extends Middleware {
       }
 
       reader.onerror = (error) => {
+        this.channel.unordered.channel.onbufferedamountlow = null
         reject(error)
       }
 
@@ -154,20 +163,31 @@ export class FileTransferMiddleware extends Middleware {
     })
   }
 
-  private onTransferCompleted() {
-    this.logger.info("File transfer completed!")
-    const file = this.pendingFiles.shift()
-    if (file) {
-      this.__sendFile(file).then(() => this.onTransferCompleted())
+  private async processFileQueue() {
+    if (this.pendingFiles.length === 0) return;
+
+    const {file, metadata, resolve, reject} = this.pendingFiles[0];
+
+    try {
+      await this.__sendFile(file, metadata)
+      this.logger.info("File transfer completed: ", metadata)
+      resolve()
+    } catch (error) {
+      reject(error)
+    } finally {
+      this.pendingFiles.shift()
+      this.processFileQueue()
     }
   }
 
-  public async sendFile(file: File) {
-    this.pendingFiles.push(file)
-    if (this.pendingFiles.length > 1) return
+  public async sendFile(file: File): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const metadata = this.__createMetadata(file)
+      this.pendingFiles.push({file, metadata, resolve, reject})
 
-    await this.__sendFile(file)
-    this.pendingFiles.shift()
-    this.onTransferCompleted()
+      if (this.pendingFiles.length === 1) {
+        this.processFileQueue()
+      }
+    })
   }
 }
