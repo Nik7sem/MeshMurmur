@@ -16,7 +16,9 @@ import {Provider} from "@/components/ui/provider.tsx";
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
-  <Provider>
+  <Provider
+    defaultTheme={window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}
+  >
     <GlobalStyles/>
     <App/>
   </Provider>

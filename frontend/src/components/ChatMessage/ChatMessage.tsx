@@ -20,7 +20,7 @@ const ChatMessage: FC<Props> = ({username, peerId, me, children}) => {
       >
         {!me ?
           <TooltipPeerId peerId={peerId}>
-            <Text color={me ? "white" : "black"} fontSize="sm" fontWeight="bold" px='4px'>
+            <Text color={me ? "white" : "black"} fontSize="sm" fontWeight="bold" px='12px'>
               {username}
             </Text>
           </TooltipPeerId> :
