@@ -46,7 +46,7 @@ const MessagesBlock: FC<Props> = ({messages, setReplyMessage}) => {
       window.SCROLL_TO_BOTTOM = false
     }
 
-    if (dist < 1) {
+    if (dist < 20) {
       window.SCROLL_TO_BOTTOM = true
     }
   }

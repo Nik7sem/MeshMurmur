@@ -1,6 +1,5 @@
 import React, {FC} from 'react';
-import {AspectRatio, Box, Flex, Link, Text} from "@chakra-ui/react";
-import TooltipPeerId from "@/components/TooltipPeerId.tsx";
+import {AspectRatio, Link} from "@chakra-ui/react";
 import ChatMessage from "@/components/ChatMessage/ChatMessage.tsx";
 
 const youtubeVideoRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -41,7 +40,10 @@ function renderMessageContent(link: string) {
   }
 
   return (
-    <Link href={link} target="_blank" color="blue.700" fontWeight="bold">{link}</Link>
+    <Link href={link} target="_blank" color="blue.700" fontWeight="bold" overflowWrap='anywhere'
+          p='2px 12px 2px 12px'>
+      {link}
+    </Link>
   )
 }
 
