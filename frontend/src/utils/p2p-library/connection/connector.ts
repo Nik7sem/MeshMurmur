@@ -6,6 +6,7 @@ import {createSignaler} from "@/utils/p2p-library/signalers/createSignaler.ts";
 import {connectionStageType, signalerNameType} from "@/utils/p2p-library/types.ts";
 import {NegotiationManager, NegotiationPackageType} from "@/utils/p2p-library/connection/negotiationManager.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
+import {TypedEventEmitter} from "@/utils/eventEmitter.ts";
 
 export interface ConnectorConfig {
   signaler: signalerNameType
@@ -17,7 +18,9 @@ export class Connector {
   private readonly signaler: Signaler;
   public connections: { [peerId: string]: PeerConnection } = {}
   public actions: ActionManager
-  public onPeerConnectionChanged?: (targetPeerId: string, status: connectionStageType) => void
+  public eventEmitter = new TypedEventEmitter<{
+    onPeerConnectionChanged: { targetPeerId: string, status: connectionStageType }
+  }>();
   public blackList: Set<string> = new Set()
   public potentialPeers: Set<string> = new Set()
 
@@ -115,7 +118,7 @@ export class Connector {
       this.createConnection(targetPeerId, false, np)
     }
 
-    this.onPeerConnectionChanged?.(targetPeerId, 'negotiating')
+    this.eventEmitter.emit('onPeerConnectionChanged', {targetPeerId, status: 'negotiating'})
     const managerMiddleware = await this.connections[targetPeerId].connect(np)
 
     if (managerMiddleware) {
@@ -136,6 +139,7 @@ export class Connector {
   private createOnPeerConnectionChanged(targetPeerId: string) {
     return (status: connectionStageType, block?: boolean, error?: boolean) => {
       if (status === "disconnected") {
+        this.eventEmitter.emit('onPeerConnectionChanged', {targetPeerId, status})
         delete this.connections[targetPeerId]
         if (block) {
           this.blackList.add(targetPeerId)
@@ -145,10 +149,11 @@ export class Connector {
             this.createConnection(targetPeerId)
           }
         }
+        return
       } else if (status === "connected") {
         this.logger.success(`Connected to ${this.actions.targetPeerNickname(targetPeerId)}.`);
       }
-      this.onPeerConnectionChanged?.(targetPeerId, status)
+      this.eventEmitter.emit('onPeerConnectionChanged', {targetPeerId, status})
     }
   }
 

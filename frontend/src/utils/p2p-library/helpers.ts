@@ -1,5 +1,5 @@
 import {
-  completeMessageType, completeTextType, completeFileType
+  completeMessageType, completeTextType, completeFileType, chatMemberBadge
 } from "@/utils/p2p-library/types.ts";
 import {AppConfig} from "@/utils/p2p-library/conf.ts";
 
@@ -76,11 +76,15 @@ export function parseChunk(chunk: ArrayBuffer, chunkWholeSize: number, chunkMeta
 }
 
 export function isCompleteText(data: completeMessageType): data is completeTextType {
-  return typeof data.data === "string"
+  return "data" in data && typeof data.data === "string"
 }
 
 export function isCompleteFile(data: completeMessageType): data is completeFileType {
-  return typeof data.data === "object" && "url" in data.data
+  return "data" in data && typeof data.data === "object" && "url" in data.data
+}
+
+export function isChatMemberBadge(data: completeMessageType): data is chatMemberBadge {
+  return "status" in data && (data.status === 'enter' || data.status === 'exit');
 }
 
 export function getShort(str: string, slice = AppConfig.maxNameLength) {

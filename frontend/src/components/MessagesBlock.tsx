@@ -3,11 +3,12 @@ import ChatTextMessage from "@/components/ChatMessage/ChatTextMessage.tsx";
 import {peerId, urlRegex} from "@/init.ts";
 import {Container} from "@chakra-ui/react";
 import {completeMessageType} from "@/utils/p2p-library/types.ts";
-import {isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
+import {isChatMemberBadge, isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
 import ChatFileMessage from "@/components/ChatMessage/ChatFileMessage.tsx";
 import {smoothScroll} from "@/utils/smoothScroll.ts";
 import ChatLinkMessage from "@/components/ChatMessage/ChatLinkMessage.tsx";
 import Swipeable from "@/components/Swipeable.tsx";
+import ChatMemberBadge from "@/components/ChatMessage/ChatMemberBadge.tsx";
 
 interface Props {
   messages: completeMessageType[];
@@ -24,6 +25,8 @@ function getMessageComponent(data: completeMessageType) {
     }
   } else if (isCompleteFile(data)) {
     return <ChatFileMessage data={data.data} peerId={data.peerId} username={data.nickname} me={me}/>
+  } else if (isChatMemberBadge(data)) {
+    return <ChatMemberBadge nickname={data.nickname} status={data.status}/>
   }
 }
 

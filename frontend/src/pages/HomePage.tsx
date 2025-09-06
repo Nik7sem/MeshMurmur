@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Center, Container} from "@chakra-ui/react";
+import {Container} from "@chakra-ui/react";
 import {completeMessageType, fileProgressType} from "@/utils/p2p-library/types.ts";
 import {connector} from "@/init.ts";
 import MessagesBlock from "@/components/MessagesBlock.tsx";
@@ -53,18 +53,37 @@ const HomePage = () => {
     })
   }, [])
 
+  const onPeerConnectionChanged = useCallback((data: { status: string, targetPeerId: string }) => {
+    let status: 'enter' | 'exit'
+    if (data.status === 'connected') {
+      status = 'enter'
+    } else if (data.status === 'disconnected') {
+      status = 'exit'
+    } else {
+      return
+    }
+    addMessage({
+      time: new Date().getTime(),
+      peerId: data.targetPeerId,
+      nickname: connector.actions.targetPeerNickname(data.targetPeerId),
+      status
+    })
+  }, [addMessage])
+
   useEffect(() => {
     if (addMessage && setNewFileProgress && onTyping) {
       connector.actions.onCompleteData = addMessage
       connector.actions.onFileProgress = setNewFileProgress
       connector.actions.onTyping = onTyping
+      connector.eventEmitter.on('onPeerConnectionChanged', onPeerConnectionChanged)
     }
     return () => {
       connector.actions.onCompleteData = undefined
       connector.actions.onFileProgress = undefined
       connector.actions.onTyping = undefined
+      connector.eventEmitter.off('onPeerConnectionChanged', onPeerConnectionChanged)
     }
-  }, [addMessage, onTyping, setNewFileProgress])
+  }, [addMessage, onTyping, setNewFileProgress, onPeerConnectionChanged])
 
   return (
     <Container width="100%">

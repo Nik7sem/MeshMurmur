@@ -22,9 +22,9 @@ export class PeerDiscoveryCoordinator {
 
   constructor(private connector: Connector) {
     this.updateSelfConnections()
-    this.connector.onPeerConnectionChanged = () => {
+    this.connector.eventEmitter.on('onPeerConnectionChanged', () => {
       this.updateSelfConnections()
-    }
+    })
     setInterval(() => {
       this.peerMap = this.getCleanPeerMap()
       this.updateSelfConnections()

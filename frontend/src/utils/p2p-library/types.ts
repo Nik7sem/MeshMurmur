@@ -52,8 +52,9 @@ export type processedFileType = {
 type commonCompleteType = { peerId: string, nickname: string }
 export type completeTextType = commonCompleteType & processedTextType
 export type completeFileType = commonCompleteType & processedFileType
+export type chatMemberBadge = commonCompleteType & { status: 'enter' | 'exit', time: number }
 
-export type completeMessageType = completeTextType | completeFileType
+export type completeMessageType = completeTextType | completeFileType | chatMemberBadge
 
 export type fileProgressType = { title: string, progress: number, bitrate: number, fileId: string }
 export type onFileProgressType = (data: fileProgressType) => void
