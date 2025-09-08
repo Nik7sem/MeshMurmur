@@ -13,7 +13,7 @@ export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSign
   "WebsocketSignalerBipki": {
     type: "websocket",
     config: {
-      url: "wss://signaler.ddns.net:50000"
+      url: "wss://signaler.ddns.net"
     }
   },
   "WebsocketSignalerDev": {
