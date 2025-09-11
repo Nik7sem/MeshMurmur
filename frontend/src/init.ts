@@ -6,7 +6,7 @@ import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
 // init constants
-export const AppVersion = 'Alpha v7.0.1'
+export const AppVersion = 'Alpha v7.0.5'
 export const urlRegex = /^https:\/\/\S+$/i;
 askNotificationPermission()
 

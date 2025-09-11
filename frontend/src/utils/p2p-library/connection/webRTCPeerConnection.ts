@@ -32,7 +32,7 @@ export class WebRTCPeerConnection {
     const polite = isPolite(this.peerId, this.targetPeerId)
 
     this.logger.info(`START CONNECTION AS ${polite ? "POLITE" : "IMPOLITE"} PEER`)
-    // this.startDebugListeners() TODO: add debug switch
+    this.startDebugListeners()
 
     this.pc.onconnectionstatechange = () => {
       if (this.pc.connectionState === "connecting" ||
@@ -44,7 +44,8 @@ export class WebRTCPeerConnection {
     // Handle ICE candidates
     this.pc.onicecandidate = ({candidate}) => {
       this.signaler.send(this.targetPeerId, {candidate: candidate ? candidate.toJSON() : null})
-      this.logger.info(`Send ice candidate: `, candidate)
+      this.logger.info(`Send ice candidate: `)
+      this.logger.debug(candidate)
     };
 
     // offer
@@ -54,7 +55,8 @@ export class WebRTCPeerConnection {
         this.makingOffer = true;
         await this.pc.setLocalDescription();
         this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
-        this.logger.info(`Send offer: `, this.pc.localDescription)
+        this.logger.info(`Send offer: `)
+        this.logger.debug(this.pc.localDescription)
       } catch (err) {
         this.logger.error("Error sending offer:", err);
       } finally {
@@ -72,7 +74,8 @@ export class WebRTCPeerConnection {
 
           this.ignoreOffer = !polite && offerCollision;
           if (this.ignoreOffer) {
-            this.logger.info("Ignore offer: ", description);
+            this.logger.info("Ignore offer: ");
+            this.logger.debug(description);
             return;
           }
 
@@ -80,16 +83,19 @@ export class WebRTCPeerConnection {
           await this.pc.setRemoteDescription(description);
           this.isSettingRemoteAnswerPending = false;
 
-          this.logger.info(`Receive ${description.type}: `, description);
+          this.logger.info(`Receive ${description.type}: `);
+          this.logger.debug(description);
           if (description.type === "offer") {
             await this.pc.setLocalDescription();
             this.signaler.send(this.targetPeerId, {description: this.pc.localDescription?.toJSON()});
-            this.logger.info("Send answer: ", this.pc.localDescription);
+            this.logger.info("Send answer: ");
+            this.logger.debug(this.pc.localDescription)
           }
         } else if (candidate) {
           try {
             await this.pc.addIceCandidate(candidate);
-            this.logger.info("Receive ice candidate: ", candidate);
+            this.logger.info("Receive ice candidate: ");
+            this.logger.debug(candidate)
           } catch (err) {
             if (!this.ignoreOffer) {
               this.logger.error("Error adding candidate: ", err);
@@ -104,23 +110,23 @@ export class WebRTCPeerConnection {
 
   startDebugListeners() {
     this.pc.onconnectionstatechange = () => {
-      this.logger.info("Connection state changed:", this.pc.connectionState);
+      this.logger.debug("Connection state changed:", this.pc.connectionState);
     };
 
     this.pc.onsignalingstatechange = () => {
-      this.logger.info("Signaling state changed:", this.pc.signalingState);
+      this.logger.debug("Signaling state changed:", this.pc.signalingState);
     };
 
     this.pc.onicegatheringstatechange = () => {
-      this.logger.info("ICE gathering state changed:", this.pc.iceGatheringState);
+      this.logger.debug("ICE gathering state changed:", this.pc.iceGatheringState);
     };
 
     this.pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state changed:', this.pc.iceConnectionState)
+      console.debug('ICE connection state changed:', this.pc.iceConnectionState)
     };
 
     this.pc.onicecandidateerror = (event) => {
-      this.logger.info("Ice candidate error: ", event.errorText, event.url);
+      this.logger.debug("Ice candidate error: ", event.errorText, event.url);
     }
   }
 

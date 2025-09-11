@@ -1,6 +1,6 @@
 import {logType} from "@/utils/p2p-library/types.ts";
 import {formatConsoleLog} from "@/utils/formatConsoleLog.ts";
-import logs from "@/components/Logs.tsx";
+import logs from "@/components/MainMenu.tsx";
 import {getFormattedTime} from "@/utils/formatDate.ts";
 
 export abstract class Logger {
@@ -12,12 +12,14 @@ export abstract class Logger {
 
   abstract error(...args: any[]): void
 
+  abstract debug(...args: any[]): void
+
   abstract createChild(prefix: string): ChildLogger
 }
 
 export class MainLogger extends Logger {
   public logs: logType[] = [];
-  private onLog?: (log: logType) => void
+  public onLog?: (log: logType) => void
 
   success(...args: any[]) {
     this.addLog(args, "success");
@@ -35,16 +37,13 @@ export class MainLogger extends Logger {
     this.addLog(args, "error")
   }
 
+  debug(...args: any[]) {
+    this.addLog(args, "debug")
+  }
+
   addLog(args: any[], type: logType['type']) {
     this.logs.push({text: `[${getFormattedTime()}] ${formatConsoleLog(...args)}`, type})
     this.onLog?.(this.logs[this.logs.length - 1]);
-  }
-
-  setOnLog(onLog: (log: logType) => void) {
-    this.onLog = onLog;
-    for (const log of this.logs) {
-      this.onLog(log)
-    }
   }
 
   createChild(prefix: string): ChildLogger {
@@ -79,6 +78,10 @@ export class ChildLogger implements Logger {
 
   error(...args: any[]) {
     this.parent.error(...this.formatWithPrefix(...args));
+  }
+
+  debug(...args: any[]) {
+    this.parent.debug(...this.formatWithPrefix(...args));
   }
 
   createChild(prefix: string): ChildLogger {

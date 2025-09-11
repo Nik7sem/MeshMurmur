@@ -1,80 +1,31 @@
-import React, {FC, useRef, useState} from 'react';
-import {
-  Box,
-  Collapsible,
-  VStack,
-  Text,
-  HStack,
-  Status,
-  Drawer,
-  Button,
-  Portal,
-  CloseButton,
-  SegmentGroup
-} from "@chakra-ui/react";
-import {logType} from "@/utils/p2p-library/types.ts";
+import React, {useState} from 'react';
+import {Box, Button, HStack, Separator, Text, VStack} from "@chakra-ui/react";
 import LogLabel from "@/components/LogLabel.tsx";
-import PeerSettings from "@/components/PeerSettings/PeerSettings.tsx";
-import PeerGraph from "./PeerGraph.tsx"
-import NicknameAssigner from "@/components/NicknameAssigner/NicknameAssigner.tsx";
-import Experimental from "@/components/Experimental.tsx";
+import {logger} from "@/init.ts";
 
-interface Props {
-  logs: logType[]
-}
+const Logs = () => {
+  const [isDebugMode, setDebugMode] = useState<boolean>(false);
 
-const Logs: FC<Props> = ({logs}) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [menuValue, setMenuValue] = useState<string>('Logs');
-  const contentRef = useRef<HTMLDivElement>(null)
+  function onClickDebug() {
+    setDebugMode(!isDebugMode);
+  }
+
+  function onClickClear() {
+    logger.logs = []
+  }
 
   return (
-    <Drawer.Root size="xl" open={isOpen} onOpenChange={(e) => {
-      setIsOpen(e.open)
-      setMenuValue('Logs')
-    }}>
-      <Drawer.Trigger asChild>
-        <Button variant="outline" size="sm" paddingY="3">
-          {isOpen ? "Hide ▲" : "Show ▼"}
-        </Button>
-      </Drawer.Trigger>
-      <Portal>
-        <Drawer.Backdrop/>
-        <Drawer.Positioner>
-          <Drawer.Content ref={contentRef}>
-            <Drawer.Header>
-              <Drawer.Title>
-                <SegmentGroup.Root value={menuValue}
-                                   onValueChange={({value}) => value ? setMenuValue(value) : undefined}>
-                  <SegmentGroup.Indicator/>
-                  <SegmentGroup.Items items={["Logs", "Settings", "Nickname", "Graph", "Experimental"]}/>
-                </SegmentGroup.Root>
-              </Drawer.Title>
-            </Drawer.Header>
-            <Drawer.Body>
-              {menuValue === "Logs" ?
-                <VStack align="start" padding={2}>
-                  {logs.map((log, idx) =>
-                    <Box key={idx}><LogLabel type={log.type}/> <Text>{log.text}</Text></Box>
-                  )}
-                </VStack> : menuValue === "Settings" ?
-                  <PeerSettings contentRef={contentRef}/> : menuValue === "Graph" ?
-                    <PeerGraph/> : menuValue === "Nickname" ?
-                      <NicknameAssigner contentRef={contentRef}/> :
-                      <Experimental/>
-              }
-            </Drawer.Body>
-            {/*<Drawer.Footer>*/}
-            {/*  <Button variant="outline">Cancel</Button>*/}
-            {/*  <Button>Save</Button>*/}
-            {/*</Drawer.Footer>*/}
-            <Drawer.CloseTrigger asChild>
-              <CloseButton size="sm"/>
-            </Drawer.CloseTrigger>
-          </Drawer.Content>
-        </Drawer.Positioner>
-      </Portal>
-    </Drawer.Root>
+    <VStack align="start" padding={2}>
+      <HStack>
+        <Button bg={isDebugMode ? 'green.400' : 'white'} width='110px'
+                onClick={onClickDebug}>{isDebugMode ? "Debug mode" : "Info mode"}</Button>
+        <Button onClick={onClickClear}>Clear logs</Button>
+      </HStack>
+      <Separator/>
+      {logger.logs.filter(log => log.type === 'debug' ? isDebugMode : true).map((log, idx) =>
+        <Box key={idx}><LogLabel type={log.type}/> <Text>{log.text}</Text></Box>
+      )}
+    </VStack>
   );
 };
 

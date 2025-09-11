@@ -1,40 +1,50 @@
-import React, {FC, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Box, Text, HStack} from '@chakra-ui/react';
-
-import {getShort} from "@/utils/p2p-library/helpers.ts";
 import {connector} from "@/init.ts";
 
-interface Props {
-  typingPeers: Set<string>;
+function getTypingText(typingPeers: Set<string>) {
+  const names = Array.from(typingPeers).map(peerId => connector.actions.targetPeerNickname(peerId));
+  const count = names.length;
+
+  let typingText = '';
+  if (count > 0) {
+    if (count === 1) {
+      typingText = `${names[0]} is typing`;
+    } else if (count === 2) {
+      typingText = `${names[0]} and ${names[1]} are typing`;
+    } else {
+      typingText = `${names[0]} and ${count - 1} others are typing`;
+    }
+  }
+  return typingText
 }
 
-const TypingNotification: FC<Props> = ({typingPeers}) => {
-  const [visible, setVisible] = useState(false);
+const TypingNotification = () => {
   const [message, setMessage] = useState('');
+  const [typingPeers, setTypingPeers] = useState<Set<string>>(new Set())
+
+  const onTyping = useCallback((data: { typing: boolean, peerId: string }) => {
+    setTypingPeers((typingPeers) => {
+      const newTypingPeers = new Set([...typingPeers])
+      if (data.typing) {
+        newTypingPeers.add(data.peerId)
+        setMessage(getTypingText(newTypingPeers))
+      } else {
+        newTypingPeers.delete(data.peerId)
+        setTimeout(() => {
+          setMessage(getTypingText(newTypingPeers))
+        }, 300)
+      }
+      return newTypingPeers
+    })
+  }, [])
 
   useEffect(() => {
-    const names = Array.from(typingPeers).map(peerId => connector.actions.targetPeerNickname(peerId));
-    const count = names.length;
-
-    if (count > 0) {
-      let newMessage = '';
-      if (count === 1) {
-        newMessage = `${names[0]} is typing`;
-      } else if (count === 2) {
-        newMessage = `${names[0]} and ${names[1]} are typing`;
-      } else {
-        newMessage = `${names[0]} and ${count - 1} others are typing`;
-      }
-      setMessage(newMessage);
-      setVisible(true);
-    } else {
-      // Delay hiding the notification to allow fade-out animation
-      const timeout = setTimeout(() => setVisible(false), 300); // 300ms matches the animation duration
-      return () => clearTimeout(timeout);
+    connector.actions.onTyping = onTyping
+    return () => {
+      connector.actions.onTyping = undefined
     }
-  }, [typingPeers]);
-
-  if (!visible) return null;
+  }, [onTyping]);
 
   return (
     <Box

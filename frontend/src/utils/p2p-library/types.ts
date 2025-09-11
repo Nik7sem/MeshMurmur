@@ -10,7 +10,7 @@ export type connectionStageType =
   | "reconnecting"
   | "disconnected"
 
-export type logType = { text: string, type: "success" | "info" | "warn" | "error" }
+export type logType = { text: string, type: "success" | "info" | "warn" | "error" | "debug" }
 
 export type signalerNameType = keyof typeof signalers
 
