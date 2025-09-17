@@ -49,6 +49,7 @@ export class RTCConfigHelper {
   }
 
   public setDefault(): RTCConfiguration {
+    storageManager.storeRTCConfig(JSON.stringify(DefaultRTCConfig))
     return this.RTCConfig = JSON.parse(JSON.stringify(DefaultRTCConfig))
   }
 }

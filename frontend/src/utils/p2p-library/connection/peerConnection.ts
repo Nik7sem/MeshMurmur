@@ -80,7 +80,7 @@ export class PeerConnection {
         const stats = await connection.getStats()
         const info = parseRTCStats(stats)
         if (info) {
-          this.logger.info(`Candidates info: `, info);
+          this.logger.info(`ICE IP: `, info.remote.address);
           this.logger.info(`Connection is using ${info.type} server.`);
           this.connectionICEInfo = info
         }
