@@ -1,13 +1,11 @@
-interface params {
-  info: null | {
-    local: { type: string, address: string, ip: string },
-    remote: { type: string, address: string, ip: string }
-    type: "" | "TURN" | "STUN"
-  }
+export interface ICEInfo {
+  local: { type: string, address: string, ip: string },
+  remote: { type: string, address: string, ip: string }
+  type: "" | "TURN" | "STUN"
 }
 
-export function parseRTCStats(stats: RTCStatsReport): params {
-  let info: params['info'] = null
+export function parseRTCStats(stats: RTCStatsReport): ICEInfo | null {
+  let info = null
   stats.forEach(report => {
     if (report.type === 'candidate-pair' && report.nominated) {
       const localCandidate = stats.get(report.localCandidateId);
@@ -28,5 +26,5 @@ export function parseRTCStats(stats: RTCStatsReport): params {
       }
     }
   })
-  return {info}
+  return info
 }

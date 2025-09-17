@@ -1,6 +1,6 @@
 import {connectionStageType} from "@/utils/p2p-library/types.ts";
 import {Logger} from "@/utils/logger.ts";
-import {parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
+import {ICEInfo, parseRTCStats} from "@/utils/p2p-library/parseRTCStart.ts";
 import {WebRTCPeerConnection} from "@/utils/p2p-library/connection/webRTCPeerConnection.ts";
 import {Signaler} from "@/utils/p2p-library/abstract.ts";
 import {ManagerMiddleware} from "@/utils/p2p-library/middlewares/managerMiddleware.ts";
@@ -22,7 +22,7 @@ export class PeerConnection {
   public managerMiddleware?: ManagerMiddleware
   public negotiationManager: NegotiationManager
   public connectionStage: connectionStageType = "negotiating";
-  public connectionType = "";
+  public connectionICEInfo?: ICEInfo;
 
   constructor(
     public readonly peerId: string,
@@ -78,11 +78,11 @@ export class PeerConnection {
         this.connectionStage = "connected"
         if (this.connectTimeoutId) clearTimeout(this.connectTimeoutId)
         const stats = await connection.getStats()
-        const {info} = parseRTCStats(stats)
+        const info = parseRTCStats(stats)
         if (info) {
           this.logger.info(`Candidates info: `, info);
           this.logger.info(`Connection is using ${info.type} server.`);
-          this.connectionType = info.type
+          this.connectionICEInfo = info
         }
         this.onPeerConnectionChanged('connected');
         this.logger.info(`Connected to ${this.targetPeerId}`)

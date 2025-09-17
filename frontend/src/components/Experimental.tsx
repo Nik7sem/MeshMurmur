@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Button, Checkbox, Container, Field, Input, Separator, Text} from "@chakra-ui/react";
+import RTCConfigurationChanger from "@/components/RTCConfigurationChanger.tsx";
 
 const Experimental = () => {
   const [myToken, setMyToken] = useState("");
@@ -54,6 +55,8 @@ const Experimental = () => {
         <Checkbox.Control/>
         <Checkbox.Label>Make anonymous</Checkbox.Label>
       </Checkbox.Root>
+      <Separator mt="10px"/>
+      <RTCConfigurationChanger/>
     </Container>
   );
 };

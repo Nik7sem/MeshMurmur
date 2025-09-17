@@ -1,5 +1,5 @@
 import {BasicSignaler} from "@/utils/p2p-library/abstract.ts";
-import {rtcConfig} from "@/utils/p2p-library/conf.ts";
+import {MainRTCConfig} from "@/utils/p2p-library/conf.ts";
 import {Logger} from "../../logger.ts";
 import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
 import {ChannelEventHandlers} from "@/utils/p2p-library/types.ts";
@@ -19,7 +19,7 @@ export class WebRTCPeerConnection {
     private readonly signaler: BasicSignaler,
     private readonly logger: Logger,
   ) {
-    this.pc = new RTCPeerConnection(rtcConfig);
+    this.pc = new RTCPeerConnection(MainRTCConfig.get());
     this.channel = new DataChannels(this.pc)
   }
 
