@@ -1,6 +1,5 @@
 import {FirebaseSignalerInterface} from "@/utils/p2p-library/signalers/firebase-signaler.ts";
 import {WebsocketSignalerInterface} from "@/utils/p2p-library/signalers/websocket-signaler.ts";
-import {RTCConfigHelper} from "@/utils/p2p-library/RTCConfigHelper.ts";
 
 export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSignalerInterface> = {
   "FirebaseSignaler": {
@@ -25,7 +24,7 @@ export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSign
   }
 }
 
-export const MainRTCConfig = new RTCConfigHelper({
+export const DefaultRTCConfig = {
   iceTransportPolicy: 'all',
   iceServers: [
     {urls: "stun:stun.l.google.com:19302"},
@@ -62,7 +61,7 @@ export const MainRTCConfig = new RTCConfigHelper({
       username: 'webrtc'
     }
   ]
-})
+}
 
 export const AppConfig = {
   maxNumberOfOutgoingConnections: 5,

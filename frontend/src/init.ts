@@ -5,8 +5,9 @@ import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
 import {askNotificationPermission} from "@/utils/notifications.ts";
 import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
+import {RTCConfigHelper} from "@/utils/p2p-library/RTCConfigHelper.ts";
 // init constants
-export const AppVersion = 'Alpha v7.0.5'
+export const AppVersion = 'Alpha v7.2'
 export const urlRegex = /^https:\/\/\S+$/i;
 askNotificationPermission()
 
@@ -32,6 +33,17 @@ export const edKeyManager = peerKeys ? new ED25519KeyPairManager(peerKeys) : new
 if (!peerKeys) {
   await storageManager.storePeerKeys(edKeyManager.exportKeyPair())
 }
+
+const stringConfigFromStorage = await storageManager.retrieveRTCConfig()
+let configFromStorage: object | undefined
+if (stringConfigFromStorage) {
+  try {
+    configFromStorage = JSON.parse(stringConfigFromStorage)
+  } catch (e) { /* empty */
+  }
+}
+
+export const MainRTCConfig = new RTCConfigHelper(configFromStorage)
 
 const defaultUserData = await getDefaultUserData()
 

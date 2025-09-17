@@ -1,5 +1,5 @@
 import {BasicSignaler} from "@/utils/p2p-library/abstract.ts";
-import {MainRTCConfig} from "@/utils/p2p-library/conf.ts";
+import {MainRTCConfig} from "@/init.ts";
 import {Logger} from "../../logger.ts";
 import {DataChannels} from "@/utils/p2p-library/connection/DataChannel.ts";
 import {ChannelEventHandlers} from "@/utils/p2p-library/types.ts";

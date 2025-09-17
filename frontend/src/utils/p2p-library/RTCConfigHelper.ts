@@ -1,4 +1,6 @@
 import {z} from "zod";
+import {DefaultRTCConfig} from "@/utils/p2p-library/conf.ts";
+import {storageManager} from "@/init.ts";
 
 const RTCConfigSchema = z.object({
   iceTransportPolicy: z.enum(["all", "relay"]).optional(),
@@ -12,7 +14,14 @@ const RTCConfigSchema = z.object({
 export class RTCConfigHelper {
   private RTCConfig: RTCConfiguration
 
-  constructor(private DefaultRTCConfig: RTCConfiguration) {
+  constructor(RTCConfig?: object) {
+    if (RTCConfig) {
+      const config = this.set(RTCConfig)
+      if (config) {
+        this.RTCConfig = config
+        return
+      }
+    }
     this.RTCConfig = this.setDefault()
   }
 
@@ -28,10 +37,10 @@ export class RTCConfigHelper {
   public set(config: object) {
     const RTCConfig = this.checkConfig(config)
     if (RTCConfig) {
-      this.RTCConfig = RTCConfig
-      return true
+      storageManager.storeRTCConfig(JSON.stringify(RTCConfig))
+      return this.RTCConfig = RTCConfig
     } else {
-      return false
+      return null
     }
   }
 
@@ -40,6 +49,6 @@ export class RTCConfigHelper {
   }
 
   public setDefault(): RTCConfiguration {
-    return this.RTCConfig = JSON.parse(JSON.stringify(this.DefaultRTCConfig))
+    return this.RTCConfig = JSON.parse(JSON.stringify(DefaultRTCConfig))
   }
 }

@@ -37,4 +37,16 @@ export class SecureStorageManager {
   async storeUserData(userData: string) {
     await this.storage.storeSecureData('user-data', userData)
   }
+
+  async retrieveRTCConfig() {
+    try {
+      return await this.storage.retrieveSecureData('rtc-config')
+    } catch (e) {
+      return null
+    }
+  }
+
+  async storeRTCConfig(RTCConfig: string) {
+    await this.storage.storeSecureData('rtc-config', RTCConfig)
+  }
 }

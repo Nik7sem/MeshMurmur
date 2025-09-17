@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Button, Container, HStack, Text, Textarea} from "@chakra-ui/react";
-import {MainRTCConfig} from "@/utils/p2p-library/conf.ts";
 import useToast from "@/hooks/useToast.tsx";
+import {MainRTCConfig} from "@/init.ts";
 
 function prettyStringify(object: object) {
   return JSON.stringify(object, null, '\t')
@@ -12,8 +12,8 @@ const RtcConfigurationChanger = () => {
   const [oldStringConfig, setOldStringConfig] = useState<string>(prettyStringify(MainRTCConfig.get()));
   const {successToast, errorToast} = useToast();
 
-  function updateConfigs(config?: RTCConfiguration) {
-    const newStringConfig = prettyStringify(config ?? MainRTCConfig.get())
+  function updateConfigs(config: RTCConfiguration) {
+    const newStringConfig = prettyStringify(config)
     setOldStringConfig(newStringConfig)
     setStringConfig(newStringConfig)
   }
@@ -29,7 +29,7 @@ const RtcConfigurationChanger = () => {
 
     const result = MainRTCConfig.set(config)
     if (result) {
-      updateConfigs()
+      updateConfigs(result)
       successToast("Set configuration successfully")
     } else {
       errorToast("Configuration invalid")
