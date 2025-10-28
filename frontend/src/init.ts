@@ -1,11 +1,11 @@
-import {Connector} from "@/utils/p2p-library/connection/connector.ts";
-import {MainLogger} from "@/utils/logger.ts";
-import {ED25519KeyPairManager, getPeerId,} from "@/utils/crypto/ed25519KeyManager.ts";
-import {arrayBufferToBase64, generateNonce} from "@/utils/crypto/helpers.ts";
+import {Connector} from "@p2p-library/connection/connector.ts";
+import {MainLogger} from "@p2p-library/logger.ts";
+import {ED25519KeyPairManager, getPeerId,} from "@p2p-library/crypto/ed25519KeyManager.ts";
+import {arrayBufferToBase64, generateNonce} from "@p2p-library/crypto/helpers.ts";
 import {askNotificationPermission} from "@/utils/notifications.ts";
-import {SecureStorageManager} from "@/utils/p2p-library/secureStorageManager.ts";
+import {SecureStorageManager} from "@p2p-library/secureStorageManager.ts";
 import {getDefaultUserData} from "@/defaultContext/getDefaultUserData.ts";
-import {RTCConfigHelper} from "@/utils/p2p-library/RTCConfigHelper.ts";
+import {RTCConfigHelper} from "@p2p-library/RTCConfigHelper.ts";
 // init constants
 export const AppVersion = 'Alpha v7.2.2'
 export const urlRegex = /^https:\/\/\S+$/i;
@@ -39,17 +39,20 @@ let configFromStorage: object | undefined
 if (stringConfigFromStorage) {
   try {
     configFromStorage = JSON.parse(stringConfigFromStorage)
-  } catch (e) { /* empty */
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      console.log("broken config from storage")
+    }
   }
 }
 
-export const MainRTCConfig = new RTCConfigHelper(configFromStorage)
+export const MainRTCConfig = new RTCConfigHelper(storageManager, configFromStorage)
 
 const defaultUserData = await getDefaultUserData()
 
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new MainLogger();
-export const connector = new Connector(peerId, defaultUserData.connectorConfig, logger)
+export const connector = new Connector(peerId, defaultUserData.connectorConfig, AppVersion, MainRTCConfig, logger, edKeyManager)
 
 connector.actions.sendNickname(defaultUserData.nickname)
 connector.actions.associatedNicknames = defaultUserData.associatedNicknames

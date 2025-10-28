@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Container} from "@chakra-ui/react";
-import {completeMessageType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType} from "@p2p-library/types.ts";
 import MessagesBlock from "@/components/MessagesBlock.tsx";
 import SendOptions from "@/components/SendOptions/SendOptions.tsx";
 import FileProgressBar from "@/components/FileProgressBar.tsx";

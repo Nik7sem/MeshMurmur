@@ -1,6 +1,6 @@
 import React, {ChangeEvent, useState} from 'react';
 import {Button, Field, Input} from "@chakra-ui/react";
-import {AppConfig} from "@/utils/p2p-library/conf.ts";
+import {AppConfig} from "@p2p-library/conf.ts";
 import useToast from "@/hooks/useToast.tsx";
 import useUserData from "@/hooks/useUserData.tsx";
 

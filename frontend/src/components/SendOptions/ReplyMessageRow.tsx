@@ -4,7 +4,7 @@ import {FaReply} from "react-icons/fa";
 import {peerId} from "@/init.ts";
 import {getReplyText} from "@/utils/getReplyText.ts";
 import {MdOutlineCancel} from "react-icons/md";
-import {completeMessageType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType} from "@p2p-library/types.ts";
 
 interface Props {
   replyMessage: completeMessageType | null

@@ -1,7 +1,7 @@
 import React, {FC, RefObject} from 'react';
-import {Box, Checkbox, createListCollection, Flex, ListCollection, Portal, Select} from "@chakra-ui/react";
+import {Checkbox, createListCollection, Flex, ListCollection, Portal, Select} from "@chakra-ui/react";
 import useUserData from "@/hooks/useUserData.tsx";
-import {signalerNameType} from "@/utils/p2p-library/types.ts";
+import {signalerNameType} from "@p2p-library/types.ts";
 
 const signalers: ListCollection<{ label: signalerNameType, value: signalerNameType }> = createListCollection({
   items: [

@@ -24,14 +24,17 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    /* Chakra-ui */
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@p2p-library/*": [
+        "./p2p-library/*"
       ]
     }
   },
   "include": [
-    "src"
+    "src",
+    "p2p-library"
   ]
 }

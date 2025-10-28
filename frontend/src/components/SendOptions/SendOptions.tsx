@@ -1,7 +1,7 @@
 import React, {FC} from 'react';
 import {Grid,} from "@chakra-ui/react";
 import {connector, peerId} from "@/init.ts";
-import {completeMessageType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType} from "@p2p-library/types.ts";
 import ReplyMessageRow from "@/components/SendOptions/ReplyMessageRow.tsx";
 import SendMessageRow from "@/components/SendOptions/SendMessageRow.tsx";
 import {getReplyText} from "@/utils/getReplyText.ts";

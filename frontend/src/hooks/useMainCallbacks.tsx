@@ -1,7 +1,7 @@
 import {useEffect, useCallback, useState} from 'react';
-import {completeMessageType, logType} from "@/utils/p2p-library/types.ts";
+import {completeMessageType, logType} from "@p2p-library/types.ts";
 import {notifyUser} from "@/utils/notifications.ts";
-import {getShort} from "@/utils/p2p-library/helpers.ts";
+import {getShort} from "@p2p-library/helpers.ts";
 import {connector, logger} from "@/init.ts";
 import useToast from "@/hooks/useToast.tsx";
 

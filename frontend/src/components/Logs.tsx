@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {Box, Button, HStack, Separator, Text, VStack} from "@chakra-ui/react";
 import LogLabel from "@/components/LogLabel.tsx";
 import {connector, logger} from "@/init.ts";
-import {logType} from "@/utils/p2p-library/types.ts";
+import {logType} from "@p2p-library/types.ts";
 
 const Logs = () => {
   const [isDebugMode, setDebugMode] = useState<boolean>(false);

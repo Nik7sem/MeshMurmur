@@ -1,4 +1,4 @@
-import {ConnectorConfig} from "@/utils/p2p-library/connection/connector.ts";
+import {ConnectorConfig} from "@p2p-library/connection/connector.ts";
 
 export type UserData = {
   connectorConfig: ConnectorConfig;

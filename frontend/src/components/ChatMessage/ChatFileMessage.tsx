@@ -5,7 +5,7 @@ import {
   Link,
   Text,
 } from '@chakra-ui/react';
-import {completeFileType} from "@/utils/p2p-library/types.ts";
+import {completeFileType} from "@p2p-library/types.ts";
 import ImagePreviewDialog from "@/components/ChatMessage/ImagePreviewDialog.tsx";
 import ChatMessage from "@/components/ChatMessage/ChatMessage.tsx";
 

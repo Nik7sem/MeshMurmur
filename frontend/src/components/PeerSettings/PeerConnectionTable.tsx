@@ -1,7 +1,7 @@
 import React, {FC, RefObject, useCallback, useEffect, useState} from 'react';
 import {Button, Menu, Portal, Show, Table, Text} from "@chakra-ui/react";
 import {connector, logger} from "@/init.ts";
-import {connectionStageType} from "@/utils/p2p-library/types.ts";
+import {connectionStageType} from "@p2p-library/types.ts";
 
 
 interface Props {

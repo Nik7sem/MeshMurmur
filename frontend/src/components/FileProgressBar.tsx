@@ -1,6 +1,6 @@
 import {Flex, FormatByte, HStack, Progress} from '@chakra-ui/react';
 import React, {useCallback, useEffect, useState} from 'react';
-import {fileProgressType} from "@/utils/p2p-library/types.ts";
+import {fileProgressType} from "@p2p-library/types.ts";
 import {connector} from "@/init.ts";
 
 const FileProgressBar = () => {

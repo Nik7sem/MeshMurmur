@@ -1,5 +1,5 @@
-import {completeMessageType} from "@/utils/p2p-library/types.ts";
-import {isChatMemberBadge, isCompleteFile, isCompleteText} from "@/utils/p2p-library/helpers.ts";
+import {completeMessageType} from "@p2p-library/types.ts";
+import {isChatMemberBadge, isCompleteFile, isCompleteText} from "@p2p-library/helpers.ts";
 
 export function getReplyText(data: completeMessageType) {
   if (isCompleteText(data)) {
