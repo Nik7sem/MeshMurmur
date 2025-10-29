@@ -52,7 +52,7 @@ const defaultUserData = await getDefaultUserData()
 
 export const peerId = getPeerId(edKeyManager.publicKey.exportKey())
 export const logger = new MainLogger();
-export const connector = new Connector(peerId, defaultUserData.connectorConfig, AppVersion, MainRTCConfig, logger, edKeyManager)
+export const connector = new Connector(peerId, defaultUserData.connectorConfig, MainRTCConfig, logger, edKeyManager)
 
 connector.actions.sendNickname(defaultUserData.nickname)
 connector.actions.associatedNicknames = defaultUserData.associatedNicknames

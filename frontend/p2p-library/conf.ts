@@ -1,6 +1,8 @@
 import {FirebaseSignalerInterface} from "@p2p-library/signalers/firebase-signaler.ts";
 import {WebsocketSignalerInterface} from "@p2p-library/signalers/websocket-signaler.ts";
 
+export const protocolVersion = "1.0.0"
+
 export const signalers: Record<string, WebsocketSignalerInterface | FirebaseSignalerInterface> = {
   "FirebaseSignaler": {
     type: "firebase",

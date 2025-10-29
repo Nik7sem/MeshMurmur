@@ -1,8 +1,9 @@
 import {Logger} from "@p2p-library/logger.ts";
+import {protocolVersion} from "@p2p-library/conf.ts";
 
 interface NegotiationDescription {
   sessionId: string
-  appVersion: string
+  protocolVersion: string
 }
 
 export type NegotiationPackageType =
@@ -20,7 +21,6 @@ export class NegotiationManager {
   constructor(
     private readonly polite: boolean,
     private readonly logger: Logger,
-    private readonly appVersion: string,
     private readonly sendNegotiationPackage: (np: NegotiationPackageType) => void,
   ) {
     this._negotiationPromise = new Promise((resolve) => {
@@ -44,12 +44,12 @@ export class NegotiationManager {
   }
 
   createOffer() {
-    this.description = {sessionId: window.crypto.randomUUID(), appVersion: this.appVersion}
+    this.description = {sessionId: window.crypto.randomUUID(), protocolVersion}
     return this.description
   }
 
   isRemoteDescriptionFine(description: NegotiationDescription): boolean {
-    if (description.appVersion !== this.appVersion) {
+    if (description.protocolVersion !== protocolVersion) {
       this.logger.info('The version is not supported.')
       return false
     }

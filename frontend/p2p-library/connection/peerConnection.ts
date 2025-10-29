@@ -32,12 +32,10 @@ export class PeerConnection {
     private readonly signaler: Signaler,
     private readonly rtcConfigHelper: RTCConfigHelper,
     private onPeerConnectionChanged: (status: connectionStageType, block?: boolean, error?: boolean) => void,
-    appVersion: string
   ) {
     this.negotiationManager = new NegotiationManager(
       isPolite(peerId, targetPeerId),
       logger.createChild("Negotiation"),
-      appVersion,
       (np) => signaler.sendNegotiationPackage(targetPeerId, np)
     )
   }

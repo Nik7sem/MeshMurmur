@@ -29,7 +29,6 @@ export class Connector {
   constructor(
     public peerId: string,
     private __config: ConnectorConfig,
-    private appVersion: string,
     private rtcConfigHelper: RTCConfigHelper,
     private logger: Logger,
     edKeyManager: ED25519KeyPairManager,
@@ -107,7 +106,7 @@ export class Connector {
       return
     }
 
-    this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.rtcConfigHelper, this.createOnPeerConnectionChanged(targetPeerId), this.appVersion);
+    this.connections[targetPeerId] = new PeerConnection(this.peerId, targetPeerId, this.logger, this.signaler, this.rtcConfigHelper, this.createOnPeerConnectionChanged(targetPeerId));
     this.connections[targetPeerId].negotiationManager.reconnect = (np) => {
       const nickname = this.actions.targetPeerNickname(targetPeerId)
       const pc = this.connections[targetPeerId]
